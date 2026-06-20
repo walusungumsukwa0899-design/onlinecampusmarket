@@ -1,0 +1,77 @@
+.vp-page{padding-top:64px;min-height:100vh;}
+.vp-header{background:linear-gradient(135deg,#0e1a12,#132b1c);}
+.vp-back{display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,0.55);font-size:13px;cursor:pointer;padding:14px 20px;background:none;border:none;font-family:'Inter',sans-serif;}
+.vp-back:hover{color:white;}
+.vp-banner{height:160px;position:relative;overflow:hidden;background:linear-gradient(135deg,#0e1a12,#1a3a20);}
+.vp-banner img{width:100%;height:100%;object-fit:cover;}
+.banner-upload-btn{position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,0.5);color:white;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;}
+.vp-info-row{display:flex;align-items:flex-end;gap:14px;padding:0 20px;margin-top:-28px;position:relative;z-index:2;}
+.vp-avatar{width:68px;height:68px;border-radius:18px;border:4px solid white;background:var(--wolf);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;}
+.vp-avatar img{width:100%;height:100%;object-fit:cover;}
+.avatar-upload-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:0;cursor:pointer;transition:.2s;}
+.vp-avatar:hover .avatar-upload-overlay{opacity:1;}
+.vp-meta{flex:1;padding-bottom:4px;}
+.vp-meta h1{font-size:clamp(18px,3vw,26px);font-weight:800;color:white;margin-bottom:4px;}
+.vp-meta-tags{display:flex;gap:10px;flex-wrap:wrap;}
+.vp-meta-tags span{font-size:12px;color:rgba(255,255,255,0.55);}
+.vp-stats-row{display:flex;gap:0;padding:16px 20px 0;flex-wrap:wrap;}
+.vp-stat{flex:1;min-width:80px;text-align:center;padding:12px 8px;border-right:1px solid rgba(255,255,255,0.08);}
+.vp-stat:last-child{border:none;}
+.vp-stat-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--wolf);}
+.vp-stat-label{font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;}
+.vp-tabs{display:flex;padding:0 20px;margin-top:12px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.vp-tab{padding:10px 16px;background:none;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.vp-tab.active{color:white;border-bottom-color:var(--wolf);}
+.vp-body{padding:24px 0 48px;}
+.avail-tag{font-size:11px;font-weight:600;margin-bottom:4px;}
+.avail{color:var(--green);}
+.unavail{color:#ef4444;}
+.ask-btn{background:var(--wolf-light);color:var(--wolf);border:none;padding:3px 9px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;}
+
+/* Contact + Chat */
+.contact-chat-grid{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:8px;}
+.contact-chat-grid::-webkit-scrollbar{height:4px;}
+.contact-chat-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.vp-panel{flex:0 0 calc(100% - 20px);scroll-snap-align:start;background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;}
+@media(min-width:700px){.vp-panel{flex:0 0 calc(50% - 8px);}}
+.vp-panel h3{font-size:15px;font-weight:700;margin-bottom:14px;}
+.contact-list{display:flex;flex-direction:column;gap:2px;}
+.ci{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.ci:last-child{border:none;}
+.ci-icon{width:32px;height:32px;background:var(--wolf-light);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.ci-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.3px;}
+.ci-val{font-size:13px;font-weight:600;margin-top:1px;}
+.delivery-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.ci-section-title{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;font-weight:600;}
+.chat-subtitle{font-size:12px;color:var(--gray);margin-bottom:10px;}
+.chat-box{background:var(--light);border-radius:10px;padding:12px;height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
+.chat-empty{text-align:center;color:var(--gray);font-size:13px;padding:24px 0;}
+.chat-msg{display:flex;flex-direction:column;}
+.chat-msg.me{align-items:flex-end;}
+.chat-msg.vendor{align-items:flex-start;}
+.bubble{max-width:82%;padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.5;}
+.me .bubble{background:var(--wolf);color:white;border-bottom-right-radius:3px;}
+.vendor .bubble{background:white;color:var(--black);border:1px solid var(--border);border-bottom-left-radius:3px;}
+.msg-time{font-size:10px;color:var(--gray);margin-top:2px;padding:0 4px;}
+.chat-input-row{display:flex;gap:7px;}
+.chat-input{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:9px 13px;font-size:13px;outline:none;resize:none;transition:border .2s;}
+.chat-input:focus{border-color:var(--wolf);}
+.chat-input:disabled{background:var(--light);cursor:not-allowed;}
+.send-btn{background:var(--wolf);color:white;border:none;padding:9px 14px;border-radius:10px;cursor:pointer;font-size:16px;}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;}
+.signin-hint{font-size:12px;color:var(--gray);text-align:center;margin-top:8px;}
+.signin-hint button{background:none;border:none;color:var(--wolf);font-weight:600;cursor:pointer;font-size:12px;}
+
+/* Reviews */
+.reviews-pane{max-width:700px;}
+.add-review{background:var(--light);border-radius:var(--radius);padding:20px;margin-bottom:24px;}
+.add-review h4{font-size:15px;font-weight:700;margin-bottom:12px;}
+.stars-row{display:flex;align-items:center;gap:4px;margin-bottom:14px;}
+.rating-label{font-size:13px;color:var(--gray);margin-left:8px;}
+.review-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.review-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+.review-name{font-weight:700;font-size:13px;}
+.review-stars{color:#f59e0b;font-size:13px;}
+.review-item{font-size:11px;color:var(--wolf);font-weight:600;margin-bottom:4px;}
+.review-text{font-size:13px;color:var(--gray);line-height:1.6;}
+.review-date{font-size:10px;color:#bbb;margin-top:5px;}
