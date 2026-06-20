@@ -1,11 +1,13 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useCart } from '../lib/CartContext'
 import { useAuth } from '../lib/AuthContext'
+import { useInstallPrompt } from '../lib/useInstallPrompt'
 import './Navbar.css'
 
 export default function Navbar() {
   const { totalItems } = useCart()
   const { user, signOut } = useAuth()
+  const { canInstall, promptInstall } = useInstallPrompt()
   const navigate = useNavigate()
   const location = useLocation()
   const path = location.pathname
@@ -29,6 +31,7 @@ export default function Navbar() {
         </div>
 
         <div className="nav-actions">
+          {canInstall && <button className="nav-install" onClick={promptInstall}>⬇️ Install App</button>}
           <Link to="/cart" className="nav-cart">
             🛒
             {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
@@ -39,6 +42,14 @@ export default function Navbar() {
           }
         </div>
       </nav>
+
+      {/* Mobile install banner */}
+      {canInstall && (
+        <div className="install-banner">
+          <span>📲 Install Wolf Market for quicker access</span>
+          <button onClick={promptInstall}>Install</button>
+        </div>
+      )}
 
       {/* Mobile Nav */}
       <div className="mobile-nav">
