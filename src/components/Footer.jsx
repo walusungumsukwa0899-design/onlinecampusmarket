@@ -30,9 +30,9 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Support</h4>
             <Link to="/contact">Contact Us</Link>
-            <a>Help Center</a>
-            <a>Safety Policy</a>
-            <a>Report Issue</a>
+            <Link to="/help">Help Center</Link>
+            <Link to="/safety">Safety Policy</Link>
+            <Link to="/report">Report Issue</Link>
           </div>
         </div>
         <div className="footer-bottom">

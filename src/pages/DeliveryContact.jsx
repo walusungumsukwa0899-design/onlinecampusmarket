@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Footer from '../components/Footer'
+import { WHATSAPP_NUMBERS } from '../lib/whatsapp'
 import './DeliveryContact.css'
 
 export function Delivery() {
@@ -60,6 +61,7 @@ export function Delivery() {
 
 export function Contact() {
   const [form, setForm] = useState({ name: '', contact: '', subject: '', message: '' })
+  const [waNumber, setWaNumber] = useState(WHATSAPP_NUMBERS[0].value)
   const [sent, setSent] = useState(false)
 
   function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
@@ -69,10 +71,20 @@ export function Contact() {
       alert('Please fill in your name, phone/email, and message.')
       return
     }
-    // In production this would post to a backend (e.g. supabase.from('contact_messages').insert(form))
+    const lines = [
+      'New message from Wolf Market site:',
+      `Name: ${form.name}`,
+      `Contact: ${form.contact}`,
+      form.subject.trim() ? `Subject: ${form.subject}` : null,
+      `Message: ${form.message}`,
+    ].filter(Boolean).join('\n')
+
+    const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(lines)}`
+    window.open(url, '_blank')
+
     setSent(true)
     setForm({ name: '', contact: '', subject: '', message: '' })
-    setTimeout(() => setSent(false), 4000)
+    setTimeout(() => setSent(false), 5000)
   }
 
   return (
@@ -87,8 +99,8 @@ export function Contact() {
           <div className="contact-info">
             {[
               {icon:'📍',label:'Location',val:'Malawi · Operating Nationwide'},
-              {icon:'📱',label:'WhatsApp',val:'+265 999 000 000'},
-              {icon:'📧',label:'Email',val:'hello@wolfmarket.mw'},
+              {icon:'📱',label:'WhatsApp',val:'+265 998 531 738 · +265 882 966 086'},
+              {icon:'📧',label:'Email',val:'lawolf22005@gmail.com'},
               {icon:'⏰',label:'Support Hours',val:'Mon–Sat, 7am – 9pm'},
             ].map(c => (
               <div key={c.label} className="contact-item">
@@ -106,8 +118,23 @@ export function Contact() {
             <div className="form-group"><label className="form-label">Phone or Email</label><input className="form-input" placeholder="+265 or email" value={form.contact} onChange={e => set('contact', e.target.value)}/></div>
             <div className="form-group"><label className="form-label">Subject</label><input className="form-input" placeholder="What's this about?" value={form.subject} onChange={e => set('subject', e.target.value)}/></div>
             <div className="form-group"><label className="form-label">Message</label><textarea className="form-input" placeholder="How can we help?" value={form.message} onChange={e => set('message', e.target.value)}/></div>
-            <button className="btn-primary" style={{width:'100%',justifyContent:'center'}} onClick={handleSend}>Send Message</button>
-            {sent && <div className="success-msg">✅ Message sent! We'll get back to you soon.</div>}
+            <div className="form-group">
+              <label className="form-label">Send to</label>
+              <div className="wa-number-picker">
+                {WHATSAPP_NUMBERS.map(n => (
+                  <button
+                    key={n.value}
+                    type="button"
+                    className={`wa-chip ${waNumber === n.value ? 'active' : ''}`}
+                    onClick={() => setWaNumber(n.value)}
+                  >
+                    {n.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button className="btn-primary" style={{width:'100%',justifyContent:'center'}} onClick={handleSend}>📱 Send via WhatsApp</button>
+            {sent && <div className="success-msg">✅ Opening WhatsApp with your message…</div>}
           </div>
         </div>
       </div>

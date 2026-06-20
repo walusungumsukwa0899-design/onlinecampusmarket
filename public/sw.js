@@ -4,7 +4,7 @@
 // Live data (products, vendors, etc.) always goes to the network — this
 // does NOT cache or serve stale Supabase API responses.
 
-const CACHE_NAME = 'wolf-market-shell-v1'
+const CACHE_NAME = 'wolf-market-shell-v2'
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',

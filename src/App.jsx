@@ -12,6 +12,9 @@ import Sell from './pages/Sell'
 import SignIn from './pages/SignIn'
 import Dashboard from './pages/Dashboard'
 import { Delivery, Contact } from './pages/DeliveryContact'
+import HelpCenter from './pages/HelpCenter'
+import SafetyPolicy from './pages/SafetyPolicy'
+import ReportIssue from './pages/ReportIssue'
 
 function Toast() {
   const { toast } = useCart()
@@ -35,6 +38,9 @@ export default function App() {
           <Route path="/sell" element={<Sell />} />
           <Route path="/delivery" element={<Delivery />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="/safety" element={<SafetyPolicy />} />
+          <Route path="/report" element={<ReportIssue />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="*" element={<Home />} />
