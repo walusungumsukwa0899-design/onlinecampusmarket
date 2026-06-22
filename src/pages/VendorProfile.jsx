@@ -507,7 +507,7 @@ export default function VendorProfile() {
               {isOwner ? (
                 <div className="success-msg" style={{background:'var(--light)'}}>You can't review your own store.</div>
               ) : hasReviewed || reviewSuccess ? (
-                <div className="success-msg">✅ {reviewSuccess ? 'Review posted! Thank you.' : 'You've already reviewed this store.'}</div>
+                <div className="success-msg">✅ {reviewSuccess ? 'Review posted! Thank you.' : "You've already reviewed this store."}</div>
               ) : !user ? (
                 <p className="signin-hint"><button onClick={() => navigate('/signin')}>Sign in</button> to leave a review</p>
               ) : (
