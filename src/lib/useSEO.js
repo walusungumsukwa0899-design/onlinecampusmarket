@@ -13,7 +13,7 @@ const DEFAULT_IMG = '/icon-512.png'
 export function useSEO({ title, description, image, url } = {}) {
   useEffect(() => {
     const fullTitle = title ? `${title} | ${SITE}` : SITE
-    const desc = description || 'Malawi's premier campus marketplace – buy, sell and discover products from student vendors across all universities.'
+    const desc = description || "Malawi's premier campus marketplace – buy, sell and discover products from student vendors across all universities."
     const img = image || DEFAULT_IMG
     const canonical = url || window.location.href
 

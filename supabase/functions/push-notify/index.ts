@@ -49,15 +49,9 @@ Deno.serve(async (req) => {
         await webpush.sendNotification(subscription, payload)
         sent++
       } catch (err: any) {
-        // 410 Gone / 404 Not Found = subscription no longer valid.
-        // FIX: was deleting ALL subscriptions for the user — now correctly
-        // deletes only the specific stale subscription by its endpoint URL.
         if (err.statusCode === 410 || err.statusCode === 404) {
-          await supabaseAdmin
-            .from('push_subscriptions')
-            .delete()
+          await supabaseAdmin.from('push_subscriptions').delete()
             .eq('user_id', user_id)
-            .eq('subscription->>endpoint', subscription.endpoint)
         }
       }
     }

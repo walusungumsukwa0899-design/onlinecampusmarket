@@ -151,12 +151,25 @@ export default function Cart() {
       lastChargeId.current = result.charge_id
       setStage('polling')
       await pollVerification(result.charge_id)
-      // On success, pollVerification navigates to /order-confirmation/:chargeId
+      // If polling set stage to success, navigate to receipt
+      // (checked via stage ref since setState is async)
     } catch (err) {
       setStage('failed')
       setErrorMsg(err.message || 'Could not start the payment. Please try again.')
     }
   }
+
+  if (stage === 'success') return (
+    <div className="cart-page">
+      <div className="empty-state">
+        <div className="empty-icon">🎉</div>
+        <h3>Payment received!</h3>
+        <p>Your order is confirmed. Message the vendor from their store page to arrange delivery or pickup.</p>
+        <button className="btn-primary" onClick={() => navigate('/dashboard')}>View My Orders</button>
+      </div>
+      <Footer />
+    </div>
+  )
 
   if (cart.length === 0) return (
     <div className="cart-page">
