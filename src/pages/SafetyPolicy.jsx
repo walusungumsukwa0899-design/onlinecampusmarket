@@ -16,7 +16,7 @@ const GUIDELINES = [
     icon: '💳',
     title: 'Payments',
     points: [
-      'Only pay through Wolf Market\'s checkout (Airtel Money, TNM Mpamba, bank transfer) — never send money outside the app.',
+      'Only pay through Wolf Market\'s checkout (Airtel Money or TNM Mpamba) — never send money outside the app.',
       'Never share your mobile money PIN with anyone, including vendors or "support agents."',
       'Keep your transaction confirmation SMS until the order is delivered.',
     ],

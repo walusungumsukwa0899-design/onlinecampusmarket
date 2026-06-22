@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useSEO } from '../lib/useSEO'
+import { SkeletonGrid } from '../components/Skeleton'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Footer from '../components/Footer'
 import './Vendors.css'
 
 export default function Vendors() {
+  useSEO({ title: 'Vendors', description: 'Browse trusted student entrepreneurs on Wolf Marketplace. View ratings, products, and contact vendors directly.' })
   const navigate = useNavigate()
   const [vendors, setVendors] = useState([])
   const [loading, setLoading] = useState(true)
@@ -12,12 +15,18 @@ export default function Vendors() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from('vendors')
-        .select('*')
-        .order('created_at', { ascending: false })
-      setVendors(data || [])
-      setLoading(false)
+      try {
+        const { data } = await supabase
+          .from('vendor_stats')
+          .select('*')
+          .order('is_featured', { ascending: false })
+          .order('created_at', { ascending: false })
+        setVendors(data || [])
+      } catch (err) {
+        console.error('Failed to load vendors:', err)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [])
@@ -39,8 +48,8 @@ export default function Vendors() {
       </div>
 
       <div className="container">
-        <div className="vendors-search">
-          <input placeholder="Search vendors by name, category, or university..." value={search} onChange={e => setSearch(e.target.value)}/>
+        <div style={{display:'flex',gap:'10px',flexWrap:'wrap',marginBottom:'20px',alignItems:'center'}}>
+          <input className="vendors-search" placeholder="Search vendors by name, category, or university..." value={search} onChange={e => setSearch(e.target.value)} style={{flex:'1 1 240px'}}/>
         </div>
 
         {loading
@@ -62,10 +71,18 @@ export default function Vendors() {
                     <div className="vendor-uni">📍 {v.university}</div>
                     <div className="vendor-stats">
                       <div className="vstat"><strong>{v.product_count || 0}</strong><span>Products</span></div>
-                      <div className="vstat"><strong>{v.avg_rating ? `${v.avg_rating}⭐` : 'New'}</strong><span>Rating</span></div>
+                      <div className="vstat">
+                        <strong>
+                          {v.avg_rating
+                            ? <span title={`${v.avg_rating} out of 5`}>{v.avg_rating} <span style={{color:'#f59e0b'}}>★</span></span>
+                            : <span style={{color:'var(--gray)',fontSize:'12px'}}>New</span>}
+                        </strong>
+                        <span>Rating</span>
+                      </div>
                       <div className="vstat"><strong>{v.total_sales || 0}+</strong><span>Sales</span></div>
                     </div>
-                    <div className="vendor-verified">✅ Verified Vendor</div>
+                    {v.is_featured && <div style={{background:'linear-gradient(135deg,#f59e0b,#ef4444)',color:'white',borderRadius:'6px',padding:'2px 10px',fontSize:'11px',fontWeight:800,display:'inline-block',marginBottom:'6px'}}>⭐ FEATURED</div>}
+                  <div className="vendor-verified">✅ Verified Vendor</div>
                     <button className="vendor-btn">View Store →</button>
                   </div>
                 </div>

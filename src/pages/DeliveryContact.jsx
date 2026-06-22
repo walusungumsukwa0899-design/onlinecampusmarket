@@ -7,8 +7,8 @@ export function Delivery() {
   return (
     <div className="page-wrap">
       <div className="delivery-hero">
-        <h1>Fast <span>Delivery</span><br/>to Your Hostel</h1>
-        <p>Order anything on campus and get it delivered straight to your door — same day.</p>
+        <h1>Delivery, <span>Vendor</span><br/>to You</h1>
+        <p>Wolf Market handles payments — delivery is arranged directly between you and the vendor you're buying from.</p>
       </div>
       <div className="steps-section">
         <div className="container">
@@ -17,8 +17,8 @@ export function Delivery() {
             {[
               {n:1,title:'Browse & Order',desc:'Find what you need from campus vendors and place your order in seconds.'},
               {n:2,title:'Pay via Mobile',desc:'Pay securely with Airtel Money or TNM Mpamba. No bank card required.'},
-              {n:3,title:'Track Your Order',desc:'Get updates as your order is prepared and dispatched to you.'},
-              {n:4,title:'Delivered!',desc:'Your order arrives at your hostel room. Rate the vendor after.'},
+              {n:3,title:'Message the Vendor',desc:"After payment, message the vendor directly from their store page to agree on delivery or pickup."},
+              {n:4,title:'Receive Your Order',desc:'The vendor delivers or you collect, exactly as you agreed together. Rate them after.'},
             ].map(s => (
               <div key={s.n} className="step-card">
                 <div className="step-num">{s.n}</div>
@@ -31,27 +31,13 @@ export function Delivery() {
       </div>
       <div className="zones-section">
         <div className="container">
-          <div className="section-header"><div className="eyebrow">Coverage Areas</div><h2 className="section-title">Delivering Across Malawi</h2></div>
-          <div className="zones-grid">
-            {[
-              {name:'UNIMA',loc:'Zomba',time:'30–60 min',fee:'MWK 300'},
-              {name:'The Polytechnic',loc:'Blantyre',time:'30–60 min',fee:'MWK 300'},
-              {name:'Mzuzu University',loc:'Mzuzu',time:'30–60 min',fee:'MWK 300'},
-              {name:'MUST',loc:'Thyolo',time:'30–60 min',fee:'MWK 300'},
-              {name:'College of Medicine',loc:'Blantyre',time:'45–90 min',fee:'MWK 400'},
-              {name:'Catholic University',loc:'Balaka',time:'45–90 min',fee:'MWK 400'},
-              {name:'MUBAS',loc:'Blantyre',time:'45–90 min',fee:'MWK 400'},
-              {name:'LUANAR',loc:'Lilongwe',time:'45–90 min',fee:'MWK 400'},
-            ].map(z => (
-              <div key={z.name} className="zone-card">
-                <div className="zone-icon">🎓</div>
-                <div className="zone-name">{z.name}</div>
-                <div className="zone-loc">{z.loc}</div>
-                <div className="zone-time">{z.time}</div>
-                <div className="zone-fee">{z.fee} delivery</div>
-              </div>
-            ))}
-          </div>
+          <div className="section-header"><div className="eyebrow">Good to Know</div><h2 className="section-title">Delivery Is Set by Each Vendor</h2></div>
+          <p className="delivery-disclaimer">
+            Wolf Market is a marketplace, not a delivery service — we don't dispatch riders or set delivery fees.
+            Each vendor decides how they get items to you: some deliver around campus, others ask buyers to pick up.
+            Delivery time, cost (if any), and coverage area are agreed between you and the vendor directly, usually
+            over chat right after you pay. Check a vendor's profile or ask them before ordering if delivery details matter to you.
+          </p>
         </div>
       </div>
       <Footer/>

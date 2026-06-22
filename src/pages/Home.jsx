@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useSEO } from '../lib/useSEO'
+import { SkeletonGrid } from '../components/Skeleton'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useCart } from '../lib/CartContext'
@@ -6,28 +8,42 @@ import Footer from '../components/Footer'
 import './Home.css'
 
 const CATEGORIES = [
-  {icon:'👗',name:'Fashion'},{icon:'📱',name:'Electronics'},{icon:'🍱',name:'Food & Drinks'},
-  {icon:'📚',name:'Books'},{icon:'✏️',name:'Stationery'},{icon:'💊',name:'Health'},
-  {icon:'🏠',name:'Home & Living'},{icon:'💄',name:'Beauty'},{icon:'⚽',name:'Sports'},
+  {icon:'👗',name:'Fashion & Clothing'},{icon:'📱',name:'Electronics'},{icon:'🍱',name:'Food & Drinks'},
+  {icon:'📚',name:'Books & Stationery'},{icon:'✏️',name:'Books & Stationery'},{icon:'💊',name:'Beauty & Health'},
+  {icon:'🏠',name:'Home & Living'},{icon:'💄',name:'Beauty & Health'},{icon:'⚽',name:'Sports & Fitness'},
   {icon:'🔧',name:'Auto Parts'},{icon:'🛠️',name:'Services'},{icon:'📦',name:'Other'},
 ]
 
 export default function Home() {
+  useSEO({ title: 'Home', description: 'Discover products from student vendors across Malawi universities. Shop fashion, food, electronics and more.' })
   const navigate = useNavigate()
-  const { addToCart } = useCart()
+  const { addToCart, toggleWishlist, isWishlisted } = useCart()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [recentlyViewed, setRecentlyViewed] = useState([])
+
+  useEffect(() => {
+    try {
+      const rv = JSON.parse(localStorage.getItem('wolf_recently_viewed') || '[]')
+      setRecentlyViewed(rv.slice(0, 4))
+    } catch {}
+  }, [])
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from('products')
-        .select('*, vendors(name)')
-        .eq('available', true)
-        .order('created_at', { ascending: false })
-        .limit(8)
-      setProducts(data || [])
-      setLoading(false)
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('*, vendors(name)')
+          .eq('available', true)
+          .order('created_at', { ascending: false })
+          .limit(8)
+        setProducts((data || []).filter(p => p.vendor_id && p.vendors))
+      } catch (err) {
+        console.error('Failed to load products:', err)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [])
@@ -79,7 +95,7 @@ export default function Home() {
           <div className="features-grid">
             {[
               {icon:'🏪',title:'Student Vendors',desc:'Buy directly from fellow students and campus entrepreneurs. Real people, real products.'},
-              {icon:'🚚',title:'Hostel Delivery',desc:'Get orders delivered straight to your hostel room. No leaving campus needed.'},
+              {icon:'🚚',title:'Vendor Delivery',desc:'Pay securely, then arrange delivery or pickup directly with the vendor on chat.'},
               {icon:'📱',title:'Airtel & TNM Pay',desc:'Pay with Airtel Money or TNM Mpamba. No bank card needed.'},
               {icon:'💬',title:'Chat with Vendors',desc:'Ask vendors directly if items are available before placing an order.'},
               {icon:'⭐',title:'Buyer Reviews',desc:'Rate products and vendors after every purchase. Keep the marketplace honest.'},
@@ -108,7 +124,7 @@ export default function Home() {
             ? <div className="empty-state"><div className="empty-icon">📦</div><h3>No products yet</h3><p>Be the first to list a product!</p><button className="btn-primary" onClick={() => navigate('/sell')}>List a Product</button></div>
             : <div className="products-grid">
                 {products.map(p => (
-                  <div key={p.id} className="product-card" onClick={() => navigate(`/vendors/${p.vendor_id}`)}>
+                  <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                     <div className="product-img">
                       {p.image_url ? <img src={p.image_url} alt={p.name}/> : <span>{p.icon || '📦'}</span>}
                     </div>
@@ -119,7 +135,10 @@ export default function Home() {
                         <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
                         <div className="product-badge">{p.category}</div>
                       </div>
-                      <button className="add-cart-btn" onClick={e => { e.stopPropagation(); addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.vendors?.name}) }}>Add to Cart</button>
+                      <div style={{display:'flex',gap:'6px'}}>
+                        <button className="add-cart-btn" style={{flex:1}} onClick={e => { e.stopPropagation(); addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.vendors?.name,vendor_id:p.vendor_id,image_url:p.image_url}) }}>Add to Cart</button>
+                        <button onClick={e=>{ e.stopPropagation(); toggleWishlist({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.vendors?.name,vendor_id:p.vendor_id,image_url:p.image_url}) }} style={{background:isWishlisted(p.id)?'#fee2e2':'var(--light)',border:'none',borderRadius:'8px',padding:'0 10px',cursor:'pointer',fontSize:'15px'}}>{isWishlisted(p.id)?'❤️':'🤍'}</button>
+                      </div>
                     </div>
                   </div>
                 ))}

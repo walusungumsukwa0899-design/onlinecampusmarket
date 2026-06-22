@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import Footer from '../components/Footer'
 import './Sell.css'
 
-const CATS = ['Fashion','Electronics','Food & Drinks','Books','Stationery','Health','Home & Living','Beauty','Sports','Auto Parts','Services','Other']
+const CATS = ['Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living','Sports & Fitness','Auto Parts','Other']
 const UNIS = ['UNIMA','The Polytechnic','Mzuzu University','MUST','College of Medicine','Catholic University of Malawi','MUBAS','LUANAR','Malawi Adventist University','Livingstonia University','Daeyang Luke University','NIPA','Other']
 
 export default function Sell() {
@@ -23,8 +23,31 @@ export default function Sell() {
 
   function set(key, val) { setForm(f => ({...f, [key]: val})) }
 
+  useEffect(() => {
+    return () => { photoPreviews.forEach(url => URL.revokeObjectURL(url)) }
+  }, [photoPreviews])
+
   function handlePhotos(e) {
-    const files = Array.from(e.target.files).slice(0, 5)
+    photoPreviews.forEach(url => URL.revokeObjectURL(url))
+    const MAX_SIZE_MB = 8
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    const raw = Array.from(e.target.files).slice(0, 5)
+
+    const oversized = raw.filter(f => f.size > MAX_SIZE_MB * 1024 * 1024)
+    const wrongType = raw.filter(f => !ALLOWED_TYPES.includes(f.type))
+
+    if (wrongType.length > 0) {
+      alert(`Only JPEG, PNG, WebP, and GIF images are allowed. Please remove: ${wrongType.map(f => f.name).join(', ')}`)
+      e.target.value = ''
+      return
+    }
+    if (oversized.length > 0) {
+      alert(`Each photo must be under ${MAX_SIZE_MB}MB. The following are too large: ${oversized.map(f => `${f.name} (${(f.size/1024/1024).toFixed(1)}MB)`).join(', ')}`)
+      e.target.value = ''
+      return
+    }
+
+    const files = raw
     setPhotoFiles(files)
     setPhotoPreviews(files.map(f => URL.createObjectURL(f)))
   }
@@ -37,9 +60,14 @@ export default function Sell() {
     setLoading(true)
 
     // Ensure vendor profile exists
-    let { data: vendor } = await supabase.from('vendors').select('id').eq('user_id', user.id).single()
+    let { data: vendor, error: vendorFetchError } = await supabase.from('vendors').select('id').eq('user_id', user.id).maybeSingle()
+    if (vendorFetchError) {
+      alert('Could not load your vendor profile: ' + vendorFetchError.message)
+      setLoading(false)
+      return
+    }
     if (!vendor) {
-      const { data: newVendor } = await supabase.from('vendors').insert({
+      const { data: newVendor, error: vendorInsertError } = await supabase.from('vendors').insert({
         user_id: user.id,
         name: user.user_metadata?.full_name || 'My Store',
         phone: form.phone,
@@ -51,29 +79,46 @@ export default function Sell() {
         delivery_time: form.deliveryTime,
         delivery_fee: form.deliveryFee ? parseInt(form.deliveryFee) : null,
       }).select().single()
+      if (vendorInsertError || !newVendor) {
+        alert('Could not create your store: ' + (vendorInsertError?.message || 'Unknown error'))
+        setLoading(false)
+        return
+      }
       vendor = newVendor
     }
 
-    // Upload first photo
-    let imageUrl = null
-    if (photoFiles.length > 0) {
-      const path = `products/${vendor.id}-${Date.now()}`
-      await supabase.storage.from('product-images').upload(path, photoFiles[0])
+    // Upload all photos and collect URLs
+    const imageUrls = []
+    for (let i = 0; i < photoFiles.length; i++) {
+      const path = `products/${vendor.id}-${Date.now()}-${i}`
+      const { error: uploadError } = await supabase.storage.from('product-images').upload(path, photoFiles[i])
+      if (uploadError) {
+        alert(`Could not upload photo ${i + 1}: ${uploadError.message}`)
+        setLoading(false)
+        return
+      }
       const { data } = supabase.storage.from('product-images').getPublicUrl(path)
-      imageUrl = data.publicUrl
+      imageUrls.push(data.publicUrl)
     }
 
-    await supabase.from('products').insert({
+    const { error: productError } = await supabase.from('products').insert({
       vendor_id: vendor.id,
       name: form.name,
       price: parseInt(form.price),
       description: form.description,
       category: selectedCat,
-      image_url: imageUrl,
+      image_url: imageUrls[0] || null,
+      image_urls: imageUrls.length > 0 ? imageUrls : null,
+      stock_qty: form.stockQty ? parseInt(form.stockQty) : null,
+      condition: form.condition || 'New',
       available: true,
     })
 
     setLoading(false)
+    if (productError) {
+      alert('Could not list your product: ' + productError.message)
+      return
+    }
     setSuccess(true)
   }
 
@@ -95,7 +140,7 @@ export default function Sell() {
         <h2>Product Listed!</h2>
         <p>Your product is now visible in your campus marketplace.</p>
         <div style={{display:'flex',gap:'12px',justifyContent:'center',marginTop:'24px',flexWrap:'wrap'}}>
-          <button className="btn-primary" onClick={() => { setSuccess(false); setForm({name:'',price:'',description:'',phone:'',location:'',university:'',delivery:'',deliveryTime:'',deliveryFee:'',hours:''}); setSelectedCat(''); setPhotoPreviews([]); setPhotoFiles([]) }}>List Another</button>
+          <button className="btn-primary" onClick={() => { photoPreviews.forEach(url => URL.revokeObjectURL(url)); setSuccess(false); setForm({name:'',price:'',description:'',phone:'',location:'',university:'',delivery:'',deliveryTime:'',deliveryFee:'',hours:''}); setSelectedCat(''); setPhotoPreviews([]); setPhotoFiles([]) }}>List Another</button>
           <button className="btn-outline" onClick={() => navigate('/shop')}>View Marketplace</button>
         </div>
       </div>
@@ -112,11 +157,21 @@ export default function Sell() {
         <label className="photo-upload-area" htmlFor="product-photos">
           <div className="upload-icon">📸</div>
           <div className="upload-text">Tap to upload product photos</div>
-          <div className="upload-sub">Upload from your gallery — up to 5 photos</div>
+          <div className="upload-sub">Up to 5 photos · Max 8MB each · JPEG, PNG, WebP</div>
           <input id="product-photos" type="file" accept="image/*" multiple onChange={handlePhotos} style={{display:'none'}}/>
           {photoPreviews.length > 0 && (
-            <div className="photo-previews">
-              {photoPreviews.map((url, i) => <img key={i} src={url} alt="" className="preview-img"/>)}
+            <div>
+              <div style={{fontSize:'12px',color:'var(--gray)',marginBottom:'8px'}}>Tap ‹ to move left · × to remove · First photo is the cover image</div>
+              <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                {photoPreviews.map((src, i) => (
+                  <div key={i} style={{position:'relative',width:'80px',height:'80px',borderRadius:'10px',overflow:'hidden',border:i===0?'2px solid var(--wolf)':'2px solid var(--border)',flexShrink:0}}>
+                    <img src={src} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                    {i === 0 && <div style={{position:'absolute',bottom:0,left:0,right:0,background:'var(--wolf)',color:'white',fontSize:'9px',fontWeight:800,textAlign:'center',padding:'2px'}}>COVER</div>}
+                    <button type="button" onClick={() => { const np=photoPreviews.filter((_,j)=>j!==i); const nf=photoFiles.filter((_,j)=>j!==i); URL.revokeObjectURL(src); setPhotoPreviews(np); setPhotoFiles(nf) }} style={{position:'absolute',top:'2px',right:'2px',background:'rgba(0,0,0,0.65)',color:'white',border:'none',borderRadius:'50%',width:'18px',height:'18px',fontSize:'11px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
+                    {i > 0 && <button type="button" onClick={() => { const np=[...photoPreviews]; const nf=[...photoFiles]; [np[i],np[i-1]]=[np[i-1],np[i]]; [nf[i],nf[i-1]]=[nf[i-1],nf[i]]; setPhotoPreviews(np); setPhotoFiles(nf) }} style={{position:'absolute',top:'2px',left:'2px',background:'rgba(0,0,0,0.65)',color:'white',border:'none',borderRadius:'50%',width:'18px',height:'18px',fontSize:'11px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </label>

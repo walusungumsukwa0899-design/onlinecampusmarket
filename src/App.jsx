@@ -15,6 +15,14 @@ import { Delivery, Contact } from './pages/DeliveryContact'
 import HelpCenter from './pages/HelpCenter'
 import SafetyPolicy from './pages/SafetyPolicy'
 import ReportIssue from './pages/ReportIssue'
+import NotFound from './pages/NotFound'
+import Admin from './pages/Admin'
+import Wishlist from './pages/Wishlist'
+import OrderConfirmation from './pages/OrderConfirmation'
+import ProductDetail from './pages/ProductDetail'
+import Category from './pages/Category'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 
 function Toast() {
   const { toast } = useCart()
@@ -43,7 +51,14 @@ export default function App() {
           <Route path="/report" element={<ReportIssue />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="*" element={<Home />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/order-confirmation/:chargeId" element={<OrderConfirmation />} />
+          <Route path="/category/:slug" element={<Category />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </CartProvider>
     </AuthProvider>

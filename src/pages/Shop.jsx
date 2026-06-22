@@ -1,38 +1,51 @@
 import { useEffect, useState } from 'react'
+import { useSEO } from '../lib/useSEO'
+import { SkeletonGrid } from '../components/Skeleton'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useCart } from '../lib/CartContext'
 import Footer from '../components/Footer'
 import './Shop.css'
 
-const CATS = ['All','Fashion','Electronics','Food & Drinks','Books','Stationery','Health','Home & Living','Beauty','Sports','Auto Parts','Services','Other']
+const CATS = ['All','Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living','Sports & Fitness','Auto Parts','Other']
 const UNIS = ['All','UNIMA','The Polytechnic','Mzuzu University','MUST','College of Medicine','Catholic University of Malawi','MUBAS','LUANAR','Malawi Adventist University','Livingstonia University']
 
 export default function Shop() {
+  useSEO({ title: 'Shop', description: 'Browse all products listed by campus vendors across Malawi universities.' })
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { addToCart } = useCart()
+  const { addToCart, toggleWishlist, isWishlisted } = useCart()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [cat, setCat] = useState(searchParams.get('cat') || 'All')
   const [uni, setUni] = useState(searchParams.get('uni') || 'All')
   const [q, setQ] = useState('')
 
-  useEffect(() => { loadProducts() }, [cat, uni])
+  useEffect(() => { setQ(''); loadProducts('') }, [cat, uni])
 
-  async function loadProducts() {
+  // Debounce search so we don't fire a DB query on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => loadProducts(q), 300)
+    return () => clearTimeout(timer)
+  }, [q])
+
+  async function loadProducts(searchQ = q) {
     setLoading(true)
-    let query = supabase.from('products').select(`*, vendors${uni !== 'All' ? '!inner' : ''}(name, university)`).eq('available', true)
-    if (cat !== 'All') query = query.eq('category', cat)
-    if (uni !== 'All') query = query.eq('vendors.university', uni)
-    const { data } = await query.order('created_at', { ascending: false })
-    setProducts(data || [])
-    setLoading(false)
+    try {
+      let query = supabase.from('products').select(`*, vendors${uni !== 'All' ? '!inner' : ''}(name, university)`).eq('available', true)
+      if (cat !== 'All') query = query.eq('category', cat)
+      if (uni !== 'All') query = query.eq('vendors.university', uni)
+      if (searchQ.trim()) query = query.ilike('name', `%${searchQ.trim()}%`)
+      const { data } = await query.order('created_at', { ascending: false })
+      setProducts((data || []).filter(p => p.vendor_id && p.vendors))
+    } catch (err) {
+      console.error('Failed to load products:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const filtered = products.filter(p =>
-    !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.category?.toLowerCase().includes(q.toLowerCase())
-  )
+  const filtered = products
 
   return (
     <div className="shop-page">
@@ -73,7 +86,7 @@ export default function Shop() {
             ? <div className="empty-state"><div className="empty-icon">🔍</div><h3>No products found</h3><p>Try a different category or search term.</p></div>
             : <div className="products-grid">
                 {filtered.map(p => (
-                  <div key={p.id} className="product-card" onClick={() => navigate(`/vendors/${p.vendor_id}`)}>
+                  <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                     <div className="product-img">
                       {p.image_url ? <img src={p.image_url} alt={p.name}/> : <span>{p.icon||'📦'}</span>}
                     </div>
@@ -84,7 +97,10 @@ export default function Shop() {
                         <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
                         <div className="product-badge">{p.category}</div>
                       </div>
-                      <button className="add-cart-btn" onClick={e => { e.stopPropagation(); addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.vendors?.name}) }}>Add to Cart</button>
+                      <div style={{display:'flex',gap:'6px'}}>
+                        <button className="add-cart-btn" style={{flex:1}} onClick={e => { e.stopPropagation(); addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.vendors?.name,vendor_id:p.vendor_id,image_url:p.image_url}) }}>Add to Cart</button>
+                        <button onClick={e=>{ e.stopPropagation(); toggleWishlist({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.vendors?.name,vendor_id:p.vendor_id,image_url:p.image_url}) }} style={{background:isWishlisted(p.id)?'#fee2e2':'var(--light)',border:'none',borderRadius:'8px',padding:'0 10px',cursor:'pointer',fontSize:'15px'}}>{isWishlisted(p.id)?'❤️':'🤍'}</button>
+                      </div>
                     </div>
                   </div>
                 ))}

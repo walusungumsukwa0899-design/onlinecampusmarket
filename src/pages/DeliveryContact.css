@@ -12,6 +12,7 @@
 .zones-section{background:var(--light);padding:56px 0;}
 .zones-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
 .zone-card{background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center;}
+.delivery-disclaimer{max-width:680px;margin:0 auto;background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:24px 28px;font-size:14px;line-height:1.7;color:var(--gray);text-align:center;}
 .zone-icon{font-size:24px;margin-bottom:8px;}
 .zone-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;}
 .zone-loc{font-size:11px;color:var(--gray);margin-top:2px;}

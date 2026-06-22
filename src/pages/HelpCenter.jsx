@@ -7,10 +7,10 @@ const FAQS = [
   {
     category: 'Buying',
     items: [
-      { q: 'How do I order something from a vendor?', a: 'Browse Shop or a Campus Market, open a product, and tap Add to Cart. When you\'re ready, go to your Cart and check out — you\'ll choose delivery or pickup and a payment method.' },
-      { q: 'What payment methods are accepted?', a: 'Airtel Money, TNM Mpamba, and bank transfer are supported. You\'ll see available options at checkout depending on the vendor.' },
-      { q: 'Can I cancel an order after placing it?', a: 'Yes, as long as the vendor hasn\'t started preparing it. Open the order from your Dashboard and select Cancel Order.' },
-      { q: 'How do I track my delivery?', a: 'Order status updates (Placed, Preparing, On the Way, Delivered) appear on your Dashboard in real time.' },
+      { q: 'How do I order something from a vendor?', a: 'Browse Shop or a Campus Market, open a product, and tap Add to Cart. When you\'re ready, go to your Cart and pay — then message the vendor to arrange delivery or pickup.' },
+      { q: 'What payment methods are accepted?', a: 'Airtel Money and TNM Mpamba are supported directly in the app at checkout.' },
+      { q: 'Can I cancel an order after placing it?', a: 'Message the vendor directly as soon as possible — since they handle fulfillment themselves, cancellation depends on whether they\'ve already started preparing your order.' },
+      { q: 'How do I arrange delivery or pickup?', a: 'After paying, open the vendor\'s store page and message them directly to agree on delivery or pickup. Wolf Market doesn\'t arrange delivery itself — each vendor handles their own.' },
     ],
   },
   {
@@ -18,16 +18,16 @@ const FAQS = [
     items: [
       { q: 'How do I become a vendor?', a: 'Tap Sell on Wolf in the footer or menu, fill in your shop details, and submit. Most applications are reviewed within 24 hours.' },
       { q: 'How do I list a new product?', a: 'From your Dashboard, go to Products and tap Add Product. Add a clear photo, price in MWK, and a short description.' },
-      { q: 'When do I get paid for orders?', a: 'Mobile money payments are released to your registered number after the order is marked Delivered and confirmed by the buyer.' },
-      { q: 'Can I message buyers directly?', a: 'Yes — buyers can message you from your seller profile, and you can also reach them via WhatsApp if they\'ve shared a number.' },
+      { q: 'When do I get paid for orders?', a: 'As soon as the buyer\'s payment is confirmed, your share is sent automatically to the payout number you set in Dashboard → Settings → Payout Details.' },
+      { q: 'Can I message buyers directly?', a: 'Yes — buyers can message you from your seller profile to arrange delivery or pickup after they pay.' },
     ],
   },
   {
     category: 'Delivery & Payments',
     items: [
-      { q: 'Which campuses do you deliver to?', a: 'UNIMA, The Polytechnic, Mzuzu University, MUST, College of Medicine, Catholic University, MUBAS, and LUANAR. See the Delivery page for fees and times.' },
+      { q: 'Does Wolf Market deliver my order?', a: 'No — Wolf Market handles payments only. Delivery or pickup is arranged directly between you and the vendor after you pay. See the Delivery page for details.' },
       { q: 'What if my payment fails?', a: 'Check your mobile money balance and PIN, then retry. If money was deducted but the order didn\'t go through, contact Support with your transaction ID.' },
-      { q: 'Is there a delivery fee?', a: 'Yes, a small delivery fee (typically MWK 300–400) applies based on your campus zone. It\'s shown before you confirm checkout.' },
+      { q: 'Is there a delivery fee?', a: 'There\'s no Wolf Market delivery fee. Some vendors may charge their own fee for delivering to you, or ask you to pick up — agree on this with them directly before or after ordering.' },
     ],
   },
   {

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import Footer from '../components/Footer'
 import './Marketplaces.css'
@@ -20,6 +21,38 @@ const UNIS = [
 
 export default function Marketplaces() {
   const navigate = useNavigate()
+  const [liveStats, setLiveStats] = useState({}) // { universityName: { vendors, products } }
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('university')
+        const { data: productData } = await supabase
+          .from('products')
+          .select('vendors(university)')
+          .eq('available', true)
+
+        const stats = {}
+        for (const v of vendorData || []) {
+          if (!v.university) continue
+          if (!stats[v.university]) stats[v.university] = { vendors: 0, products: 0 }
+          stats[v.university].vendors++
+        }
+        for (const p of productData || []) {
+          const uni = p.vendors?.university
+          if (!uni) continue
+          if (!stats[uni]) stats[uni] = { vendors: 0, products: 0 }
+          stats[uni].products++
+        }
+        setLiveStats(stats)
+      } catch (err) {
+        console.error('Failed to load marketplace stats:', err)
+      }
+    }
+    loadStats()
+  }, [])
   const [filter, setFilter] = useState('All')
 
   const list = filter === 'All' ? UNIS : UNIS.filter(u => u.type === filter)

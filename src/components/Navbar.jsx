@@ -1,13 +1,15 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useCart } from '../lib/CartContext'
+import { useDarkMode } from '../lib/useDarkMode'
 import { useAuth } from '../lib/AuthContext'
 import { useInstallPrompt } from '../lib/useInstallPrompt'
 import './Navbar.css'
 
 export default function Navbar() {
-  const { totalItems } = useCart()
+  const { totalItems, wishlist } = useCart()
   const { user, signOut } = useAuth()
   const { canInstall, promptInstall } = useInstallPrompt()
+  const [dark, setDark] = useDarkMode()
   const navigate = useNavigate()
   const location = useLocation()
   const path = location.pathname
@@ -32,9 +34,15 @@ export default function Navbar() {
 
         <div className="nav-actions">
           {canInstall && <button className="nav-install" onClick={promptInstall}>⬇️ Install App</button>}
+          <button onClick={() => setDark(d => !d)} title={dark ? 'Light mode' : 'Dark mode'}
+            style={{background:'none',border:'none',fontSize:'18px',cursor:'pointer',padding:'6px',borderRadius:'8px',color:'inherit',lineHeight:1}}>
+            {dark ? '☀️' : '🌙'}
+          </button>
+          <Link to="/wishlist" className="nav-cart" title="Wishlist" style={{marginRight:'2px'}}>
+            ❤️{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
+          </Link>
           <Link to="/cart" className="nav-cart">
-            🛒
-            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+            🛒{totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
           </Link>
           {user
             ? <button className="nav-cta" onClick={() => { signOut(); navigate('/') }}>Sign Out</button>
@@ -43,7 +51,6 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile install banner */}
       {canInstall && (
         <div className="install-banner">
           <span>📲 Install Wolf Market for quicker access</span>
@@ -54,13 +61,20 @@ export default function Navbar() {
       {/* Mobile Nav */}
       <div className="mobile-nav">
         <Link to="/" className={`mob-item${path==='/'?' active':''}`}><span>🏠</span><span>Home</span></Link>
-        <Link to="/marketplaces" className={`mob-item${path==='/marketplaces'?' active':''}`}><span>🏛️</span><span>Markets</span></Link>
         <Link to="/shop" className={`mob-item${path==='/shop'?' active':''}`}><span>🛍️</span><span>Shop</span></Link>
         <Link to="/vendors" className={`mob-item${path==='/vendors'?' active':''}`}><span>🏪</span><span>Vendors</span></Link>
+        <Link to="/wishlist" className={`mob-item${path==='/wishlist'?' active':''}`}>
+          <span style={{position:'relative',display:'inline-block'}}>❤️{wishlist.length > 0 && <span className="mob-cart-dot">{wishlist.length}</span>}</span>
+          <span>Saved</span>
+        </Link>
         <Link to="/cart" className={`mob-item${path==='/cart'?' active':''}`}>
-          <span>🛒{totalItems > 0 && <span className="mob-cart-dot">{totalItems}</span>}</span>
+          <span style={{position:'relative',display:'inline-block'}}>🛒{totalItems > 0 && <span className="mob-cart-dot">{totalItems}</span>}</span>
           <span>Cart</span>
         </Link>
+        {user
+          ? <Link to="/dashboard" className={`mob-item${path==='/dashboard'?' active':''}`}><span>👤</span><span>Account</span></Link>
+          : <Link to="/signin" className={`mob-item${path==='/signin'?' active':''}`}><span>🔑</span><span>Sign In</span></Link>
+        }
       </div>
     </>
   )
