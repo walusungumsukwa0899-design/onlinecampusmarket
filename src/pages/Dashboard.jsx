@@ -63,27 +63,6 @@ function OnboardingChecklist({ vendor, myProducts, payoutPhone }) {
           </div>
         </div>
       ))}
-      {/* Edit Product Modal */}
-      {editingProduct && (
-        <div className="modal-overlay" onClick={() => setEditingProduct(null)}>
-          <div className="modal-card" style={{maxWidth:'440px'}} onClick={e => e.stopPropagation()}>
-            <h3>✏️ Edit Product</h3>
-            <div className="form-group"><label className="form-label">Product Name *</label><input className="form-input" value={editProductForm.name||''} onChange={e=>setEditProductForm(f=>({...f,name:e.target.value}))}/></div>
-            <div className="form-group"><label className="form-label">Price (MWK) *</label><input className="form-input" type="number" value={editProductForm.price||''} onChange={e=>setEditProductForm(f=>({...f,price:e.target.value}))}/></div>
-            <div className="form-group"><label className="form-label">Category</label>
-              <select className="form-input" value={editProductForm.category||''} onChange={e=>setEditProductForm(f=>({...f,category:e.target.value}))}>
-                {['Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living','Sports & Fitness','Auto Parts','Other'].map(c=><option key={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="form-group"><label className="form-label">Description</label><textarea className="form-input" rows={3} value={editProductForm.description||''} onChange={e=>setEditProductForm(f=>({...f,description:e.target.value}))}/></div>
-            <div className="form-group"><label className="form-label">Stock Quantity <span style={{color:'var(--gray)',fontWeight:400}}>(blank = unlimited)</span></label><input className="form-input" type="number" min="0" value={editProductForm.stock_qty??''} onChange={e=>setEditProductForm(f=>({...f,stock_qty:e.target.value}))}/></div>
-            <div className="modal-actions">
-              <button className="continue-btn" onClick={() => setEditingProduct(null)}>Cancel</button>
-              <button className="btn-primary" onClick={saveProductEdit} disabled={editProductSaving}>{editProductSaving?'Saving...':'Save Changes'}</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -753,6 +732,28 @@ export default function Dashboard() {
           )}
         </main>
       </div>
+
+      {/* Edit Product Modal */}
+      {editingProduct && (
+        <div className="modal-overlay" onClick={() => setEditingProduct(null)}>
+          <div className="modal-card" style={{maxWidth:'440px'}} onClick={e => e.stopPropagation()}>
+            <h3>✏️ Edit Product</h3>
+            <div className="form-group"><label className="form-label">Product Name *</label><input className="form-input" value={editProductForm.name||''} onChange={e=>setEditProductForm(f=>({...f,name:e.target.value}))}/></div>
+            <div className="form-group"><label className="form-label">Price (MWK) *</label><input className="form-input" type="number" value={editProductForm.price||''} onChange={e=>setEditProductForm(f=>({...f,price:e.target.value}))}/></div>
+            <div className="form-group"><label className="form-label">Category</label>
+              <select className="form-input" value={editProductForm.category||''} onChange={e=>setEditProductForm(f=>({...f,category:e.target.value}))}>
+                {['Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living','Sports & Fitness','Auto Parts','Other'].map(c=><option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="form-group"><label className="form-label">Description</label><textarea className="form-input" rows={3} value={editProductForm.description||''} onChange={e=>setEditProductForm(f=>({...f,description:e.target.value}))}/></div>
+            <div className="form-group"><label className="form-label">Stock Quantity <span style={{color:'var(--gray)',fontWeight:400}}>(blank = unlimited)</span></label><input className="form-input" type="number" min="0" value={editProductForm.stock_qty??''} onChange={e=>setEditProductForm(f=>({...f,stock_qty:e.target.value}))}/></div>
+            <div className="modal-actions">
+              <button className="continue-btn" onClick={() => setEditingProduct(null)}>Cancel</button>
+              <button className="btn-primary" onClick={saveProductEdit} disabled={editProductSaving}>{editProductSaving?'Saving...':'Save Changes'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
