@@ -8,6 +8,14 @@ import './Cart.css'
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
 
+function withTimeout(promise, ms, message) {
+  let timer
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}
+
 export default function Cart() {
   const navigate = useNavigate()
 
@@ -49,15 +57,28 @@ export default function Cart() {
   }
 
   async function callFunction(path, payload) {
-    const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch(`${FUNCTIONS_URL}/${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session?.access_token ?? ''}`,
-      },
-      body: JSON.stringify(payload),
-    })
+    const { data: { session } } = await withTimeout(
+      supabase.auth.getSession(), 10000, 'Could not verify your session. Please try again.'
+    )
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000)
+    let res
+    try {
+      res = await fetch(`${FUNCTIONS_URL}/${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      })
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('The connection timed out. Please check your internet and try again.')
+      throw new Error('Network error. Please check your connection and try again.')
+    } finally {
+      clearTimeout(timeoutId)
+    }
     const json = await res.json()
     if (!res.ok) throw new Error(json?.error || 'Request failed')
     return json
@@ -113,21 +134,23 @@ export default function Cart() {
       supabase.from('profiles').update({ saved_mobile: mobile, saved_network: network }).eq('id', user.id).catch(() => {})
     }
 
-    // Cancel any lingering pending orders from a previous failed attempt
-    if (lastChargeId.current) {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        await supabase
-          .from('orders')
-          .update({ status: 'cancelled' })
-          .eq('buyer_id', user.id)
-          .like('notes', `%charge_id:${lastChargeId.current}%`)
-          .eq('status', 'pending')
-      }
-      lastChargeId.current = null
-    }
-
     try {
+      // Cancel any lingering pending orders from a previous failed attempt
+      if (lastChargeId.current) {
+        const { data: { session } } = await withTimeout(
+          supabase.auth.getSession(), 10000, 'Could not verify your session. Please try again.'
+        )
+        if (session) {
+          await supabase
+            .from('orders')
+            .update({ status: 'cancelled' })
+            .eq('buyer_id', user.id)
+            .like('notes', `%charge_id:${lastChargeId.current}%`)
+            .eq('status', 'pending')
+        }
+        lastChargeId.current = null
+      }
+
       const deliveryAddress = [deliveryHostel.trim(), deliveryRoom.trim(), deliverySlot ? `Slot: ${deliverySlot}` : '', deliveryNote.trim()].filter(Boolean).join(', ')
       const items = cart.map(i => ({
         product_id: i.id,

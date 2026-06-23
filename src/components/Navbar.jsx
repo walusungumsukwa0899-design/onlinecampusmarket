@@ -34,9 +34,6 @@ export default function Navbar() {
           <Link to="/wishlist" className="nav-cart" title="Wishlist" style={{marginRight:'2px'}}>
             ❤️{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
           </Link>
-          <Link to="/cart" className="nav-cart">
-            🛒{totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-          </Link>
           {user
             ? <button className="nav-cta" onClick={() => { signOut(); navigate('/') }}>Sign Out</button>
             : <Link to="/signin"><button className="nav-cta">Sign In</button></Link>
