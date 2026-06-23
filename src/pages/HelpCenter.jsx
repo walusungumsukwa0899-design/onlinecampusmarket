@@ -7,7 +7,7 @@ const FAQS = [
   {
     category: 'Buying',
     items: [
-      { q: 'How do I order something from a vendor?', a: 'Browse Shop or a Campus Market, open a product, and tap Add to Cart. When you\'re ready, go to your Cart and pay — then message the vendor to arrange delivery or pickup.' },
+      { q: 'How do I order something from a vendor?', a: 'Browse Vendors or a Campus Market, open a product, and tap Add to Cart. When you\'re ready, go to your Cart and pay — then message the vendor to arrange delivery or pickup.' },
       { q: 'What payment methods are accepted?', a: 'Airtel Money and TNM Mpamba are supported directly in the app at checkout.' },
       { q: 'Can I cancel an order after placing it?', a: 'Message the vendor directly as soon as possible — since they handle fulfillment themselves, cancellation depends on whether they\'ve already started preparing your order.' },
       { q: 'How do I arrange delivery or pickup?', a: 'After paying, open the vendor\'s store page and message them directly to agree on delivery or pickup. Wolf Market doesn\'t arrange delivery itself — each vendor handles their own.' },

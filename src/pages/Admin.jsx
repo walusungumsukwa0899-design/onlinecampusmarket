@@ -7,7 +7,7 @@ import { useAuth } from '../lib/AuthContext'
 const ADMIN_EMAILS = ['admin@wolfmarketplace.mw', 'walusungumsukwa0899@gmail.com']
 
 export default function Admin() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState('reports')
   const [reports, setReports] = useState([])
@@ -18,10 +18,11 @@ export default function Admin() {
   const isAdmin = user && ADMIN_EMAILS.includes(user.email)
 
   useEffect(() => {
+    if (authLoading) return // wait until we actually know if there's a session
     if (!user) { navigate('/signin'); return }
     if (!isAdmin) { navigate('/'); return }
     loadAll()
-  }, [user])
+  }, [user, authLoading])
 
   async function loadAll() {
     try {
@@ -64,6 +65,7 @@ export default function Admin() {
     if (!error) setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, verified: !current } : v))
   }
 
+  if (authLoading) return <div className="loading" style={{minHeight:'60vh'}}><div className="spinner"/><span>Loading...</span></div>
   if (!user || !isAdmin) return null
 
   return (

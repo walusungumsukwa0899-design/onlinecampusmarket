@@ -141,7 +141,7 @@ export default function Sell() {
         <p>Your product is now visible in your campus marketplace.</p>
         <div style={{display:'flex',gap:'12px',justifyContent:'center',marginTop:'24px',flexWrap:'wrap'}}>
           <button className="btn-primary" onClick={() => { photoPreviews.forEach(url => URL.revokeObjectURL(url)); setSuccess(false); setForm({name:'',price:'',description:'',phone:'',location:'',university:'',delivery:'',deliveryTime:'',deliveryFee:'',hours:''}); setSelectedCat(''); setPhotoPreviews([]); setPhotoFiles([]) }}>List Another</button>
-          <button className="btn-outline" onClick={() => navigate('/shop')}>View Marketplace</button>
+          <button className="btn-outline" onClick={() => navigate('/vendors')}>View Marketplace</button>
         </div>
       </div>
     </div>

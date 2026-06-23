@@ -76,7 +76,7 @@ export default function Home() {
           </div>
           <div className="cat-grid">
             {CATEGORIES.map(c => (
-              <div key={c.name} className="cat-card" onClick={() => navigate(`/shop?cat=${c.name}`)}>
+              <div key={c.name} className="cat-card" onClick={() => navigate(`/vendors?cat=${c.name}`)}>
                 <div className="cat-icon">{c.icon}</div>
                 <div className="cat-name">{c.name}</div>
               </div>
@@ -145,7 +145,7 @@ export default function Home() {
               </div>
           }
           <div style={{textAlign:'center',marginTop:'24px'}}>
-            <button className="btn-primary" onClick={() => navigate('/shop')}>View All Products</button>
+            <button className="btn-primary" onClick={() => navigate('/vendors')}>View All Products</button>
           </div>
         </div>
       </section>

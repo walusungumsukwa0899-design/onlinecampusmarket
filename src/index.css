@@ -4,23 +4,6 @@
   --black:#0e0e0e;--gray:#6b7280;--light:#f9fafb;
   --white:#fff;--border:#e5e7eb;--green:#1a7a4a;--radius:14px;
 }
-[data-theme="dark"]{
-  --black:#f3f4f6;
-  --white:#111827;
-  --light:#1f2937;
-  --border:#374151;
-  --gray:#9ca3af;
-  --wolf-light:#1c1208;
-}
-[data-theme="dark"] body{background:#111827;color:#f3f4f6;}
-[data-theme="dark"] .product-card,[data-theme="dark"] .vendor-card,[data-theme="dark"] .dash-card,
-[data-theme="dark"] .order-row,[data-theme="dark"] .review-card,[data-theme="dark"] .settings-card,
-[data-theme="dark"] .modal-card,[data-theme="dark"] .vp-panel{background:#1f2937;border-color:#374151;}
-[data-theme="dark"] .form-input{background:#1f2937;border-color:#374151;color:#f3f4f6;}
-[data-theme="dark"] .dash-sidebar{background:#1f2937;border-color:#374151;}
-[data-theme="dark"] .dash-main{background:#111827;}
-[data-theme="dark"] .btn-outline{background:#1f2937;color:var(--wolf);}
-[data-theme="dark"] .nav-bar,[data-theme="dark"] .navbar{background:rgba(17,24,39,0.95);border-color:#374151;}
 body{font-family:'Inter',sans-serif;color:var(--black);background:var(--white);overflow-x:hidden;}
 h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
 a{text-decoration:none;color:inherit;}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSEO } from '../lib/useSEO'
 import { SkeletonGrid } from '../components/Skeleton'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Footer from '../components/Footer'
 import './Vendors.css'
@@ -9,9 +9,10 @@ import './Vendors.css'
 export default function Vendors() {
   useSEO({ title: 'Vendors', description: 'Browse trusted student entrepreneurs on Wolf Marketplace. View ratings, products, and contact vendors directly.' })
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [vendors, setVendors] = useState([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(searchParams.get('uni') || searchParams.get('cat') || '')
 
   useEffect(() => {
     async function load() {

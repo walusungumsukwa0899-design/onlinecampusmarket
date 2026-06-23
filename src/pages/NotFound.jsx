@@ -12,7 +12,7 @@ export default function NotFound() {
       </p>
       <div style={{display:'flex',gap:'12px',flexWrap:'wrap',justifyContent:'center'}}>
         <button className="btn-primary" onClick={() => navigate('/')}>Go Home</button>
-        <button className="btn-outline" onClick={() => navigate('/shop')}>Browse Shop</button>
+        <button className="btn-outline" onClick={() => navigate('/vendors')}>Browse Vendors</button>
       </div>
     </div>
   )

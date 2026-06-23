@@ -1,6 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useCart } from '../lib/CartContext'
-import { useDarkMode } from '../lib/useDarkMode'
 import { useAuth } from '../lib/AuthContext'
 import { useInstallPrompt } from '../lib/useInstallPrompt'
 import './Navbar.css'
@@ -9,7 +8,6 @@ export default function Navbar() {
   const { totalItems, wishlist } = useCart()
   const { user, signOut } = useAuth()
   const { canInstall, promptInstall } = useInstallPrompt()
-  const [dark, setDark] = useDarkMode()
   const navigate = useNavigate()
   const location = useLocation()
   const path = location.pathname
@@ -25,7 +23,6 @@ export default function Navbar() {
         <div className="nav-links">
           <Link to="/" className={`nav-link${path==='/'?' active':''}`}>Home</Link>
           <Link to="/marketplaces" className={`nav-link${path==='/marketplaces'?' active':''}`}>Marketplaces</Link>
-          <Link to="/shop" className={`nav-link${path==='/shop'?' active':''}`}>Shop</Link>
           <Link to="/vendors" className={`nav-link${path==='/vendors'?' active':''}`}>Vendors</Link>
           <Link to="/delivery" className={`nav-link${path==='/delivery'?' active':''}`}>Delivery</Link>
           <Link to="/contact" className={`nav-link${path==='/contact'?' active':''}`}>Contact</Link>
@@ -34,10 +31,6 @@ export default function Navbar() {
 
         <div className="nav-actions">
           {canInstall && <button className="nav-install" onClick={promptInstall}>⬇️ Install App</button>}
-          <button onClick={() => setDark(d => !d)} title={dark ? 'Light mode' : 'Dark mode'}
-            style={{background:'none',border:'none',fontSize:'18px',cursor:'pointer',padding:'6px',borderRadius:'8px',color:'inherit',lineHeight:1}}>
-            {dark ? '☀️' : '🌙'}
-          </button>
           <Link to="/wishlist" className="nav-cart" title="Wishlist" style={{marginRight:'2px'}}>
             ❤️{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
           </Link>
@@ -61,7 +54,6 @@ export default function Navbar() {
       {/* Mobile Nav */}
       <div className="mobile-nav">
         <Link to="/" className={`mob-item${path==='/'?' active':''}`}><span>🏠</span><span>Home</span></Link>
-        <Link to="/shop" className={`mob-item${path==='/shop'?' active':''}`}><span>🛍️</span><span>Shop</span></Link>
         <Link to="/vendors" className={`mob-item${path==='/vendors'?' active':''}`}><span>🏪</span><span>Vendors</span></Link>
         <Link to="/wishlist" className={`mob-item${path==='/wishlist'?' active':''}`}>
           <span style={{position:'relative',display:'inline-block'}}>❤️{wishlist.length > 0 && <span className="mob-cart-dot">{wishlist.length}</span>}</span>

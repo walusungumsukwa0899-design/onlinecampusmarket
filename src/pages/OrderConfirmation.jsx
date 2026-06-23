@@ -92,7 +92,7 @@ export default function OrderConfirmation() {
 
         <div style={{ display: 'flex', gap: '12px' }}>
           <button className="btn-outline" style={{ flex: 1 }} onClick={() => navigate('/dashboard')}>View My Orders</button>
-          <button className="btn-primary" style={{ flex: 1 }} onClick={() => navigate('/shop')}>Keep Shopping</button>
+          <button className="btn-primary" style={{ flex: 1 }} onClick={() => navigate('/vendors')}>Keep Shopping</button>
         </div>
       </div>
       <Footer />

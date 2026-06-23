@@ -16,7 +16,7 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Marketplace</h4>
             <Link to="/marketplaces">Campus Markets</Link>
-            <Link to="/shop">Browse Products</Link>
+            <Link to="/vendors">Browse Products</Link>
             <Link to="/vendors">Vendors</Link>
             <Link to="/delivery">Delivery</Link>
           </div>
@@ -39,12 +39,6 @@ export default function Footer() {
         </div>
         <div className="footer-bottom">
           <p>© 2026 Wolf Marketplace · Malawi. All rights reserved.</p>
-          <div className="footer-socials">
-            <a className="social-btn" href="https://facebook.com/wolfmarketplace" target="_blank" rel="noreferrer" title="Facebook">📘</a>
-            <a className="social-btn" href="https://instagram.com/wolfmarketplace" target="_blank" rel="noreferrer" title="Instagram">📸</a>
-            <a className="social-btn" href="https://twitter.com/wolfmarket_mw" target="_blank" rel="noreferrer" title="Twitter/X">🐦</a>
-            <a className="social-btn" href="https://wa.me/265990000000" target="_blank" rel="noreferrer" title="WhatsApp Support">💬</a>
-          </div>
         </div>
       </div>
       <div className="footer-slogan">Powered and operated by <span>la wolf</span> 🐺</div>

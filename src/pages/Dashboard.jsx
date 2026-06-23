@@ -101,7 +101,7 @@ function SettingsForm({ user }) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user, signOut, registerPush } = useAuth()
+  const { user, loading: authLoading, signOut, registerPush } = useAuth()
   const [tab, setTab] = useState('overview')
   const [orders, setOrders] = useState([])
   const [sales, setSales] = useState([])
@@ -125,8 +125,11 @@ export default function Dashboard() {
   const [bulkSelected, setBulkSelected] = useState(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
   const [productSearch, setProductSearch] = useState('')
+  const [notifications, setNotifications] = useState([])
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0)
 
   useEffect(() => {
+    if (authLoading) return // wait until we actually know if there's a session
     if (!user) { navigate('/signin'); return }
     loadData()
     // Prompt for push notifications after user lands on dashboard
@@ -135,7 +138,7 @@ export default function Dashboard() {
     } else if ('Notification' in window && Notification.permission === 'granted') {
       registerPush()
     }
-  }, [user, navigate])
+  }, [user, authLoading, navigate])
 
   async function loadData() {
     try {
@@ -149,6 +152,7 @@ export default function Dashboard() {
         supabase.from('orders').select('*, products(name,icon)').eq('buyer_id', user.id).order('created_at', { ascending: false }),
         supabase.from('order_reports').select('order_id').eq('reporter_id', user.id),
         supabase.from('profiles').select('referral_code, credit_balance, referred_by').eq('id', user.id).maybeSingle(),
+        supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       ]
       if (vend?.id) {
         queries.push(supabase.from('products').select('*').eq('vendor_id', vend.id).order('created_at', { ascending: false }))
@@ -156,14 +160,16 @@ export default function Dashboard() {
       }
 
       const results = await Promise.all(queries)
-      const [{ data: ords }, { data: reports }, { data: prof }] = results
+      const [{ data: ords }, { data: reports }, { data: prof }, { data: notifs }] = results
       setOrders(ords || [])
       setReportedIds(new Set((reports || []).map(r => r.order_id)))
       setProfile(prof || null)
+      setNotifications(notifs || [])
+      setUnreadNotifCount((notifs || []).filter(n => !n.read).length)
 
       if (vend?.id) {
-        const prods = results[3]?.data || []
-        const salesData = results[4]?.data || []
+        const prods = results[4]?.data || []
+        const salesData = results[5]?.data || []
         setMyProducts(prods)
         setSales(salesData)
         const totalRevenue = salesData.filter(o => o.status !== 'cancelled').reduce((a, o) => a + (o.total || 0), 0)
@@ -333,6 +339,7 @@ export default function Dashboard() {
     }
   }
 
+  if (authLoading) return <div className="loading" style={{minHeight:'60vh'}}><div className="spinner"/><span>Loading...</span></div>
   if (!user) return null
 
   const name = user.user_metadata?.full_name || user.email
@@ -419,7 +426,7 @@ export default function Dashboard() {
                   </div>
                   <h3 className="dash-section-title">Recent Orders</h3>
                   {orders.length === 0
-                    ? <div className="empty-state"><div className="empty-icon">🛍️</div><h3>No orders yet</h3><p>Start shopping on campus!</p><button className="btn-primary" onClick={() => navigate('/shop')}>Browse Products</button></div>
+                    ? <div className="empty-state"><div className="empty-icon">🛍️</div><h3>No orders yet</h3><p>Start shopping on campus!</p><button className="btn-primary" onClick={() => navigate('/vendors')}>Browse Products</button></div>
                     : <div className="orders-list">
                         {orders.slice(0,5).map(o => (
                           <div key={o.id} className="order-row">
@@ -437,7 +444,7 @@ export default function Dashboard() {
                 <div>
                   <h2 className="dash-title">My Orders</h2>
                   {orders.length === 0
-                    ? <div className="empty-state"><div className="empty-icon">🛍️</div><h3>No orders yet</h3><button className="btn-primary" onClick={() => navigate('/shop')}>Browse Products</button></div>
+                    ? <div className="empty-state"><div className="empty-icon">🛍️</div><h3>No orders yet</h3><button className="btn-primary" onClick={() => navigate('/vendors')}>Browse Products</button></div>
                     : <div className="orders-list">
                         {orders.map(o => (
                           <div key={o.id} className="order-row order-row-expanded">

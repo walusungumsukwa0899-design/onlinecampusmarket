@@ -82,9 +82,9 @@ export default function ProductDetail() {
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '90px 16px 60px' }}>
         {/* Breadcrumb */}
         <div style={{ fontSize: '13px', color: 'var(--gray)', marginBottom: '20px', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ cursor: 'pointer', color: 'var(--wolf)' }} onClick={() => navigate('/shop')}>Shop</span>
+          <span style={{ cursor: 'pointer', color: 'var(--wolf)' }} onClick={() => navigate('/vendors')}>Vendors</span>
           <span>›</span>
-          <span style={{ cursor: 'pointer', color: 'var(--wolf)' }} onClick={() => navigate('/shop')}>{product.category}</span>
+          <span style={{ cursor: 'pointer', color: 'var(--wolf)' }} onClick={() => navigate('/vendors')}>{product.category}</span>
           <span>›</span>
           <span>{product.name}</span>
         </div>

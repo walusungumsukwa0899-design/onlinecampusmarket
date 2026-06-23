@@ -71,12 +71,12 @@ export default function Marketplaces() {
               {f === 'All' ? '🌍 All Institutions' : f === 'Public' ? '🎓 Public Universities' : '🏫 Private / Faith'}
             </button>
           ))}
-          <button className="filter-btn" onClick={() => navigate('/shop')}>🛍️ Browse All Products</button>
+          <button className="filter-btn" onClick={() => navigate('/vendors')}>🛍️ Browse All Products</button>
         </div>
 
         <div className="market-grid">
           {list.map(u => (
-            <div key={u.id} className="market-card" onClick={() => navigate(`/shop?uni=${encodeURIComponent(u.full)}`)}>
+            <div key={u.id} className="market-card" onClick={() => navigate(`/vendors?uni=${encodeURIComponent(u.full)}`)}>
               <div className="market-card-banner" style={{background:`linear-gradient(135deg,${u.color},${u.color}cc)`}}>
                 <span className="market-emoji">{u.emoji}</span>
               </div>
@@ -88,7 +88,7 @@ export default function Marketplaces() {
                   <div className="mstat"><strong>{u.vendors}</strong><span>Vendors</span></div>
                   <div className="mstat"><strong>{u.products}</strong><span>Products</span></div>
                 </div>
-                <button className="market-card-btn">Shop {u.name} →</button>
+                <button className="market-card-btn">View {u.name} →</button>
               </div>
             </div>
           ))}

@@ -104,7 +104,6 @@ export default function Cart() {
     if (!user) { navigate('/signin'); return }
     if (!network) { setErrorMsg('Choose Airtel Money or TNM Mpamba first.'); return }
     if (!mobile.trim()) { setErrorMsg('Enter the mobile money number to charge.'); return }
-    if (!deliveryHostel.trim()) { setErrorMsg('Please enter your delivery location (hostel/block name).'); return }
 
     setErrorMsg('')
     setStage('charging')
@@ -177,7 +176,7 @@ export default function Cart() {
         <div className="empty-icon">🛒</div>
         <h3>Your cart is empty</h3>
         <p>Browse products and add items to your cart.</p>
-        <button className="btn-primary" onClick={() => navigate('/shop')}>Start Shopping</button>
+        <button className="btn-primary" onClick={() => navigate('/vendors')}>Start Shopping</button>
       </div>
       <Footer />
     </div>
@@ -251,7 +250,7 @@ export default function Cart() {
               onClick={placeOrder} disabled={stage==='charging'||stage==='polling'}>
               {stage==='charging'||stage==='polling' ? 'Processing...' : 'Place Order →'}
             </button>
-            <button className="continue-btn" onClick={() => navigate('/shop')}>← Continue Shopping</button>
+            <button className="continue-btn" onClick={() => navigate('/vendors')}>← Continue Shopping</button>
           </div>
         </div>
       </div>

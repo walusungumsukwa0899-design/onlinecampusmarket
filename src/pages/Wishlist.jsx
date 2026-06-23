@@ -17,7 +17,7 @@ export default function Wishlist() {
             <div className="empty-icon">❤️</div>
             <h3>Nothing saved yet</h3>
             <p>Tap the heart on any product to save it here.</p>
-            <button className="btn-primary" onClick={() => navigate('/shop')}>Browse Products</button>
+            <button className="btn-primary" onClick={() => navigate('/vendors')}>Browse Products</button>
           </div>
         ) : (
           <div className="products-grid">

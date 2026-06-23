@@ -1,10 +1,10 @@
-import { Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { CartProvider, useCart } from './lib/CartContext'
 import { AuthProvider } from './lib/AuthContext'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Marketplaces from './pages/Marketplaces'
-import Shop from './pages/Shop'
 import Vendors from './pages/Vendors'
 import VendorProfile from './pages/VendorProfile'
 import Cart from './pages/Cart'
@@ -24,6 +24,12 @@ import Category from './pages/Category'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
+
 function Toast() {
   const { toast } = useCart()
   if (!toast) return null
@@ -34,12 +40,12 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <ScrollToTop />
         <Navbar />
         <Toast />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/marketplaces" element={<Marketplaces />} />
-          <Route path="/shop" element={<Shop />} />
           <Route path="/vendors" element={<Vendors />} />
           <Route path="/vendors/:id" element={<VendorProfile />} />
           <Route path="/cart" element={<Cart />} />
