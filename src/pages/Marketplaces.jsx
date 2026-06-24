@@ -76,7 +76,7 @@ export default function Marketplaces() {
 
         <div className="market-grid">
           {list.map(u => (
-            <div key={u.id} className="market-card" onClick={() => navigate(`/vendors?uni=${encodeURIComponent(u.full)}`)}>
+            <div key={u.id} className="market-card" onClick={() => navigate(`/vendors?uni=${encodeURIComponent(u.name)}`)}>
               <div className="market-card-banner" style={{background:`linear-gradient(135deg,${u.color},${u.color}cc)`}}>
                 <span className="market-emoji">{u.emoji}</span>
               </div>
