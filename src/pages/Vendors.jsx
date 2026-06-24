@@ -12,7 +12,8 @@ export default function Vendors() {
   const [searchParams] = useSearchParams()
   const [vendors, setVendors] = useState([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState(searchParams.get('uni') || searchParams.get('cat') || '')
+  const [search, setSearch] = useState('')
+  const uniFilter = searchParams.get('uni') || ''
 
   useEffect(() => {
     async function load() {
@@ -32,19 +33,24 @@ export default function Vendors() {
     load()
   }, [])
 
-  const filtered = vendors.filter(v =>
-    !search || v.name.toLowerCase().includes(search.toLowerCase()) ||
-    v.category?.toLowerCase().includes(search.toLowerCase()) ||
-    v.university?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = vendors.filter(v => {
+    const matchesUni = !uniFilter || v.university?.toLowerCase().includes(uniFilter.toLowerCase())
+    const matchesSearch = !search || v.name.toLowerCase().includes(search.toLowerCase()) ||
+      v.category?.toLowerCase().includes(search.toLowerCase()) ||
+      v.university?.toLowerCase().includes(search.toLowerCase())
+    return matchesUni && matchesSearch
+  })
 
   return (
     <div className="vendors-page">
       <div className="vendors-hero">
-        <h1>Campus <span>Vendors</span></h1>
-        <p>Browse trusted student entrepreneurs. View their stores, chat with them, and rate their products.</p>
+        {uniFilter
+          ? <><h1><span>{uniFilter}</span> Market</h1><p>Vendors and stores from {uniFilter}.</p></>
+          : <><h1>Campus <span>Vendors</span></h1><p>Browse trusted student entrepreneurs. View their stores, chat with them, and rate their products.</p></>
+        }
         <div style={{display:'flex',gap:'10px',justifyContent:'center',flexWrap:'wrap'}}>
           <button className="btn-primary" onClick={() => navigate('/sell')}>Open Your Store</button>
+          {uniFilter && <button className="btn-secondary" onClick={() => navigate('/vendors')}>View All Vendors</button>}
         </div>
       </div>
 
@@ -56,7 +62,7 @@ export default function Vendors() {
         {loading
           ? <div className="loading"><div className="spinner"/><span>Loading vendors...</span></div>
           : filtered.length === 0
-          ? <div className="empty-state"><div className="empty-icon">🏪</div><h3>No vendors found</h3><p>Try a different search or be the first to open a store!</p><button className="btn-primary" onClick={() => navigate('/sell')}>Open Your Store</button></div>
+          ? <div className="empty-state"><div className="empty-icon">🏪</div><h3>No vendors found</h3><p>{uniFilter ? `No vendors from ${uniFilter} yet. Be the first!` : 'Try a different search or be the first to open a store!'}</p><button className="btn-primary" onClick={() => navigate('/sell')}>Open Your Store</button></div>
           : <div className="vendors-grid">
               {filtered.map(v => (
                 <div key={v.id} className="vendor-card" onClick={() => navigate(`/vendors/${v.id}`)}>

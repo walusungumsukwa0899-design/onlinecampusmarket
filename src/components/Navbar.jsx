@@ -34,6 +34,9 @@ export default function Navbar() {
           <Link to="/wishlist" className="nav-cart" title="Wishlist" style={{marginRight:'2px'}}>
             ❤️{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
           </Link>
+          <Link to="/cart" className="nav-cart" title="Cart" style={{marginRight:'2px'}}>
+            🛒{totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+          </Link>
           {user
             ? <button className="nav-cta" onClick={() => { signOut(); navigate('/') }}>Sign Out</button>
             : <Link to="/signin"><button className="nav-cta">Sign In</button></Link>
@@ -56,10 +59,7 @@ export default function Navbar() {
           <span style={{position:'relative',display:'inline-block'}}>❤️{wishlist.length > 0 && <span className="mob-cart-dot">{wishlist.length}</span>}</span>
           <span>Saved</span>
         </Link>
-        <Link to="/cart" className={`mob-item${path==='/cart'?' active':''}`}>
-          <span style={{position:'relative',display:'inline-block'}}>🛒{totalItems > 0 && <span className="mob-cart-dot">{totalItems}</span>}</span>
-          <span>Cart</span>
-        </Link>
+        <Link to="/marketplaces" className={`mob-item${path==='/marketplaces'?' active':''}`}><span>🎓</span><span>Campus</span></Link>
         {user
           ? <Link to="/dashboard" className={`mob-item${path==='/dashboard'?' active':''}`}><span>👤</span><span>Account</span></Link>
           : <Link to="/signin" className={`mob-item${path==='/signin'?' active':''}`}><span>🔑</span><span>Sign In</span></Link>

@@ -131,7 +131,7 @@ export default function Cart() {
 
     // Save mobile number to profile if requested
     if (saveMobileChecked && user && mobile && network) {
-      supabase.from('profiles').update({ saved_mobile: mobile, saved_network: network }).eq('id', user.id).catch(() => {})
+      supabase.from('profiles').update({ saved_mobile: mobile, saved_network: network }).eq('id', user.id).then(() => {}).catch(() => {})
     }
 
     try {
@@ -168,7 +168,7 @@ export default function Cart() {
       })
       // Deduct credit balance if used
       if (useCredit && creditApplied > 0 && user) {
-        supabase.rpc('add_referral_credit', { referrer_id: user.id, amount: -creditApplied }).catch(() => {})
+        supabase.rpc('add_referral_credit', { referrer_id: user.id, amount: -creditApplied }).then(() => {}).catch(() => {})
       }
       lastChargeId.current = result.charge_id
       setStage('polling')
