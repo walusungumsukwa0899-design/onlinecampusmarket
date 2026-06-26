@@ -21,6 +21,12 @@ export default function Home() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [recentlyViewed, setRecentlyViewed] = useState([])
+  const [heroSearch, setHeroSearch] = useState('')
+
+  function handleHeroSearch(e) {
+    e.preventDefault()
+    if (heroSearch.trim()) navigate(`/search?q=${encodeURIComponent(heroSearch.trim())}`)
+  }
 
   useEffect(() => {
     try {
@@ -34,7 +40,7 @@ export default function Home() {
       try {
         const { data } = await supabase
           .from('products')
-          .select('*, vendors(name)')
+          .select('*, vendors(name, avg_rating, review_count)')
           .eq('available', true)
           .order('created_at', { ascending: false })
           .limit(8)
@@ -59,6 +65,12 @@ export default function Home() {
           <button className="btn-primary" onClick={() => navigate('/marketplaces')}>Choose Your Campus</button>
           <button className="btn-secondary" onClick={() => navigate('/vendors')}>Become a Vendor</button>
         </div>
+        <form onSubmit={handleHeroSearch} style={{ display: 'flex', gap: '8px', maxWidth: '480px', margin: '24px auto 0', width: '100%' }}>
+          <input value={heroSearch} onChange={e => setHeroSearch(e.target.value)}
+            placeholder="Search products, e.g. laptop, jollof…"
+            style={{ flex: 1, padding: '12px 18px', borderRadius: '10px', border: 'none', fontSize: '14px', fontFamily: 'Inter,sans-serif', outline: 'none', background: 'rgba(255,255,255,0.95)' }} />
+          <button type="submit" style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '10px', padding: '0 20px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', flexShrink: 0 }}>Search</button>
+        </form>
         <div className="hero-stats">
           <div className="hero-stat"><div className="stat-num">2,400+</div><div className="stat-label">Products Listed</div></div>
           <div className="hero-stat"><div className="stat-num">380+</div><div className="stat-label">Campus Vendors</div></div>
@@ -131,6 +143,12 @@ export default function Home() {
                     <div className="product-body">
                       <div className="product-name">{p.name}</div>
                       <div className="product-seller">by {p.vendors?.name}</div>
+                      {p.vendors?.avg_rating > 0 && (
+                        <div style={{display:'flex',alignItems:'center',gap:'2px',margin:'3px 0'}}>
+                          {'★'.repeat(Math.floor(p.vendors.avg_rating)).split('').map((_,i)=><span key={i} style={{color:'#f59e0b',fontSize:'10px'}}>★</span>)}
+                          <span style={{fontSize:'10px',color:'#6b7280',fontWeight:600}}>{Number(p.vendors.avg_rating).toFixed(1)}</span>
+                        </div>
+                      )}
                       <div className="product-footer">
                         <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
                         <div className="product-badge">{p.category}</div>
@@ -150,7 +168,59 @@ export default function Home() {
         </div>
       </section>
 
+      {/* RECENTLY VIEWED */}
+      {recentlyViewed.length > 0 && (
+        <section className="section" style={{background:'var(--light)',padding:'40px 0'}}>
+          <div className="container">
+            <div className="section-header" style={{marginBottom:'20px'}}>
+              <div className="eyebrow">Your History</div>
+              <h2 className="section-title" style={{fontSize:'20px'}}>Recently Viewed</h2>
+            </div>
+            <div className="products-grid">
+              {recentlyViewed.map(p => (
+                <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
+                  <div className="product-img">
+                    {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span>{p.icon || '📦'}</span>}
+                  </div>
+                  <div className="product-body">
+                    <div className="product-name">{p.name}</div>
+                    <div className="product-seller">by {p.seller}</div>
+                    <div className="product-footer">
+                      <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
+                    </div>
+                    <button className="add-cart-btn" style={{marginTop:'8px'}} onClick={e => { e.stopPropagation(); addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.seller,vendor_id:p.vendor_id,image_url:p.image_url}) }}>Add to Cart</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CTA */}
+      {/* DISCOVER STRIP */}
+      <section style={{background:'white',padding:'32px 0',borderTop:'1.5px solid var(--border)'}}>
+        <div className="container">
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'16px'}}>
+            {[
+              {icon:'🔥',title:'Trending Now',desc:'The most-viewed products this week',color:'#fff4ee',border:'#fed7aa',link:'/trending'},
+              {icon:'✨',title:'New Arrivals',desc:'Products listed in the last 7 days',color:'#f0fdf4',border:'#bbf7d0',link:'/trending?tab=new'},
+              {icon:'🏷️',title:'On Sale',desc:'Discounted items from campus vendors',color:'#fef9c3',border:'#fde68a',link:'/trending?tab=sale'},
+            ].map(s => (
+              <div key={s.title} onClick={() => navigate(s.link)}
+                style={{background:s.color,border:`1.5px solid ${s.border}`,borderRadius:'14px',padding:'20px',cursor:'pointer',display:'flex',alignItems:'center',gap:'14px'}}>
+                <div style={{fontSize:'32px',flexShrink:0}}>{s.icon}</div>
+                <div>
+                  <div style={{fontWeight:800,fontSize:'14px'}}>{s.title}</div>
+                  <div style={{fontSize:'12px',color:'var(--gray)',marginTop:'2px'}}>{s.desc}</div>
+                </div>
+                <span style={{marginLeft:'auto',color:'var(--wolf)',fontWeight:700,fontSize:'16px'}}>→</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="cta-banner">
         <div className="container" style={{textAlign:'center'}}>
           <h2>Start Selling on Campus Today</h2>

@@ -1,44 +1,49 @@
 # 🐺 Wolf Marketplace
 
-Malawi's campus marketplace — built with React + Vite + Supabase, deployed on Vercel.
+Malawi's campus marketplace — buy and sell everything on campus.
+
+## New in v6.0
+
+### 🔍 Search & Filters (`/search`)
+- Full-text search across all products
+- Filter by category, price range, sort order
+- Quick category pills for fast browsing
+- Debounced live search as you type
+- Search bar in home hero + navbar (🔍 button)
+
+### 💬 In-App Messaging (`/messages`)
+- Real-time chat between buyers and vendors
+- Sidebar conversation list with unread indicators
+- Mobile-responsive: full-screen chat on small screens
+- Realtime via Supabase subscriptions
+- "Message in App" button on every product page
+
+### 🔔 Live Notifications Bell
+- Bell icon in navbar with live unread count
+- Message count badge for unread chats
+- Realtime updates via Supabase channels
+- Tapping bell goes directly to notifications tab
+- Mobile nav shows account badge with notification count
+
+### ✉️ Product-level Messaging
+- "Message in App" button on ProductDetail
+- Pre-routes to the correct vendor conversation
+
+### 📊 Dashboard URL Tabs
+- `?tab=notifications` deep-links to notifications tab
+- Notification bell in navbar routes directly here
 
 ## Setup
 
-### 1. Supabase
-1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Go to **SQL Editor** and paste + run the entire contents of `supabase-schema.sql`
-3. Copy your **Project URL** and **anon public key** from Settings → API
+1. Copy `.env.example` to `.env.local` and fill in your Supabase keys
+2. Run the SQL schema: `supabase-schema.sql` in Supabase SQL editor
+3. Run all migrations in `supabase/migrations/` in order
+4. Deploy edge functions: `supabase functions deploy`
+5. Set secrets: see `SUPABASE_SECRETS_SETUP.md`
+6. `npm install && npm run dev`
 
-### 2. Environment Variables
-Create a `.env` file in the root:
-```
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-
-### 3. Local Development
-```bash
-npm install
-npm run dev
-```
-
-### 4. Deploy to Vercel
-1. Push to GitHub
-2. Import repo in Vercel
-3. Add environment variables in Vercel → Settings → Environment Variables:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-4. Deploy!
-
-## Features
-- 🏛️ Campus-based marketplaces (15+ Malawian universities)
-- 🛍️ Product listings with photo uploads
-- 🏪 Vendor profiles with contact info, products, reviews
-- 💬 Real-time buyer-seller chat (Supabase Realtime)
-- ⭐ Buyer ratings & reviews
-- 🛒 Shopping cart with quantity management
-- 📱 Mobile-first with bottom nav
-- 🔐 Supabase Auth (email/password)
-- 📸 Photo uploads (product images, vendor avatar & banner)
-- 🚚 Delivery info per vendor
-- 💰 Airtel Money & TNM Mpamba payment flow
+## Tech Stack
+- React + Vite
+- Supabase (Postgres, Auth, Realtime, Storage, Edge Functions)
+- PWA with push notifications
+- PayChangu for mobile money payments

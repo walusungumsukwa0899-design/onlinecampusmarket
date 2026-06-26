@@ -6,6 +6,69 @@ import { supabase } from '../lib/supabase'
 import Footer from '../components/Footer'
 import './Cart.css'
 
+function EmptyCart({ navigate }) {
+  const { addToCart, toggleWishlist, isWishlisted } = useCart()
+  const [recommended, setRecommended] = useState([])
+
+  useEffect(() => {
+    // Show recently viewed first, then random products
+    try {
+      const rv = JSON.parse(localStorage.getItem('wolf_recently_viewed') || '[]')
+      if (rv.length > 0) { setRecommended(rv.slice(0, 4)); return }
+    } catch {}
+    supabase.from('products').select('*, vendors(name)').eq('available', true)
+      .order('created_at', { ascending: false }).limit(8)
+      .then(({ data }) => setRecommended((data || []).filter(p => p.vendors).slice(0, 4)))
+  }, [])
+
+  return (
+    <div className="cart-page">
+      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '100px 20px 60px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '12px' }}>🛒</div>
+          <h2 style={{ fontWeight: 900, fontSize: '22px', marginBottom: '8px' }}>Your cart is empty</h2>
+          <p style={{ color: 'var(--gray)', fontSize: '14px', marginBottom: '20px' }}>Add some products and come back here to checkout.</p>
+          <button className="btn-primary" onClick={() => navigate('/vendors')}>Browse Products</button>
+        </div>
+        {recommended.length > 0 && (
+          <>
+            <h3 style={{ fontWeight: 800, fontSize: '16px', marginBottom: '16px' }}>
+              {JSON.parse(localStorage.getItem('wolf_recently_viewed') || '[]').length > 0 ? '👀 Recently Viewed' : '✨ Popular Right Now'}
+            </h3>
+            <div className="products-grid">
+              {recommended.map(p => {
+                const cartItem = { id: p.id, name: p.name, price: `MWK ${Number(p.price).toLocaleString()}`, rawPrice: p.price, icon: p.icon || '📦', seller: p.seller || p.vendors?.name, vendor_id: p.vendor_id, image_url: p.image_url }
+                return (
+                  <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
+                    <div className="product-img">
+                      {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span>{p.icon || '📦'}</span>}
+                    </div>
+                    <div className="product-body">
+                      <div className="product-name">{p.name}</div>
+                      <div className="product-seller">{p.seller || p.vendors?.name}</div>
+                      <div className="product-footer">
+                        <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                        <button className="add-cart-btn" style={{ flex: 1 }} onClick={e => { e.stopPropagation(); addToCart(cartItem) }}>Add to Cart</button>
+                        <button onClick={e => { e.stopPropagation(); toggleWishlist(cartItem) }}
+                          style={{ background: isWishlisted(p.id) ? '#fee2e2' : 'var(--light)', border: 'none', borderRadius: '8px', padding: '0 10px', cursor: 'pointer', fontSize: '15px' }}>
+                          {isWishlisted(p.id) ? '❤️' : '🤍'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </div>
+      <Footer />
+    </div>
+  )
+}
+
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
 
 function withTimeout(promise, ms, message) {
@@ -33,23 +96,56 @@ export default function Cart() {
   const [saveMobileChecked, setSaveMobileChecked] = useState(true)
   const [creditBalance, setCreditBalance] = useState(0)
   const [useCredit, setUseCredit] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoApplied, setPromoApplied] = useState(null) // { code, discount, type }
+  const [promoError, setPromoError] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
   const [deliverySlot, setDeliverySlot] = useState('')
+  const [savedAddresses, setSavedAddresses] = useState([])
+  const [showAddressPicker, setShowAddressPicker] = useState(false)
 
-  // Pre-fill saved mobile + credit balance from profile
+  // Pre-fill saved mobile + credit balance + addresses from profile
   useEffect(() => {
     async function loadProfile() {
       if (!user) return
-      const { data } = await supabase.from('profiles').select('saved_mobile, saved_network, credit_balance').eq('id', user.id).maybeSingle()
+      const [{ data }, { data: addrs }] = await Promise.all([
+        supabase.from('profiles').select('saved_mobile, saved_network, credit_balance').eq('id', user.id).maybeSingle(),
+        supabase.from('address_book').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      ])
       if (data?.saved_mobile) setMobile(data.saved_mobile)
       if (data?.saved_network) setNetwork(data.saved_network)
       if (data?.credit_balance) setCreditBalance(data.credit_balance)
+      if (addrs?.length) setSavedAddresses(addrs)
     }
     loadProfile()
   }, [user])
 
   const subtotal = cart.reduce((a, i) => a + (parseInt(String(i.rawPrice || i.price).replace(/[^0-9]/g,'')) * i.qty), 0)
   const creditApplied = useCredit ? Math.min(creditBalance, subtotal) : 0
-  const total = subtotal - creditApplied
+  const promoDiscount = promoApplied
+    ? promoApplied.type === 'percent'
+      ? Math.round(subtotal * promoApplied.discount / 100)
+      : Math.min(promoApplied.discount, subtotal)
+    : 0
+  const total = subtotal - creditApplied - promoDiscount
+
+  async function applyPromoCode() {
+    if (!promoCode.trim()) return
+    setPromoLoading(true)
+    setPromoError('')
+    const { data, error } = await supabase
+      .from('promo_codes')
+      .select('*')
+      .eq('code', promoCode.trim().toUpperCase())
+      .eq('active', true)
+      .maybeSingle()
+    if (error || !data) { setPromoError('Invalid or expired promo code.'); setPromoLoading(false); return }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) { setPromoError('This promo code has expired.'); setPromoLoading(false); return }
+    if (data.max_uses && data.uses_count >= data.max_uses) { setPromoError('This promo code has reached its usage limit.'); setPromoLoading(false); return }
+    if (data.min_order && subtotal < data.min_order) { setPromoError(`Minimum order of MWK ${data.min_order.toLocaleString()} required.`); setPromoLoading(false); return }
+    setPromoApplied({ code: data.code, discount: data.discount, type: data.discount_type, id: data.id })
+    setPromoLoading(false)
+  }
 
   function selectNetwork(n) {
     setNetwork(n)
@@ -170,6 +266,10 @@ export default function Cart() {
       if (useCredit && creditApplied > 0 && user) {
         supabase.rpc('add_referral_credit', { referrer_id: user.id, amount: -creditApplied }).then(() => {}).catch(() => {})
       }
+      // Increment promo code usage
+      if (promoApplied?.id) {
+        supabase.from('promo_codes').update({ uses_count: supabase.rpc('increment', { x: 1 }) }).eq('id', promoApplied.id).then(() => {}).catch(() => {})
+      }
       lastChargeId.current = result.charge_id
       setStage('polling')
       await pollVerification(result.charge_id)
@@ -194,15 +294,7 @@ export default function Cart() {
   )
 
   if (cart.length === 0) return (
-    <div className="cart-page">
-      <div className="empty-state">
-        <div className="empty-icon">🛒</div>
-        <h3>Your cart is empty</h3>
-        <p>Browse products and add items to your cart.</p>
-        <button className="btn-primary" onClick={() => navigate('/vendors')}>Start Shopping</button>
-      </div>
-      <Footer />
-    </div>
+    <EmptyCart navigate={navigate} />
   )
 
   return (
@@ -236,12 +328,71 @@ export default function Cart() {
           <div className="cart-summary">
             <h3>Order Summary</h3>
             <div className="summary-row"><span>Subtotal</span><span>MWK {subtotal.toLocaleString()}</span></div>
-          {creditApplied > 0 && <div className="summary-row" style={{color:'#16a34a'}}><span>🎁 Referral Credit</span><span>- MWK {creditApplied.toLocaleString()}</span></div>}
+            {promoDiscount > 0 && <div className="summary-row" style={{color:'#16a34a'}}><span>🏷️ Promo ({promoApplied.code})</span><span>- MWK {promoDiscount.toLocaleString()}</span></div>}
+            {creditApplied > 0 && <div className="summary-row" style={{color:'#16a34a'}}><span>🎁 Referral Credit</span><span>- MWK {creditApplied.toLocaleString()}</span></div>}
             <div className="summary-row total"><span>Total</span><span>MWK {total.toLocaleString()}</span></div>
-            <p className="delivery-note">📦 Delivery or pickup is arranged directly with each vendor after payment — message them from their store page to coordinate.</p>
+
+            {/* Promo code */}
+            {!promoApplied ? (
+              <div style={{display:'flex',gap:'6px',margin:'12px 0'}}>
+                <input value={promoCode} onChange={e=>{setPromoCode(e.target.value.toUpperCase());setPromoError('')}}
+                  placeholder="Promo code" className="form-input" style={{flex:1,padding:'8px 12px',fontSize:'13px'}}
+                  onKeyDown={e=>e.key==='Enter'&&applyPromoCode()} disabled={stage==='charging'||stage==='polling'}/>
+                <button onClick={applyPromoCode} disabled={promoLoading||!promoCode.trim()||stage==='charging'||stage==='polling'}
+                  style={{background:'var(--wolf)',color:'white',border:'none',borderRadius:'8px',padding:'0 14px',fontWeight:700,fontSize:'13px',cursor:'pointer',flexShrink:0,opacity:promoLoading||!promoCode.trim()?0.5:1}}>
+                  {promoLoading?'...':'Apply'}
+                </button>
+              </div>
+            ) : (
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'12px 0',background:'#f0fdf4',border:'1.5px solid #bbf7d0',borderRadius:'8px',padding:'8px 12px'}}>
+                <span style={{fontSize:'13px',color:'#166534',fontWeight:700}}>✅ {promoApplied.code} — {promoApplied.type==='percent'?`${promoApplied.discount}% off`:`MWK ${promoApplied.discount.toLocaleString()} off`}</span>
+                <button onClick={()=>{setPromoApplied(null);setPromoCode('');setPromoError('')}} style={{background:'none',border:'none',color:'#6b7280',cursor:'pointer',fontSize:'12px',fontWeight:700}}>Remove</button>
+              </div>
+            )}
+            {promoError && <div style={{fontSize:'12px',color:'#ef4444',marginBottom:'8px',fontWeight:600}}>{promoError}</div>}
+
+            {/* Credit toggle */}
+            {creditBalance > 0 && (
+              <label style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',margin:'4px 0 12px',cursor:'pointer'}}>
+                <input type="checkbox" checked={useCredit} onChange={e=>setUseCredit(e.target.checked)} style={{accentColor:'var(--wolf)'}} disabled={stage==='charging'||stage==='polling'}/>
+                Use MWK {creditBalance.toLocaleString()} referral credit
+              </label>
+            )}
+
+            {/* Guest checkout notice */}
+            {!user && (
+              <div style={{background:'#fffbeb',border:'1.5px solid #fde68a',borderRadius:'10px',padding:'12px 14px',marginBottom:'12px',fontSize:'13px'}}>
+                <div style={{fontWeight:700,marginBottom:'4px'}}>👤 Sign in to checkout</div>
+                <div style={{color:'var(--gray)',marginBottom:'8px'}}>You need an account to complete your purchase and track your order.</div>
+                <button className="btn-primary" style={{padding:'8px 16px',fontSize:'12px'}} onClick={()=>navigate('/signin')}>Sign In / Create Account</button>
+              </div>
+            )}
 
             <div className="form-group">
-              <label className="form-label">Delivery location or pickup note (optional)</label>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'6px'}}>
+                <label className="form-label" style={{margin:0}}>Delivery location or pickup note (optional)</label>
+                {savedAddresses.length > 0 && (
+                  <button
+                    onClick={() => setShowAddressPicker(p => !p)}
+                    style={{background:'none',border:'none',color:'var(--wolf)',fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:'inherit',padding:'0'}}>
+                    📍 Saved ({savedAddresses.length})
+                  </button>
+                )}
+              </div>
+
+              {showAddressPicker && savedAddresses.length > 0 && (
+                <div style={{background:'var(--light)',borderRadius:'10px',padding:'10px',marginBottom:'8px',display:'flex',flexDirection:'column',gap:'6px'}}>
+                  {savedAddresses.map(a => (
+                    <button key={a.id}
+                      onClick={() => { setDeliveryNote(a.address + (a.phone ? ` (📱 ${a.phone})` : '')); setShowAddressPicker(false) }}
+                      style={{background:'white',border:'1.5px solid var(--border)',borderRadius:'8px',padding:'8px 12px',textAlign:'left',cursor:'pointer',fontFamily:'inherit'}}>
+                      <div style={{fontWeight:700,fontSize:'12px',color:'#374151'}}>{a.label || 'Address'}</div>
+                      <div style={{fontSize:'11px',color:'var(--gray)'}}>{a.address}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <input className="form-input" value={deliveryNote} onChange={e => setDeliveryNote(e.target.value)} placeholder="e.g. Block C Hostel, UNIMA — or 'I'll pick up'" disabled={stage==='charging'||stage==='polling'}/>
             </div>
 

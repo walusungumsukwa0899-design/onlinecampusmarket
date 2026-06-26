@@ -20,6 +20,8 @@ export default function VendorProfile() {
   const [loading, setLoading] = useState(true)
   const [msgText, setMsgText] = useState('')
   const [vendorBuyerId, setVendorBuyerId] = useState(null) // which buyer convo the vendor is viewing
+  const [following, setFollowing] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
   const [buyerThreads, setBuyerThreads] = useState([]) // list of {buyer_id, buyer_name, last_msg} for vendor inbox
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
@@ -79,10 +81,38 @@ export default function VendorProfile() {
     return () => supabase.removeChannel(channel)
   }, [id])
 
+  const [responseRate, setResponseRate] = useState(null)
+
   async function loadVendor() {
     try {
       const { data } = await supabase.from('vendors').select('*').eq('id', id).single()
       setVendor(data)
+      if (user) {
+        const { data: fol } = await supabase.from('vendor_follows').select('id').eq('vendor_id', id).eq('user_id', user.id).maybeSingle()
+        setFollowing(!!fol)
+      }
+      // Calculate response rate: % of buyer messages that got a vendor reply within 24h
+      const { data: msgs } = await supabase.from('messages')
+        .select('sender, created_at, buyer_id')
+        .eq('vendor_id', id)
+        .order('created_at', { ascending: true })
+      if (msgs && msgs.length > 0) {
+        // Group by buyer and find if there's a vendor reply after each buyer message
+        const buyerMsgMap = new Map()
+        for (const m of msgs) {
+          if (!buyerMsgMap.has(m.buyer_id)) buyerMsgMap.set(m.buyer_id, [])
+          buyerMsgMap.get(m.buyer_id).push(m)
+        }
+        let totalConvos = 0, replied = 0
+        for (const thread of buyerMsgMap.values()) {
+          const firstBuyer = thread.find(m => m.sender === 'buyer')
+          if (!firstBuyer) continue
+          totalConvos++
+          const vendorReply = thread.find(m => m.sender === 'vendor' && new Date(m.created_at) > new Date(firstBuyer.created_at))
+          if (vendorReply) replied++
+        }
+        if (totalConvos > 0) setResponseRate(Math.round((replied / totalConvos) * 100))
+      }
     } catch (err) {
       console.error('Failed to load vendor:', err)
     } finally {
@@ -243,6 +273,9 @@ export default function VendorProfile() {
       delivery_area: editForm.delivery_area.trim(),
       delivery_time: editForm.delivery_time,
       delivery_fee: editForm.delivery_fee ? parseInt(editForm.delivery_fee) : null,
+      delivery_zones: editForm.delivery_zones?.trim() || null,
+      payout_phone: editForm.payout_phone?.trim() || null,
+      payout_network: editForm.payout_network || null,
     }
     const { error } = await supabase.from('vendors').update(updates).eq('id', id)
     setEditSaving(false)
@@ -320,12 +353,17 @@ export default function VendorProfile() {
             )}
           </div>
           <div className="vp-meta">
-            <h1>{vendor.name}</h1>
+            <h1 style={{display:'flex',alignItems:'center',gap:'8px'}}>{vendor.name}{vendor.verified && <span title="Verified Vendor" style={{background:'#3b82f6',color:'white',fontSize:'11px',fontWeight:800,padding:'2px 8px',borderRadius:'20px',verticalAlign:'middle'}}>✓ Verified</span>}</h1>
             <div className="vp-meta-tags">
               <span>🏷️ {vendor.category}</span>
               <span>📍 {vendor.university}</span>
               <span style={{color:'#4ade80'}}>✅ Verified</span>
               {avgRating && <span>⭐ {avgRating} ({reviews.length} reviews)</span>}
+              {responseRate !== null && (
+                <span style={{color: responseRate >= 80 ? '#22c55e' : responseRate >= 50 ? '#f59e0b' : '#ef4444'}}>
+                  💬 {responseRate}% response rate
+                </span>
+              )}
             </div>
             {isOwner && (
               <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'8px'}}>
@@ -341,10 +379,27 @@ export default function VendorProfile() {
               </div>
             )}
             {!isOwner && (
-              <button onClick={() => { const text=encodeURIComponent(`Check out ${vendor.name} on Wolf Marketplace!\n${window.location.href}`); window.open(`https://wa.me/?text=${text}`,'_blank') }}
-                style={{marginTop:'8px',background:'#25D366',color:'white',border:'none',borderRadius:'8px',padding:'6px 14px',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>
-                📤 Share Store on WhatsApp
-              </button>
+              <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'8px'}}>
+                <button onClick={async () => {
+                  if (!user) { navigate('/signin'); return }
+                  setFollowLoading(true)
+                  if (following) {
+                    await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id)
+                    setFollowing(false)
+                  } else {
+                    await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id })
+                    setFollowing(true)
+                  }
+                  setFollowLoading(false)
+                }} disabled={followLoading}
+                  style={{background:following?'var(--wolf)':'white',color:following?'white':'var(--wolf)',border:'1.5px solid var(--wolf)',borderRadius:'8px',padding:'6px 14px',fontSize:'12px',fontWeight:700,cursor:'pointer',transition:'all .2s'}}>
+                  {following ? '✓ Following' : '+ Follow'}
+                </button>
+                <button onClick={() => { const text=encodeURIComponent(`Check out ${vendor.name} on Wolf Marketplace!\n${window.location.href}`); window.open(`https://wa.me/?text=${text}`,'_blank') }}
+                  style={{background:'#25D366',color:'white',border:'none',borderRadius:'8px',padding:'6px 14px',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>
+                  📤 Share Store
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -387,6 +442,12 @@ export default function VendorProfile() {
                     <div className="product-body">
                       <div className="product-name">{p.name}</div>
                       <div className={`avail-tag ${p.available?'avail':'unavail'}`}>{p.available ? '✅ In Stock' : '❌ Out of Stock'}</div>
+                      {avgRating && (
+                        <div style={{display:'flex',alignItems:'center',gap:'3px',marginBottom:'4px'}}>
+                          {'★'.repeat(Math.floor(avgRating)).split('').map((_,i)=><span key={i} style={{color:'#f59e0b',fontSize:'11px'}}>★</span>)}
+                          <span style={{fontSize:'11px',color:'#6b7280',fontWeight:600}}>{avgRating} ({reviews.length})</span>
+                        </div>
+                      )}
                       <div className="product-footer">
                         <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
                     {p.stock_qty !== null && p.stock_qty !== undefined && (
@@ -417,11 +478,26 @@ export default function VendorProfile() {
                 <div className="ci"><div className="ci-icon">📧</div><div><div className="ci-label">Email</div><div className="ci-val">{vendor.email || 'Not provided'}</div></div></div>
                 <div className="ci"><div className="ci-icon">📍</div><div><div className="ci-label">Location</div><div className="ci-val">{vendor.location || 'Not provided'}</div></div></div>
                 <div className="ci"><div className="ci-icon">⏰</div><div><div className="ci-label">Open Hours</div><div className="ci-val">{vendor.hours || 'Not specified'}</div></div></div>
+                {responseRate !== null && (
+                  <div className="ci">
+                    <div className="ci-icon">💬</div>
+                    <div>
+                      <div className="ci-label">Response Rate</div>
+                      <div className="ci-val" style={{color: responseRate >= 80 ? '#22c55e' : responseRate >= 50 ? '#f59e0b' : '#ef4444', fontWeight: 700}}>
+                        {responseRate}%
+                        <span style={{fontWeight:400,color:'var(--gray)',fontSize:'12px',marginLeft:'6px'}}>
+                          {responseRate >= 80 ? 'Usually responds quickly' : responseRate >= 50 ? 'Responds within a few hours' : 'May take time to respond'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="delivery-section">
                 <div className="ci-section-title">🚚 Delivery Details</div>
                 <div className="ci"><div className="ci-icon">📦</div><div><div className="ci-label">Delivery Area</div><div className="ci-val">{vendor.delivery_area || 'On campus'}</div></div></div>
                 <div className="ci"><div className="ci-icon">⏱️</div><div><div className="ci-label">Delivery Time</div><div className="ci-val">{vendor.delivery_time || 'Same day'}</div></div></div>
+                {vendor.delivery_zones && <div className="ci"><div className="ci-icon">📍</div><div><div className="ci-label">Delivery Zones</div><div className="ci-val">{vendor.delivery_zones}</div></div></div>}
                 <div className="ci"><div className="ci-icon">💰</div><div><div className="ci-label">Delivery Fee</div><div className="ci-val">{vendor.delivery_fee ? `MWK ${Number(vendor.delivery_fee).toLocaleString()}` : 'Free'}</div></div></div>
               </div>
             </div>
@@ -615,6 +691,23 @@ export default function VendorProfile() {
                 <option>Same day (2–5 hours)</option>
                 <option>Next day</option>
                 <option>2–3 days</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Delivery Zones <span style={{fontWeight:400,color:'var(--gray)'}}>— campuses/areas you deliver to</span></label>
+              <input className="form-input" value={editForm.delivery_zones || ''} onChange={e => setEditForm(ef => ({...ef, delivery_zones: e.target.value}))} placeholder="e.g. UNIMA, Poly, Chancellor College, Zomba Town"/>
+              <div style={{fontSize:'11px',color:'var(--gray)',marginTop:'4px'}}>Separate with commas. Leave blank for all areas.</div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Payout Phone Number <span style={{fontWeight:400,color:'var(--gray)'}}>— Airtel Money or TNM Mpamba</span></label>
+              <input className="form-input" value={editForm.payout_phone || ''} onChange={e => setEditForm(ef => ({...ef, payout_phone: e.target.value}))} placeholder="e.g. 0991234567"/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Mobile Money Network</label>
+              <select className="form-input" value={editForm.payout_network || ''} onChange={e => setEditForm(ef => ({...ef, payout_network: e.target.value}))}>
+                <option value="">Select network...</option>
+                <option value="airtel">Airtel Money</option>
+                <option value="tnm">TNM Mpamba</option>
               </select>
             </div>
             <div className="modal-actions">

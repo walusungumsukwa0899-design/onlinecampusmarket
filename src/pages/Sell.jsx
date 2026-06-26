@@ -8,6 +8,106 @@ import './Sell.css'
 const CATS = ['Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living','Sports & Fitness','Auto Parts','Other']
 const UNIS = ['UNIMA','The Polytechnic','Mzuzu University','MUST','College of Medicine','Catholic University of Malawi','MUBAS','LUANAR','Malawi Adventist University','Livingstonia University','Daeyang Luke University','NIPA','Other']
 
+// ── Variant Group Builder ─────────────────────────────────────
+const PRESET_GROUPS = [
+  { name: 'Size', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+  { name: 'Color', options: ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow'] },
+  { name: 'Material', options: [] },
+  { name: 'Flavour', options: [] },
+]
+
+function VariantGroupBuilder({ variantGroups, setVariantGroups }) {
+  const [draftOption, setDraftOption] = useState({}) // { groupIdx: 'text' }
+
+  function addGroup() {
+    setVariantGroups(g => [...g, { name: '', options: [] }])
+  }
+
+  function removeGroup(idx) {
+    setVariantGroups(g => g.filter((_, i) => i !== idx))
+  }
+
+  function setGroupName(idx, name) {
+    setVariantGroups(g => g.map((grp, i) => i === idx ? { ...grp, name } : grp))
+    // Auto-fill preset options when a known name is typed
+    const preset = PRESET_GROUPS.find(p => p.name.toLowerCase() === name.toLowerCase())
+    if (preset?.options.length) {
+      setVariantGroups(g => g.map((grp, i) => i === idx ? { ...grp, name, options: grp.options.length ? grp.options : preset.options } : grp))
+    }
+  }
+
+  function addOption(idx) {
+    const text = (draftOption[idx] || '').trim()
+    if (!text) return
+    setVariantGroups(g => g.map((grp, i) => i === idx ? { ...grp, options: [...grp.options, text] } : grp))
+    setDraftOption(d => ({ ...d, [idx]: '' }))
+  }
+
+  function removeOption(groupIdx, optIdx) {
+    setVariantGroups(g => g.map((grp, i) => i === groupIdx ? { ...grp, options: grp.options.filter((_, oi) => oi !== optIdx) } : grp))
+  }
+
+  return (
+    <div>
+      {variantGroups.map((grp, idx) => (
+        <div key={idx} style={{ background: 'var(--light)', borderRadius: '12px', padding: '14px', marginBottom: '10px', border: '1.5px solid var(--border)' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
+            <input
+              className="form-input" value={grp.name}
+              onChange={e => setGroupName(idx, e.target.value)}
+              placeholder="Group name (e.g. Size, Colour)"
+              style={{ flex: 1, padding: '7px 12px', fontSize: '13px' }}
+              list={`vg-presets-${idx}`}
+            />
+            <datalist id={`vg-presets-${idx}`}>
+              {PRESET_GROUPS.map(p => <option key={p.name} value={p.name} />)}
+            </datalist>
+            <button type="button" onClick={() => removeGroup(idx)}
+              style={{ background: '#fee2e2', border: 'none', borderRadius: '8px', padding: '7px 10px', cursor: 'pointer', color: '#b91c1c', fontWeight: 700, fontSize: '13px', flexShrink: 0, fontFamily: 'inherit' }}>
+              Remove
+            </button>
+          </div>
+
+          {/* Options chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+            {grp.options.map((opt, oi) => (
+              <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'white', border: '1.5px solid var(--wolf)', borderRadius: '20px', padding: '3px 10px', fontSize: '12px', fontWeight: 700, color: 'var(--wolf)' }}>
+                {opt}
+                <button type="button" onClick={() => removeOption(idx, oi)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 4px', color: 'var(--wolf)', fontSize: '14px', lineHeight: 1 }}>×</button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add option input */}
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <input className="form-input" value={draftOption[idx] || ''}
+              onChange={e => setDraftOption(d => ({ ...d, [idx]: e.target.value }))}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOption(idx) } }}
+              placeholder="Type option, press Enter"
+              style={{ flex: 1, padding: '7px 12px', fontSize: '13px' }}
+            />
+            <button type="button" onClick={() => addOption(idx)}
+              style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '8px', padding: '7px 14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+              + Add
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <button type="button" onClick={addGroup}
+        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--light)', border: '1.5px dashed var(--border)', borderRadius: '10px', padding: '9px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', color: 'var(--gray)', width: '100%', justifyContent: 'center', fontFamily: 'inherit' }}>
+        + Add Variant Group
+      </button>
+      {variantGroups.length > 0 && (
+        <div style={{ fontSize: '11px', color: 'var(--gray)', marginTop: '6px' }}>
+          Buyers will see a separate picker for each group — e.g. "Size" and "Colour" shown separately.
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Sell() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -16,6 +116,7 @@ export default function Sell() {
   const [photoPreviews, setPhotoPreviews] = useState([])
   const [photoFiles, setPhotoFiles] = useState([])
   const [selectedCat, setSelectedCat] = useState('')
+  const [variantGroups, setVariantGroups] = useState([]) // [{ name:'Size', options:['S','M','L'] }]
   const [form, setForm] = useState({
     name:'', price:'', description:'', phone:'', location:'', university:'',
     delivery:'', deliveryTime:'', deliveryFee:'', hours:''
@@ -111,6 +212,9 @@ export default function Sell() {
       image_urls: imageUrls.length > 0 ? imageUrls : null,
       stock_qty: form.stockQty ? parseInt(form.stockQty) : null,
       condition: form.condition || 'New',
+      compare_at_price: form.compareAtPrice ? parseInt(form.compareAtPrice) : null,
+      variants: null, // legacy — no longer used for new listings
+      variant_groups: variantGroups.length > 0 ? variantGroups : null,
       available: true,
     })
 
@@ -147,11 +251,78 @@ export default function Sell() {
     </div>
   )
 
+  const [csvMode, setCsvMode] = useState(false)
+  const [csvText, setCsvText] = useState('')
+  const [csvImporting, setCsvImporting] = useState(false)
+  const [csvResults, setCsvResults] = useState(null)
+
+  async function importCSV() {
+    if (!user) { navigate('/signin'); return }
+    setCsvImporting(true)
+    setCsvResults(null)
+    try {
+      const lines = csvText.trim().split('\n').filter(Boolean)
+      const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g,''))
+      const rows = lines.slice(1)
+      let { data: vendor } = await supabase.from('vendors').select('id').eq('user_id', user.id).maybeSingle()
+      if (!vendor) {
+        const { data: nv } = await supabase.from('vendors').insert({ user_id: user.id, name: user.user_metadata?.full_name || 'My Store', email: user.email, university: 'Other' }).select('id').single()
+        vendor = nv
+      }
+      let ok = 0, fail = 0
+      for (const row of rows) {
+        const cols = row.split(',').map(c => c.trim().replace(/"/g,''))
+        const obj = {}
+        headers.forEach((h, i) => { obj[h] = cols[i] || '' })
+        if (!obj.name || !obj.price) { fail++; continue }
+        const { error } = await supabase.from('products').insert({
+          vendor_id: vendor.id, name: obj.name, price: parseInt(obj.price) || 0,
+          description: obj.description || '', category: obj.category || 'Other',
+          stock_qty: obj.stock_qty ? parseInt(obj.stock_qty) : null,
+          available: true, icon: obj.icon || '📦',
+          compare_at_price: obj.compare_at_price ? parseInt(obj.compare_at_price) : null,
+        })
+        if (error) fail++; else ok++
+      }
+      setCsvResults({ ok, fail, total: rows.length })
+    } catch (e) {
+      setCsvResults({ error: e.message })
+    }
+    setCsvImporting(false)
+  }
+
   return (
     <div className="sell-page">
       <div className="sell-container">
-        <h2>List Your Product</h2>
-        <p className="sell-sub">Add your items to Wolf Marketplace and start selling to students on your campus.</p>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'4px'}}>
+          <h2 style={{margin:0}}>{csvMode ? '📂 Bulk Import via CSV' : 'List Your Product'}</h2>
+          <button onClick={() => setCsvMode(v => !v)} style={{background:'var(--light)',border:'1.5px solid var(--border)',borderRadius:'8px',padding:'7px 14px',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>
+            {csvMode ? '← Single Product' : '📂 Bulk Import'}
+          </button>
+        </div>
+
+        {csvMode ? (
+          <div>
+            <p className="sell-sub">Paste a CSV with columns: <code>name, price, description, category, stock_qty, icon, compare_at_price</code></p>
+            <div style={{background:'var(--light)',borderRadius:'8px',padding:'10px 14px',fontSize:'12px',fontFamily:'monospace',color:'var(--gray)',marginBottom:'12px'}}>
+              name,price,description,category,stock_qty,icon<br/>
+              "Calculus Textbook",5000,"Used textbook good condition","Books & Stationery",3,📚<br/>
+              "UNIMA Hoodie",8000,"Black hoodie size M","Fashion & Clothing",10,👕
+            </div>
+            <textarea value={csvText} onChange={e => setCsvText(e.target.value)}
+              placeholder="Paste your CSV here..." rows={12}
+              style={{width:'100%',border:'1.5px solid var(--border)',borderRadius:'10px',padding:'12px',fontSize:'13px',fontFamily:'monospace',outline:'none',resize:'vertical',marginBottom:'12px'}}/>
+            {csvResults && (
+              <div style={{background:csvResults.error?'#fee2e2':'#f0fdf4',border:`1.5px solid ${csvResults.error?'#fca5a5':'#bbf7d0'}`,borderRadius:'10px',padding:'12px 16px',marginBottom:'12px',fontSize:'13px',fontWeight:700,color:csvResults.error?'#991b1b':'#166534'}}>
+                {csvResults.error ? `❌ Error: ${csvResults.error}` : `✅ Imported ${csvResults.ok} of ${csvResults.total} products${csvResults.fail>0?` (${csvResults.fail} failed)`:''}`}
+              </div>
+            )}
+            <button className="btn-primary" style={{width:'100%',padding:'13px',justifyContent:'center'}} disabled={csvImporting||!csvText.trim()} onClick={importCSV}>
+              {csvImporting ? 'Importing...' : `Import Products`}
+            </button>
+          </div>
+        ) : (
+          <><p className="sell-sub">Add your items to Wolf Marketplace and start selling to students on your campus.</p>
 
         {/* Photo upload */}
         <label className="photo-upload-area" htmlFor="product-photos">
@@ -183,6 +354,14 @@ export default function Sell() {
         <div className="form-group">
           <label className="form-label">Price (MWK) *</label>
           <input className="form-input" type="number" value={form.price} onChange={e => set('price', e.target.value)} placeholder="e.g. 8500"/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Sale Price / Compare-at (MWK) <span style={{fontWeight:400,color:"var(--gray)"}}>optional — shows strikethrough original price</span></label>
+          <input className="form-input" type="number" value={form.compareAtPrice||''} onChange={e => set('compareAtPrice', e.target.value)} placeholder="e.g. 10000 (original price before discount)"/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Variants <span style={{fontWeight:400,color:"var(--gray)"}}>optional — e.g. sizes or colours</span></label>
+          <VariantGroupBuilder variantGroups={variantGroups} setVariantGroups={setVariantGroups} />
         </div>
         <div className="form-group">
           <label className="form-label">Description</label>
@@ -244,6 +423,7 @@ export default function Sell() {
         <button className="btn-primary" style={{width:'100%',justifyContent:'center',padding:'13px'}} onClick={submit} disabled={loading}>
           {loading ? 'Listing product...' : 'List Product →'}
         </button>
+        </>)}
       </div>
       <Footer />
     </div>

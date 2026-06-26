@@ -1,10 +1,193 @@
-.signin-page{padding-top:64px;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--light);padding:80px 24px 48px;}
-.signin-card{background:white;border-radius:20px;padding:36px;width:100%;max-width:400px;border:1px solid var(--border);}
-.signin-logo{text-align:center;margin-bottom:24px;}
-.signin-logo-icon{width:52px;height:52px;background:var(--wolf);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px;}
-.signin-logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;}
-.signin-logo-sub{font-size:12px;color:var(--gray);margin-top:3px;}
-.auth-toggle{display:flex;background:var(--light);border-radius:10px;padding:4px;margin-bottom:22px;}
-.auth-tab{flex:1;border:none;background:none;padding:8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--gray);}
-.auth-tab.active{background:white;color:var(--wolf);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
-.auth-error{background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px 14px;color:#ef4444;font-size:13px;margin-bottom:14px;}
+/* ── existing base styles ── */
+.signin-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px 40px;
+  background: var(--light, #f9fafb);
+}
+
+/* ── landing variant ── */
+.signin-page--landing {
+  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+  padding: 70px 20px 40px;
+  gap: 0;
+}
+
+/* ── landing hero ── */
+.signin-hero {
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  color: white;
+  padding: 0 8px 32px;
+}
+
+.signin-hero-badge {
+  display: inline-block;
+  background: rgba(232,99,10,0.25);
+  border: 1px solid rgba(232,99,10,0.5);
+  color: #fba96e;
+  border-radius: 99px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-bottom: 20px;
+}
+
+.signin-hero-title {
+  font-size: clamp(34px, 8vw, 54px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 14px;
+  letter-spacing: -1px;
+}
+
+.signin-hero-accent {
+  color: #E8630A;
+  position: relative;
+}
+
+.signin-hero-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.signin-hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.signin-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.signin-stat-icon { font-size: 20px; }
+.signin-stat-val { font-size: 18px; font-weight: 900; color: white; }
+.signin-stat-label { font-size: 11px; color: rgba(255,255,255,0.55); font-weight: 500; }
+
+.signin-hero-scroll {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+/* ── card ── */
+.signin-card {
+  background: white;
+  border-radius: 20px;
+  padding: 28px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+}
+
+.signin-page--landing .signin-card {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.signin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1.5px solid var(--border, #f0f0f0);
+}
+
+/* ── logo (non-landing) ── */
+.signin-logo {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.signin-logo-icon { font-size: 40px; margin-bottom: 6px; }
+.signin-logo-text { font-size: 20px; font-weight: 900; color: var(--wolf, #E8630A); }
+.signin-logo-sub { font-size: 12px; color: var(--gray, #9ca3af); margin-top: 2px; }
+
+/* ── tabs ── */
+.auth-toggle {
+  display: flex;
+  background: var(--light, #f9fafb);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 4px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  background: none;
+  color: var(--gray, #9ca3af);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.auth-tab.active {
+  background: white;
+  color: var(--wolf, #E8630A);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+}
+
+/* ── form ── */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #374151; }
+.form-input {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  background: white;
+}
+.form-input:focus { border-color: var(--wolf, #E8630A); }
+
+.auth-error {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+/* ── browse hint ── */
+.signin-browse-hint {
+  margin-top: 20px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .signin-hero-stats { gap: 16px; }
+  .signin-stat-val { font-size: 16px; }
+  .signin-card { padding: 22px 18px; }
+}
