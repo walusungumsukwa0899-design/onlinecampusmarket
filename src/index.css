@@ -74,3 +74,23 @@ textarea.form-input{resize:vertical;min-height:100px;}
   .container{padding:0 16px;}
   .products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
 }
+
+/* Email verification banner: below action bar on mobile */
+@media(max-width:768px){
+  .email-verify-banner{top:112px !important;}
+}
+
+/* ── Mobile: body already provides 112px top offset via Navbar.css.
+   Zero out per-page padding-top so content doesn't get double-padded. ── */
+@media(max-width:768px){
+  .home-page,
+  .vendors-page,
+  .dash-page,
+  .vp-page,
+  .marketplaces-page,
+  .cart-page,
+  .sell-page,
+  .page-wrap {
+    padding-top: 0 !important;
+  }
+}

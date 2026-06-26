@@ -6,6 +6,17 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import './Navbar.css'
 
+// Professional bookmark/save SVG icon
+function SaveIcon({ filled = false, size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? 'var(--wolf)' : 'none'}
+      stroke={filled ? 'var(--wolf)' : 'currentColor'} strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+    </svg>
+  )
+}
+
 export default function Navbar() {
   const { totalItems, wishlist } = useCart()
   const { user, signOut } = useAuth()
@@ -18,18 +29,16 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQ, setSearchQ] = useState('')
   const searchInputRef = useRef(null)
+  const searchInputMobileRef = useRef(null)
 
   useEffect(() => {
     if (!user) { setUnreadNotifs(0); setUnreadMsgs(0); return }
-    // Load unread notification count
     supabase.from('notifications').select('id', { count: 'exact', head: true })
       .eq('user_id', user.id).eq('read', false)
       .then(({ count }) => setUnreadNotifs(count || 0))
-    // Load unread messages count (messages from vendors to this buyer)
     supabase.from('messages').select('id', { count: 'exact', head: true })
       .eq('buyer_id', user.id).eq('sender', 'vendor').eq('read', false)
       .then(({ count }) => setUnreadMsgs(count || 0))
-    // Realtime for notifications
     const notifSub = supabase.channel('navbar-notifs')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
         () => setUnreadNotifs(c => c + 1))
@@ -48,10 +57,12 @@ export default function Navbar() {
   }, [user])
 
   useEffect(() => {
-    if (searchOpen) setTimeout(() => searchInputRef.current?.focus(), 50)
+    if (searchOpen) setTimeout(() => {
+      searchInputRef.current?.focus()
+      searchInputMobileRef.current?.focus()
+    }, 50)
   }, [searchOpen])
 
-  // Close search on nav
   useEffect(() => { setSearchOpen(false) }, [path])
 
   function handleSearch(e) {
@@ -93,19 +104,14 @@ export default function Navbar() {
         {/* Desktop nav-actions (hidden on mobile) */}
         <div className="nav-actions">
           {canInstall && <button className="nav-install" onClick={promptInstall}>⬇️ Install App</button>}
-          <button onClick={() => setSearchOpen(v => !v)} className="nav-cart" title="Search" style={{ fontSize: '16px' }}>🔍</button>
-          {user && (
-            <Link to="/messages" className="nav-cart" title="Messages" style={{ position: 'relative' }}>
-              💬{unreadMsgs > 0 && <span className="cart-badge">{unreadMsgs > 9 ? '9+' : unreadMsgs}</span>}
-            </Link>
-          )}
           {user && (
             <Link to="/dashboard?tab=notifications" className="nav-cart" title="Notifications">
               🔔{unreadNotifs > 0 && <span className="cart-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
             </Link>
           )}
-          <Link to="/wishlist" className="nav-cart" title="Wishlist">
-            ❤️{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
+          <Link to="/wishlist" className="nav-cart" title="Saved">
+            <SaveIcon filled={wishlist.length > 0} />
+            {wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
           </Link>
           <Link to="/cart" className="nav-cart" title="Cart">
             🛒{totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
@@ -121,7 +127,7 @@ export default function Navbar() {
       <div className="navbar-action-bar">
         {searchOpen ? (
           <form onSubmit={handleSearch} style={{ flex: 1, display: 'flex', gap: '8px' }}>
-            <input ref={searchInputRef} value={searchQ} onChange={e => setSearchQ(e.target.value)}
+            <input ref={searchInputMobileRef} value={searchQ} onChange={e => setSearchQ(e.target.value)}
               placeholder="Search products…"
               style={{ flex: 1, padding: '7px 12px', borderRadius: '8px', border: '1.5px solid var(--wolf)', fontSize: '14px', outline: 'none', fontFamily: 'Inter,sans-serif' }} />
             <button type="submit" style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '8px', padding: '0 12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>Go</button>
@@ -129,19 +135,17 @@ export default function Navbar() {
           </form>
         ) : (
           <>
-            <button onClick={() => setSearchOpen(v => !v)} className="nav-cart" title="Search" style={{ fontSize: '16px' }}>🔍</button>
-            {user && (
-              <Link to="/messages" className="nav-cart" title="Messages" style={{ position: 'relative' }}>
-                💬{unreadMsgs > 0 && <span className="cart-badge">{unreadMsgs > 9 ? '9+' : unreadMsgs}</span>}
-              </Link>
-            )}
             {user && (
               <Link to="/dashboard?tab=notifications" className="nav-cart" title="Notifications">
                 🔔{unreadNotifs > 0 && <span className="cart-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
               </Link>
             )}
             <Link to="/wishlist" className="nav-cart" title="Saved">
-              ❤️{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
+              <SaveIcon filled={wishlist.length > 0} />
+              {wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
+            </Link>
+            <Link to="/cart" className="nav-cart" title="Cart">
+              🛒{totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
             </Link>
             {user
               ? <button className="nav-cta" style={{ fontSize: '12px', padding: '7px 12px' }} onClick={() => { signOut(); navigate('/') }}>Sign Out</button>
@@ -170,7 +174,10 @@ export default function Navbar() {
           </Link>
         ) : (
           <Link to="/wishlist" className={`mob-item${path==='/wishlist'?' active':''}`}>
-            <span style={{ position: 'relative', display: 'inline-block' }}>❤️{wishlist.length > 0 && <span className="mob-cart-dot">{wishlist.length}</span>}</span>
+            <span style={{ position: 'relative', display: 'inline-block', lineHeight: 1 }}>
+              <SaveIcon filled={wishlist.length > 0} size={20} />
+              {wishlist.length > 0 && <span className="mob-cart-dot">{wishlist.length}</span>}
+            </span>
             <span>Saved</span>
           </Link>
         )}

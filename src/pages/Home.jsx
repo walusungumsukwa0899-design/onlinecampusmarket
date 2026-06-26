@@ -9,8 +9,8 @@ import './Home.css'
 
 const CATEGORIES = [
   {icon:'👗',name:'Fashion & Clothing'},{icon:'📱',name:'Electronics'},{icon:'🍱',name:'Food & Drinks'},
-  {icon:'📚',name:'Books & Stationery'},{icon:'✏️',name:'Books & Stationery'},{icon:'💊',name:'Beauty & Health'},
-  {icon:'🏠',name:'Home & Living'},{icon:'💄',name:'Beauty & Health'},{icon:'⚽',name:'Sports & Fitness'},
+  {icon:'📚',name:'Books & Stationery'},{icon:'✏️',name:'Stationery & Art'},{icon:'💊',name:'Beauty & Health'},
+  {icon:'🏠',name:'Home & Living'},{icon:'💄',name:'Cosmetics'},{icon:'⚽',name:'Sports & Fitness'},
   {icon:'🔧',name:'Auto Parts'},{icon:'🛠️',name:'Services'},{icon:'📦',name:'Other'},
 ]
 

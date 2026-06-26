@@ -12,6 +12,32 @@ const LANDING_STATS = [
   { icon: '📦', value: '5,000+', label: 'Products Listed' },
 ]
 
+// Landing hero shown when app loads with no session — defined outside component to avoid remounting
+function LandingHero() {
+  return (
+    <div className="signin-hero">
+      <div className="signin-hero-badge">🇲🇼 Made for Malawian Students</div>
+      <h1 className="signin-hero-title">
+        Buy &amp; Sell on<br />
+        <span className="signin-hero-accent">Campus</span>
+      </h1>
+      <p className="signin-hero-sub">
+        Wolf Marketplace connects students and vendors across every university in Malawi — from food &amp; fashion to textbooks &amp; tech.
+      </p>
+      <div className="signin-hero-stats">
+        {LANDING_STATS.map(s => (
+          <div key={s.label} className="signin-stat">
+            <span className="signin-stat-icon">{s.icon}</span>
+            <strong className="signin-stat-val">{s.value}</strong>
+            <span className="signin-stat-label">{s.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="signin-hero-scroll">↓ Sign in to explore</div>
+    </div>
+  )
+}
+
 /** isLanding = true when rendered from App.jsx auth gate at "/" */
 export default function SignIn({ isLanding = false }) {
   const navigate = useNavigate()
@@ -33,24 +59,24 @@ export default function SignIn({ isLanding = false }) {
     try {
       if (tab === 'in') {
         if (!form.email.trim() || !form.password) {
-          setError('Please enter your email and password'); return
+          setError('Please enter your email and password'); setLoading(false); return
         }
         await signIn({ email: form.email.trim(), password: form.password })
         navigate('/')
       } else if (tab === 'up') {
         if (!form.fullName || !form.email || !form.password || !form.university) {
-          setError('Please fill in all fields'); return
+          setError('Please fill in all fields'); setLoading(false); return
         }
         if (form.password.length < 8) {
-          setError('Password must be at least 8 characters'); return
+          setError('Password must be at least 8 characters'); setLoading(false); return
         }
         if (!/[A-Za-z]/.test(form.password) || !/[0-9]/.test(form.password)) {
-          setError('Password must contain at least one letter and one number'); return
+          setError('Password must contain at least one letter and one number'); setLoading(false); return
         }
         await signUp({ email: form.email.trim(), password: form.password, fullName: form.fullName, phone: form.phone, university: form.university, referralCode: form.referralCode })
         setTab('check-email')
       } else if (tab === 'reset') {
-        if (!form.email.trim()) { setError('Please enter your email address'); return }
+        if (!form.email.trim()) { setError('Please enter your email address'); setLoading(false); return }
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(form.email.trim(), {
           redirectTo: `${window.location.origin}/signin`,
         })
@@ -83,30 +109,6 @@ export default function SignIn({ isLanding = false }) {
       </div>
     )
   }
-
-  // Landing hero shown when app loads with no session
-  const LandingHero = () => (
-    <div className="signin-hero">
-      <div className="signin-hero-badge">🇲🇼 Made for Malawian Students</div>
-      <h1 className="signin-hero-title">
-        Buy &amp; Sell on<br />
-        <span className="signin-hero-accent">Campus</span>
-      </h1>
-      <p className="signin-hero-sub">
-        Wolf Marketplace connects students and vendors across every university in Malawi — from food &amp; fashion to textbooks &amp; tech.
-      </p>
-      <div className="signin-hero-stats">
-        {LANDING_STATS.map(s => (
-          <div key={s.label} className="signin-stat">
-            <span className="signin-stat-icon">{s.icon}</span>
-            <strong className="signin-stat-val">{s.value}</strong>
-            <span className="signin-stat-label">{s.label}</span>
-          </div>
-        ))}
-      </div>
-      <div className="signin-hero-scroll">↓ Sign in to explore</div>
-    </div>
-  )
 
   return (
     <div className={`signin-page${isLanding ? ' signin-page--landing' : ''}`}>
