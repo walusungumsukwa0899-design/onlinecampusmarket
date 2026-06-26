@@ -26,9 +26,18 @@
   .mobile-nav{display:flex;justify-content:space-around;}
   .install-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;position:fixed;top:64px;left:0;right:0;z-index:190;background:var(--black);color:white;padding:9px 16px;font-size:12px;font-weight:500;}
   .install-banner button{background:var(--wolf);color:white;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;}
-  body{padding-bottom:70px;}
+  body{padding-bottom:70px;padding-top:112px;}
   .navbar{padding:0 12px;gap:6px;}
   .nav-logo-text{font-size:15px;}
   .nav-actions{gap:6px;}
   .nav-cta{padding:8px 12px;font-size:12px;}
+}
+
+/* ── Mobile action bar (below logo row) ── */
+.navbar-action-bar{display:none;}
+@media(max-width:768px){
+  .navbar .nav-actions{display:none;}
+  .navbar-action-bar{display:flex;align-items:center;gap:8px;position:fixed;top:64px;left:0;right:0;z-index:199;background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:6px 12px;justify-content:flex-end;}
+  .install-banner{top:112px !important;}
+  body{padding-top:112px;}
 }

@@ -90,17 +90,15 @@ export default function Navbar() {
           </div>
         )}
 
+        {/* Desktop nav-actions (hidden on mobile) */}
         <div className="nav-actions">
           {canInstall && <button className="nav-install" onClick={promptInstall}>⬇️ Install App</button>}
-          {/* Search button */}
           <button onClick={() => setSearchOpen(v => !v)} className="nav-cart" title="Search" style={{ fontSize: '16px' }}>🔍</button>
-          {/* Messages */}
           {user && (
             <Link to="/messages" className="nav-cart" title="Messages" style={{ position: 'relative' }}>
               💬{unreadMsgs > 0 && <span className="cart-badge">{unreadMsgs > 9 ? '9+' : unreadMsgs}</span>}
             </Link>
           )}
-          {/* Notifications */}
           {user && (
             <Link to="/dashboard?tab=notifications" className="nav-cart" title="Notifications">
               🔔{unreadNotifs > 0 && <span className="cart-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
@@ -118,6 +116,40 @@ export default function Navbar() {
           }
         </div>
       </nav>
+
+      {/* Mobile-only action bar — sits below the logo row */}
+      <div className="navbar-action-bar">
+        {searchOpen ? (
+          <form onSubmit={handleSearch} style={{ flex: 1, display: 'flex', gap: '8px' }}>
+            <input ref={searchInputRef} value={searchQ} onChange={e => setSearchQ(e.target.value)}
+              placeholder="Search products…"
+              style={{ flex: 1, padding: '7px 12px', borderRadius: '8px', border: '1.5px solid var(--wolf)', fontSize: '14px', outline: 'none', fontFamily: 'Inter,sans-serif' }} />
+            <button type="submit" style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '8px', padding: '0 12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>Go</button>
+            <button type="button" onClick={() => setSearchOpen(false)} style={{ background: 'var(--light)', border: 'none', borderRadius: '8px', padding: '0 10px', cursor: 'pointer', fontSize: '16px' }}>✕</button>
+          </form>
+        ) : (
+          <>
+            <button onClick={() => setSearchOpen(v => !v)} className="nav-cart" title="Search" style={{ fontSize: '16px' }}>🔍</button>
+            {user && (
+              <Link to="/messages" className="nav-cart" title="Messages" style={{ position: 'relative' }}>
+                💬{unreadMsgs > 0 && <span className="cart-badge">{unreadMsgs > 9 ? '9+' : unreadMsgs}</span>}
+              </Link>
+            )}
+            {user && (
+              <Link to="/dashboard?tab=notifications" className="nav-cart" title="Notifications">
+                🔔{unreadNotifs > 0 && <span className="cart-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
+              </Link>
+            )}
+            <Link to="/wishlist" className="nav-cart" title="Saved">
+              ❤️{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
+            </Link>
+            {user
+              ? <button className="nav-cta" style={{ fontSize: '12px', padding: '7px 12px' }} onClick={() => { signOut(); navigate('/') }}>Sign Out</button>
+              : <Link to="/signin"><button className="nav-cta" style={{ fontSize: '12px', padding: '7px 12px' }}>Sign In</button></Link>
+            }
+          </>
+        )}
+      </div>
 
       {canInstall && (
         <div className="install-banner">

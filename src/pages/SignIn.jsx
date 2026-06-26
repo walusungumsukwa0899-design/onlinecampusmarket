@@ -216,8 +216,11 @@ export default function SignIn({ isLanding = false }) {
 
       {isLanding && (
         <div className="signin-browse-hint">
-          <button onClick={() => navigate('/vendors')} style={{background:'none',border:'1.5px solid rgba(255,255,255,0.3)',borderRadius:'10px',color:'white',padding:'10px 20px',fontSize:'13px',cursor:'pointer',fontWeight:600,backdropFilter:'blur(4px)'}}>
-            👀 Browse without account
+          <p style={{color:'rgba(255,255,255,0.6)',fontSize:'13px',margin:'0 0 10px'}}>Already have an account?</p>
+          <button onClick={() => { setTab('in'); document.querySelector('.signin-card')?.scrollIntoView({ behavior: 'smooth' }) }} style={{background:'rgba(255,255,255,0.12)',border:'1.5px solid rgba(255,255,255,0.3)',borderRadius:'10px',color:'white',padding:'10px 24px',fontSize:'13px',cursor:'pointer',fontWeight:700,backdropFilter:'blur(4px)',transition:'all .2s'}}
+            onMouseOver={e => e.currentTarget.style.background='rgba(232,99,10,0.35)'}
+            onMouseOut={e => e.currentTarget.style.background='rgba(255,255,255,0.12)'}>
+            → Login
           </button>
         </div>
       )}
