@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { CartProvider, useCart } from './lib/CartContext'
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import Navbar from './components/Navbar'
@@ -29,6 +29,14 @@ import Referrals from './pages/Referrals'
 import Disputes from './pages/Disputes'
 import Trending from './pages/Trending'
 import { supabase } from './lib/supabase'
+
+// Redirects to /signin if not logged in
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return null // wait for auth to resolve
+  if (!user) return <Navigate to="/signin" replace />
+  return children
+}
 
 function EmailVerificationBanner() {
   const { user } = useAuth()
@@ -105,40 +113,47 @@ function AppShell({ children }) {
   )
 }
 
+// Public routes (no login needed)
+const PUBLIC_ROUTES = ['/', '/signin', '/terms', '/privacy', '/safety', '/help']
+
 export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
         <AppShell>
           <Routes>
+            {/* Public */}
             <Route path="/" element={<SignIn />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/marketplaces" element={<Marketplaces />} />
-          <Route path="/vendors" element={<Vendors />} />
-          <Route path="/vendors/:id" element={<VendorProfile />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/sell" element={<Sell />} />
-          <Route path="/delivery" element={<Delivery />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/help" element={<HelpCenter />} />
-          <Route path="/safety" element={<SafetyPolicy />} />
-          <Route path="/report" element={<ReportIssue />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
-          <Route path="/order-confirmation/:chargeId" element={<OrderConfirmation />} />
-          <Route path="/category/:slug" element={<Category />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/referrals" element={<Referrals />} />
-          <Route path="/disputes" element={<Disputes />} />
-          <Route path="/trending" element={<Trending />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/safety" element={<SafetyPolicy />} />
+            <Route path="/help" element={<HelpCenter />} />
+
+            {/* Protected — must be signed in */}
+            <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/marketplaces" element={<ProtectedRoute><Marketplaces /></ProtectedRoute>} />
+            <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
+            <Route path="/vendors/:id" element={<ProtectedRoute><VendorProfile /></ProtectedRoute>} />
+            <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+            <Route path="/sell" element={<ProtectedRoute><Sell /></ProtectedRoute>} />
+            <Route path="/delivery" element={<ProtectedRoute><Delivery /></ProtectedRoute>} />
+            <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
+            <Route path="/report" element={<ProtectedRoute><ReportIssue /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+            <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+            <Route path="/products/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
+            <Route path="/order-confirmation/:chargeId" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
+            <Route path="/category/:slug" element={<ProtectedRoute><Category /></ProtectedRoute>} />
+            <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/referrals" element={<ProtectedRoute><Referrals /></ProtectedRoute>} />
+            <Route path="/disputes" element={<ProtectedRoute><Disputes /></ProtectedRoute>} />
+            <Route path="/trending" element={<ProtectedRoute><Trending /></ProtectedRoute>} />
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </AppShell>
       </CartProvider>
     </AuthProvider>
