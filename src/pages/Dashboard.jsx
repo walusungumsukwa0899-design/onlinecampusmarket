@@ -632,7 +632,7 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-              }})()
+              )})()}
               /* orders tab end */
 
               {tab === 'sales' && vendor && (
