@@ -146,20 +146,27 @@ export default function Messages() {
     sessionStorage.setItem(key, JSON.stringify(times))
 
     setSending(true)
-    const isVendorSending = myVendor && conversations.find(c => c.vendorId === activeVendorId)?.type === 'vendor-side'
     const msgData = {
       vendor_id: activeVendorId,
       buyer_id: user.id,
       text: newMsg.trim(),
       sender: 'buyer',
     }
+    // Optimistic update
+    const optimistic = { ...msgData, id: `opt-${Date.now()}`, created_at: new Date().toISOString() }
+    setMessages(prev => [...prev, optimistic])
+    setNewMsg('')
     const { data, error } = await supabase.from('messages').insert(msgData).select().single()
-    if (!error && data) {
-      setMessages(prev => [...prev, data])
-      setNewMsg('')
-      // Notify vendor via edge function
+    if (error) {
+      // Remove optimistic message and restore text
+      setMessages(prev => prev.filter(m => m.id !== optimistic.id))
+      setNewMsg(msgData.text)
+      alert(`Message failed to send: ${error.message || 'Please try again.'}`)
+    } else if (data) {
+      // Replace optimistic with real
+      setMessages(prev => prev.map(m => m.id === optimistic.id ? data : m))
       supabase.functions.invoke('notify-new-message', {
-        body: { vendorId: activeVendorId, buyerId: user.id, message: newMsg.trim() }
+        body: { vendorId: activeVendorId, buyerId: user.id, message: data.text }
       }).catch(() => {})
     }
     setSending(false)

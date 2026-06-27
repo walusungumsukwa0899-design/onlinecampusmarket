@@ -54,7 +54,7 @@ export default function VendorProfile() {
   }, [id, user])
 
   useEffect(() => {
-    if (user && tab === 'contact') loadVendorInbox()
+    if (user && tab === 'messages') loadVendorInbox()
   }, [tab, user, id])
 
   useEffect(() => {
@@ -300,7 +300,7 @@ export default function VendorProfile() {
 
   function askAboutItem(name) {
     setMsgText(`Hi! Is "${name}" still available?`)
-    setTab('contact')
+    setTab('messages')
     setTimeout(() => document.getElementById('chat-input')?.focus(), 100)
   }
 
@@ -362,11 +362,13 @@ export default function VendorProfile() {
                   if (!user) { navigate('/signin'); return }
                   setFollowLoading(true)
                   if (following) {
-                    await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id)
-                    setFollowing(false)
+                    const { error } = await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id)
+                    if (!error) setFollowing(false)
+                    else alert('Could not unfollow. Please try again.')
                   } else {
-                    await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id })
-                    setFollowing(true)
+                    const { error } = await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id }, { onConflict: 'vendor_id,user_id' })
+                    if (!error) setFollowing(true)
+                    else alert('Could not follow. Please try again.')
                   }
                   setFollowLoading(false)
                 }} disabled={followLoading}
@@ -390,10 +392,10 @@ export default function VendorProfile() {
         </div>
 
         <div className="vp-tabs">
-          {['products','contact','reviews'].map(t => (
+          {['products','messages','reviews'].map(t => (
             <button key={t} className={`vp-tab${tab===t?' active':''}`} onClick={() => setTab(t)}>
-              {t==='products'?'🛍️ Products':t==='contact'?(
-              <span>📞 Contact & Chat{!isOwner && unreadCount > 0 && <span style={{marginLeft:'6px',background:'#ef4444',color:'white',borderRadius:'99px',padding:'1px 7px',fontSize:'11px',fontWeight:700}}>{unreadCount}</span>}</span>
+              {t==='products'?'🛍️ Products':t==='messages'?(
+              <span>💬 Messages{!isOwner && unreadCount > 0 && <span style={{marginLeft:'6px',background:'#ef4444',color:'white',borderRadius:'99px',padding:'1px 7px',fontSize:'11px',fontWeight:700}}>{unreadCount}</span>}</span>
             ):'⭐ Reviews'}
             </button>
           ))}
@@ -446,28 +448,10 @@ export default function VendorProfile() {
         )}
 
         {/* Contact & Chat */}
-        {tab === 'contact' && (
-          <div className="contact-chat-grid">
-            {/* Contact info */}
-            <div className="vp-panel">
-              <h3>📞 Contact Info</h3>
-              <div className="contact-list">
-                <div className="ci"><div className="ci-icon">📱</div><div><div className="ci-label">Phone / WhatsApp</div><div className="ci-val">{vendor.phone || 'Not provided'}</div></div></div>
-                <div className="ci"><div className="ci-icon">📧</div><div><div className="ci-label">Email</div><div className="ci-val">{vendor.email || 'Not provided'}</div></div></div>
-                <div className="ci"><div className="ci-icon">📍</div><div><div className="ci-label">Location</div><div className="ci-val">{vendor.location || 'Not provided'}</div></div></div>
-                <div className="ci"><div className="ci-icon">⏰</div><div><div className="ci-label">Open Hours</div><div className="ci-val">{vendor.hours || 'Not specified'}</div></div></div>
-              </div>
-              <div className="delivery-section">
-                <div className="ci-section-title">🚚 Delivery Details</div>
-                <div className="ci"><div className="ci-icon">📦</div><div><div className="ci-label">Delivery Area</div><div className="ci-val">{vendor.delivery_area || 'On campus'}</div></div></div>
-                <div className="ci"><div className="ci-icon">⏱️</div><div><div className="ci-label">Delivery Time</div><div className="ci-val">{vendor.delivery_time || 'Same day'}</div></div></div>
-                {vendor.delivery_zones && <div className="ci"><div className="ci-icon">📍</div><div><div className="ci-label">Delivery Zones</div><div className="ci-val">{vendor.delivery_zones}</div></div></div>}
-                <div className="ci"><div className="ci-icon">💰</div><div><div className="ci-label">Delivery Fee</div><div className="ci-val">{vendor.delivery_fee ? `MWK ${Number(vendor.delivery_fee).toLocaleString()}` : 'Free'}</div></div></div>
-              </div>
-            </div>
-
-            {/* Chat */}
-            <div className="vp-panel">
+        {tab === 'messages' && (
+          <div style={{maxWidth:'600px',margin:'0 auto'}}>
+            {/* Chat panel — full width, prominent */}
+            <div className="vp-panel" style={{marginBottom:'16px'}}>
               {isOwner ? (
                 <>
                   <h3>📥 Customer Messages</h3>
@@ -475,7 +459,6 @@ export default function VendorProfile() {
                     ? <div className="chat-empty" style={{padding:'24px 0'}}>No messages yet from buyers.</div>
                     : (
                       <div style={{display:'flex',gap:'12px',height:'340px'}}>
-                        {/* Thread list */}
                         <div style={{width:'140px',borderRight:'1px solid var(--border)',overflowY:'auto',flexShrink:0}}>
                           {buyerThreads.map(t => (
                             <div key={t.buyer_id}
@@ -486,7 +469,6 @@ export default function VendorProfile() {
                             </div>
                           ))}
                         </div>
-                        {/* Active thread */}
                         <div style={{flex:1,display:'flex',flexDirection:'column'}}>
                           <div className="chat-box" ref={chatRef} style={{flex:1}}>
                             {messages.length === 0
@@ -513,8 +495,8 @@ export default function VendorProfile() {
                 </>
               ) : (
                 <>
-                  <h3>💬 Ask the Vendor</h3>
-                  <p className="chat-subtitle">Ask about availability, prices, or delivery.</p>
+                  <h3>💬 Message {vendor.name}</h3>
+                  <p className="chat-subtitle">Ask about availability, prices, or delivery. Messages go directly to the vendor.</p>
                   <div className="chat-box" ref={chatRef}>
                     {messages.length === 0
                       ? <div className="chat-empty">No messages yet. Say hello! 👋</div>
@@ -526,17 +508,40 @@ export default function VendorProfile() {
                         ))
                     }
                   </div>
-                  <div className="chat-input-row">
-                    <textarea id="chat-input" className="chat-input" value={msgText} onChange={e => setMsgText(e.target.value)}
-                      placeholder={user ? 'Type a message...' : 'Sign in to chat with this vendor'}
-                      onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()} }}
-                      rows={2} disabled={!user}/>
-                    <button className="send-btn" onClick={sendMessage} disabled={!user}>➤</button>
-                  </div>
-                  {!user && <p className="signin-hint"><button onClick={() => navigate('/signin')}>Sign in</button> to chat with this vendor</p>}
+                  {user ? (
+                    <div className="chat-input-row">
+                      <textarea id="chat-input" className="chat-input" value={msgText} onChange={e => setMsgText(e.target.value)}
+                        placeholder="Type a message..."
+                        onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()} }}
+                        rows={2}/>
+                      <button className="send-btn" onClick={sendMessage}>➤</button>
+                    </div>
+                  ) : (
+                    <p className="signin-hint"><button onClick={() => navigate('/signin')}>Sign in</button> to message this vendor</p>
+                  )}
+                  {vendor.phone && (
+                    <a href={`https://wa.me/${vendor.phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer"
+                      style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'12px',background:'#25D366',color:'white',padding:'10px 14px',borderRadius:'10px',fontWeight:700,fontSize:'13px',textDecoration:'none'}}>
+                      <span style={{fontSize:'18px'}}>💬</span> Chat on WhatsApp
+                    </a>
+                  )}
                 </>
               )}
             </div>
+
+            {/* Contact info — compact, below chat */}
+            {!isOwner && (
+              <div className="vp-panel" style={{fontSize:'13px'}}>
+                <h4 style={{margin:'0 0 10px',fontSize:'14px',fontWeight:700}}>📞 Contact & Delivery</h4>
+                <div className="contact-list">
+                  {vendor.phone && <div className="ci"><div className="ci-icon">📱</div><div><div className="ci-label">Phone / WhatsApp</div><div className="ci-val">{vendor.phone}</div></div></div>}
+                  {vendor.location && <div className="ci"><div className="ci-icon">📍</div><div><div className="ci-label">Location</div><div className="ci-val">{vendor.location}</div></div></div>}
+                  {vendor.hours && <div className="ci"><div className="ci-icon">⏰</div><div><div className="ci-label">Open Hours</div><div className="ci-val">{vendor.hours}</div></div></div>}
+                  <div className="ci"><div className="ci-icon">💰</div><div><div className="ci-label">Delivery Fee</div><div className="ci-val">{vendor.delivery_fee ? `MWK ${Number(vendor.delivery_fee).toLocaleString()}` : 'Free'}</div></div></div>
+                  <div className="ci"><div className="ci-icon">⏱️</div><div><div className="ci-label">Delivery Time</div><div className="ci-val">{vendor.delivery_time || 'Same day'}</div></div></div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
