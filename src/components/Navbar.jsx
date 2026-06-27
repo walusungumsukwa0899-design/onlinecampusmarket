@@ -44,11 +44,13 @@ export default function Navbar() {
   return (
     <>
       <nav className="navbar">
+        {/* Row 1 — Logo */}
         <Link to="/home" className="nav-logo">
           <div className="nav-logo-icon">🐺</div>
           <div className="nav-logo-text">Wolf <span>Market</span></div>
         </Link>
 
+        {/* Desktop centre links */}
         <div className="nav-links">
           <Link to="/home" className={`nav-link${path==='/home'?' active':''}`}>Home</Link>
           <Link to="/marketplaces" className={`nav-link${path==='/marketplaces'?' active':''}`}>Marketplaces</Link>
@@ -58,8 +60,28 @@ export default function Navbar() {
           {user && <Link to="/dashboard" className={`nav-link${path==='/dashboard'?' active':''}`}>Dashboard</Link>}
         </div>
 
+        {/* Desktop right actions */}
         <div className="nav-actions">
           {canInstall && <button className="nav-install" onClick={promptInstall}>⬇️ Install App</button>}
+          {user && (
+            <Link to="/dashboard?tab=notifications" className="nav-cart" title="Notifications">
+              🔔{unreadNotifs > 0 && <span className="cart-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
+            </Link>
+          )}
+          <Link to="/wishlist" className="nav-cart" title="Saved">
+            🔖{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
+          </Link>
+          <Link to="/cart" className="nav-cart" title="Cart">
+            🛒{totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+          </Link>
+          {user
+            ? <button className="nav-cta" onClick={() => { signOut(); navigate('/') }}>Sign Out</button>
+            : <Link to="/signin"><button className="nav-cta">Sign In</button></Link>
+          }
+        </div>
+
+        {/* Row 2 — Mobile icon strip (below logo) */}
+        <div className="mobile-icon-row">
           {user && (
             <Link to="/dashboard?tab=notifications" className="nav-cart" title="Notifications">
               🔔{unreadNotifs > 0 && <span className="cart-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
@@ -85,7 +107,7 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Mobile Nav */}
+      {/* Mobile Bottom Nav */}
       <div className="mobile-nav">
         <Link to="/home" className={`mob-item${path==='/home'?' active':''}`}><span>🏠</span><span>Home</span></Link>
         <Link to="/search" className={`mob-item${path==='/search'?' active':''}`}><span>🔍</span><span>Search</span></Link>

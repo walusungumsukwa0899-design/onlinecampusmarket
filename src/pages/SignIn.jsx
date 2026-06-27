@@ -54,7 +54,8 @@ export default function SignIn() {
         setTab('check-email')
       }
     } catch (e) {
-      setError(e.message || 'Something went wrong. Please try again.')
+      const msg = typeof e === 'string' ? e : e?.message || JSON.stringify(e) || 'Something went wrong. Please try again.'
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -212,11 +213,7 @@ export default function SignIn() {
             </div>
           )}
 
-          <div style={{ textAlign: 'center', marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-            <button onClick={() => navigate('/home')} style={{ background: 'none', border: 'none', color: 'var(--gray)', fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>
-              Browse as guest →
-            </button>
-          </div>
+
         </div>
       </div>
     </div>

@@ -30,10 +30,14 @@ import Disputes from './pages/Disputes'
 import Trending from './pages/Trending'
 import { supabase } from './lib/supabase'
 
-// Redirects to /signin if not logged in
+// Redirects to /signin if not logged in, waits while auth is loading
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return null // wait for auth to resolve
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div style={{ fontSize: '32px' }}>🐺</div>
+    </div>
+  )
   if (!user) return <Navigate to="/signin" replace />
   return children
 }
@@ -42,17 +46,14 @@ function EmailVerificationBanner() {
   const { user } = useAuth()
   const [dismissed, setDismissed] = useState(false)
   const [resent, setResent] = useState(false)
-
   if (!user || dismissed) return null
   if (user.email_confirmed_at) return null
-
   async function resend() {
     await supabase.auth.resend({ type: 'signup', email: user.email })
     setResent(true)
   }
-
   return (
-    <div style={{ background: '#fffbeb', borderBottom: '1.5px solid #fde68a', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', fontSize: '13px', position: 'fixed', top: '60px', left: 0, right: 0, zIndex: 999 }}>
+    <div style={{ background: '#fffbeb', borderBottom: '1.5px solid #fde68a', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', fontSize: '13px', position: 'fixed', top: '108px', left: 0, right: 0, zIndex: 999 }}>
       <span>📧 <strong>Verify your email</strong> — check your inbox for a link from Wolf Marketplace.</span>
       {!resent
         ? <button onClick={resend} style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>Resend Email</button>
@@ -113,24 +114,17 @@ function AppShell({ children }) {
   )
 }
 
-// Public routes (no login needed)
-const PUBLIC_ROUTES = ['/', '/signin', '/terms', '/privacy', '/safety', '/help']
-
 export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
         <AppShell>
           <Routes>
-            {/* Public */}
+            {/* Only these two are accessible without login */}
             <Route path="/" element={<SignIn />} />
             <Route path="/signin" element={<SignIn />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/safety" element={<SafetyPolicy />} />
-            <Route path="/help" element={<HelpCenter />} />
 
-            {/* Protected — must be signed in */}
+            {/* Everything else requires login */}
             <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/marketplaces" element={<ProtectedRoute><Marketplaces /></ProtectedRoute>} />
             <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
@@ -139,6 +133,8 @@ export default function App() {
             <Route path="/sell" element={<ProtectedRoute><Sell /></ProtectedRoute>} />
             <Route path="/delivery" element={<ProtectedRoute><Delivery /></ProtectedRoute>} />
             <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
+            <Route path="/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+            <Route path="/safety" element={<ProtectedRoute><SafetyPolicy /></ProtectedRoute>} />
             <Route path="/report" element={<ProtectedRoute><ReportIssue /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
@@ -146,12 +142,13 @@ export default function App() {
             <Route path="/products/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
             <Route path="/order-confirmation/:chargeId" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
             <Route path="/category/:slug" element={<ProtectedRoute><Category /></ProtectedRoute>} />
+            <Route path="/terms" element={<ProtectedRoute><Terms /></ProtectedRoute>} />
+            <Route path="/privacy" element={<ProtectedRoute><Privacy /></ProtectedRoute>} />
             <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/referrals" element={<ProtectedRoute><Referrals /></ProtectedRoute>} />
             <Route path="/disputes" element={<ProtectedRoute><Disputes /></ProtectedRoute>} />
             <Route path="/trending" element={<ProtectedRoute><Trending /></ProtectedRoute>} />
-
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppShell>
