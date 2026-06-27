@@ -41,7 +41,7 @@ function EmptyCart({ navigate }) {
                 return (
                   <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                     <div className="product-img">
-                      {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span>{p.icon || '📦'}</span>}
+                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span>{p.icon || '📦'}</span>}
                     </div>
                     <div className="product-body">
                       <div className="product-name">{p.name}</div>
@@ -101,21 +101,15 @@ export default function Cart() {
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
   const [deliverySlot, setDeliverySlot] = useState('')
-  const [savedAddresses, setSavedAddresses] = useState([])
-  const [showAddressPicker, setShowAddressPicker] = useState(false)
 
-  // Pre-fill saved mobile + credit balance + addresses from profile
+  // Pre-fill saved mobile + credit balance from profile
   useEffect(() => {
     async function loadProfile() {
       if (!user) return
-      const [{ data }, { data: addrs }] = await Promise.all([
-        supabase.from('profiles').select('saved_mobile, saved_network, credit_balance').eq('id', user.id).maybeSingle(),
-        supabase.from('address_book').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      ])
+      const { data } = await supabase.from('profiles').select('saved_mobile, saved_network, credit_balance').eq('id', user.id).maybeSingle()
       if (data?.saved_mobile) setMobile(data.saved_mobile)
       if (data?.saved_network) setNetwork(data.saved_network)
       if (data?.credit_balance) setCreditBalance(data.credit_balance)
-      if (addrs?.length) setSavedAddresses(addrs)
     }
     loadProfile()
   }, [user])
@@ -369,31 +363,39 @@ export default function Cart() {
             )}
 
             <div className="form-group">
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'6px'}}>
-                <label className="form-label" style={{margin:0}}>Delivery location or pickup note (optional)</label>
-                {savedAddresses.length > 0 && (
-                  <button
-                    onClick={() => setShowAddressPicker(p => !p)}
-                    style={{background:'none',border:'none',color:'var(--wolf)',fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:'inherit',padding:'0'}}>
-                    📍 Saved ({savedAddresses.length})
+              <label className="form-label">Delivery location or pickup note (optional)</label>
+              {/* Saved address book */}
+              {(() => {
+                let saved = []
+                try { saved = JSON.parse(localStorage.getItem('wolf_saved_addresses') || '[]') } catch {}
+                return saved.length > 0 ? (
+                  <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'8px'}}>
+                    {saved.map((addr, i) => (
+                      <button key={i} onClick={() => setDeliveryNote(addr)}
+                        style={{background:'var(--light)',border:'1.5px solid var(--border)',borderRadius:'8px',padding:'5px 10px',fontSize:'11px',fontWeight:600,cursor:'pointer',maxWidth:'180px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--wolf)'}}>
+                        📍 {addr}
+                      </button>
+                    ))}
+                  </div>
+                ) : null
+              })()}
+              <div style={{display:'flex',gap:'6px'}}>
+                <input className="form-input" style={{flex:1}} value={deliveryNote} onChange={e => setDeliveryNote(e.target.value)} placeholder="e.g. Block C Hostel, UNIMA — or 'I'll pick up'" disabled={stage==='charging'||stage==='polling'}/>
+                {deliveryNote.trim() && (
+                  <button onClick={() => {
+                    let saved = []
+                    try { saved = JSON.parse(localStorage.getItem('wolf_saved_addresses') || '[]') } catch {}
+                    if (!saved.includes(deliveryNote.trim())) {
+                      saved = [deliveryNote.trim(), ...saved].slice(0, 5)
+                      localStorage.setItem('wolf_saved_addresses', JSON.stringify(saved))
+                      alert('📍 Address saved!')
+                    }
+                  }} style={{background:'var(--light)',border:'1.5px solid var(--border)',borderRadius:'8px',padding:'0 10px',cursor:'pointer',fontSize:'12px',fontWeight:700,color:'var(--wolf)',flexShrink:0,whiteSpace:'nowrap'}}
+                  disabled={stage==='charging'||stage==='polling'}>
+                    💾 Save
                   </button>
                 )}
               </div>
-
-              {showAddressPicker && savedAddresses.length > 0 && (
-                <div style={{background:'var(--light)',borderRadius:'10px',padding:'10px',marginBottom:'8px',display:'flex',flexDirection:'column',gap:'6px'}}>
-                  {savedAddresses.map(a => (
-                    <button key={a.id}
-                      onClick={() => { setDeliveryNote(a.address + (a.phone ? ` (📱 ${a.phone})` : '')); setShowAddressPicker(false) }}
-                      style={{background:'white',border:'1.5px solid var(--border)',borderRadius:'8px',padding:'8px 12px',textAlign:'left',cursor:'pointer',fontFamily:'inherit'}}>
-                      <div style={{fontWeight:700,fontSize:'12px',color:'#374151'}}>{a.label || 'Address'}</div>
-                      <div style={{fontSize:'11px',color:'var(--gray)'}}>{a.address}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <input className="form-input" value={deliveryNote} onChange={e => setDeliveryNote(e.target.value)} placeholder="e.g. Block C Hostel, UNIMA — or 'I'll pick up'" disabled={stage==='charging'||stage==='polling'}/>
             </div>
 
             <div className="pay-methods">

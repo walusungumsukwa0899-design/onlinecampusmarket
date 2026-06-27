@@ -19,10 +19,6 @@ export default function Messages() {
   const [myVendor, setMyVendor] = useState(null)
   const messagesEndRef = useRef(null)
   const realtimeRef = useRef(null)
-  // Rate limiting: max 3 messages per 5 seconds
-  const lastSentTimestamps = useRef([])
-  const [rateLimited, setRateLimited] = useState(false)
-  const rateLimitTimer = useRef(null)
 
   useEffect(() => {
     if (authLoading) return
@@ -106,7 +102,7 @@ export default function Messages() {
         if (v) setActiveVendor(v.vendor)
         else {
           // Fetch vendor info even if no prior messages
-          const { data: vd } = await supabase.from('vendors').select('id,name,avatar_url,icon,university').eq('id', activeVendorId).maybeSingle()
+          const { data: vd } = await supabase.from('vendors').select('id,name,avatar_url,icon,university,avg_rating,response_rate').eq('id', activeVendorId).maybeSingle()
           if (vd) setActiveVendor(vd)
         }
       } else if (convMap.size > 0) {
@@ -135,20 +131,22 @@ export default function Messages() {
   }
 
   async function sendMessage() {
-    if (!newMsg.trim() || !activeVendorId || sending || rateLimited) return
-
-    // Rate limiting: max 3 messages per 5 seconds
+    if (!newMsg.trim() || !activeVendorId || sending) return
+    // Rate limit: max 5 messages per minute
     const now = Date.now()
-    lastSentTimestamps.current = lastSentTimestamps.current.filter(t => now - t < 5000)
-    if (lastSentTimestamps.current.length >= 3) {
-      setRateLimited(true)
-      clearTimeout(rateLimitTimer.current)
-      rateLimitTimer.current = setTimeout(() => setRateLimited(false), 5000)
+    const key = `wolf_msg_times_${activeVendorId}`
+    let times = []
+    try { times = JSON.parse(sessionStorage.getItem(key) || '[]') } catch {}
+    times = times.filter(t => now - t < 60000)
+    if (times.length >= 5) {
+      alert('Please wait a moment before sending more messages.')
       return
     }
-    lastSentTimestamps.current.push(now)
+    times.push(now)
+    sessionStorage.setItem(key, JSON.stringify(times))
 
     setSending(true)
+    const isVendorSending = myVendor && conversations.find(c => c.vendorId === activeVendorId)?.type === 'vendor-side'
     const msgData = {
       vendor_id: activeVendorId,
       buyer_id: user.id,
@@ -230,7 +228,11 @@ export default function Messages() {
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: '14px', cursor: 'pointer' }} onClick={() => navigate(`/vendors/${activeVendorId}`)}>{activeVendor?.name || 'Vendor'}</div>
-              <div style={{ fontSize: '11px', color: 'var(--gray)' }}>{activeVendor?.university}</div>
+              <div style={{ fontSize: '11px', color: 'var(--gray)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <span>{activeVendor?.university}</span>
+                {activeVendor?.response_rate > 0 && <span style={{ color: '#22c55e', fontWeight: 600 }}>⚡ {activeVendor.response_rate}% response rate</span>}
+                {activeVendor?.avg_rating > 0 && <span>⭐ {Number(activeVendor.avg_rating).toFixed(1)}</span>}
+              </div>
             </div>
             <button onClick={() => navigate(`/vendors/${activeVendorId}`)}
               style={{ marginLeft: 'auto', background: 'var(--light)', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>View Store →</button>
@@ -264,25 +266,18 @@ export default function Messages() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Rate limit warning */}
-          {rateLimited && (
-            <div style={{ padding: '6px 16px', background: '#fff7ed', borderTop: '1px solid #fed7aa', fontSize: '12px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-              ⏱️ Slow down — you can send 3 messages every 5 seconds.
-            </div>
-          )}
           {/* Input */}
           <div style={{ padding: '12px 16px', borderTop: '1.5px solid var(--border)', background: 'white', display: 'flex', gap: '10px', alignItems: 'flex-end', flexShrink: 0 }}>
             <textarea
               value={newMsg}
               onChange={e => setNewMsg(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-              placeholder={rateLimited ? 'Too many messages — wait a moment…' : 'Type a message...'}
+              placeholder="Type a message..."
               rows={1}
-              disabled={rateLimited}
-              style={{ flex: 1, border: `1.5px solid ${rateLimited ? '#fed7aa' : 'var(--border)'}`, borderRadius: '10px', padding: '10px 14px', fontSize: '14px', fontFamily: 'Inter,sans-serif', outline: 'none', resize: 'none', maxHeight: '100px', overflowY: 'auto', opacity: rateLimited ? 0.6 : 1 }}
+              style={{ flex: 1, border: '1.5px solid var(--border)', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', fontFamily: 'Inter,sans-serif', outline: 'none', resize: 'none', maxHeight: '100px', overflowY: 'auto' }}
             />
-            <button onClick={sendMessage} disabled={sending || !newMsg.trim() || rateLimited}
-              style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '10px', width: '42px', height: '42px', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: (!newMsg.trim() || sending || rateLimited) ? 0.5 : 1 }}>
+            <button onClick={sendMessage} disabled={sending || !newMsg.trim()}
+              style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '10px', width: '42px', height: '42px', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}>
               ➤
             </button>
           </div>

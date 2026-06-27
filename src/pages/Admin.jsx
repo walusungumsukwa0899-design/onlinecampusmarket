@@ -23,7 +23,7 @@ export default function Admin() {
   useEffect(() => {
     if (authLoading) return
     if (!user) { navigate('/signin'); return }
-    if (!isAdmin) { navigate('/'); return }
+    if (!isAdmin) { navigate('/home'); return }
     loadAll()
   }, [user, authLoading])
 

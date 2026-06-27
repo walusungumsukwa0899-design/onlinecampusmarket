@@ -80,7 +80,7 @@ export default function Category() {
             {products.map(p => (
               <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                 <div className="product-img">
-                  {p.image_url ? <img src={p.image_url} alt={p.name}/> : <span>{p.icon || icon}</span>}
+                  {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy"/> : <span>{p.icon || icon}</span>}
                 </div>
                 <div className="product-info">
                   <div className="product-name">{p.name}</div>

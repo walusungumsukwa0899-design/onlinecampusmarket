@@ -7,47 +7,6 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import Onboarding from './Onboarding'
 import './Dashboard.css'
 
-// Lightweight variant group editor used inside the edit-product modal
-function EditVariantGroups({ variantGroups, setVariantGroups }) {
-  const [drafts, setDrafts] = useState({})
-  function addGroup() { setVariantGroups([...variantGroups, { name: '', options: [] }]) }
-  function removeGroup(i) { setVariantGroups(variantGroups.filter((_, idx) => idx !== i)) }
-  function setName(i, name) { setVariantGroups(variantGroups.map((g, idx) => idx === i ? { ...g, name } : g)) }
-  function addOpt(i) {
-    const t = (drafts[i] || '').trim(); if (!t) return
-    setVariantGroups(variantGroups.map((g, idx) => idx === i ? { ...g, options: [...g.options, t] } : g))
-    setDrafts(d => ({ ...d, [i]: '' }))
-  }
-  function removeOpt(gi, oi) { setVariantGroups(variantGroups.map((g, i) => i === gi ? { ...g, options: g.options.filter((_, j) => j !== oi) } : g)) }
-  return (
-    <div>
-      {variantGroups.map((g, i) => (
-        <div key={i} style={{ background: 'var(--light)', borderRadius: '10px', padding: '10px 12px', marginBottom: '8px', border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-            <input className="form-input" value={g.name} onChange={e => setName(i, e.target.value)} placeholder="Group (e.g. Size)" style={{ flex: 1, padding: '6px 10px', fontSize: '12px' }} />
-            <button type="button" onClick={() => removeGroup(i)} style={{ background: '#fee2e2', border: 'none', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#b91c1c', fontSize: '12px', fontFamily: 'inherit' }}>✕</button>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
-            {g.options.map((opt, oi) => (
-              <span key={oi} style={{ background: 'white', border: '1.5px solid var(--wolf)', borderRadius: '20px', padding: '2px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--wolf)', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                {opt}
-                <button type="button" onClick={() => removeOpt(i, oi)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--wolf)', lineHeight: 1, fontSize: '13px' }}>×</button>
-              </span>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <input className="form-input" value={drafts[i] || ''} onChange={e => setDrafts(d => ({ ...d, [i]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOpt(i) } }} placeholder="Add option, press Enter" style={{ flex: 1, padding: '5px 9px', fontSize: '12px' }} />
-            <button type="button" onClick={() => addOpt(i)} style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>+</button>
-          </div>
-        </div>
-      ))}
-      <button type="button" onClick={addGroup} style={{ width: '100%', background: 'none', border: '1.5px dashed var(--border)', borderRadius: '8px', padding: '7px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', color: 'var(--gray)', fontFamily: 'inherit' }}>
-        + Add Variant Group
-      </button>
-    </div>
-  )
-}
-
 function OrderTimeline({ status, createdAt, receivedAt }) {
   const steps = [
     { key: 'pending',   label: 'Order Placed',    icon: '🛒' },
@@ -197,24 +156,6 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState([])
   const [unreadNotifCount, setUnreadNotifCount] = useState(0)
 
-  // Order history filters
-  const [orderStatusFilter, setOrderStatusFilter] = useState('all')
-  const [orderDateFilter, setOrderDateFilter] = useState('all') // 'all' | '7d' | '30d' | '90d'
-  const [orderSearch, setOrderSearch] = useState('')
-
-  // Address book
-  const [addresses, setAddresses] = useState([])
-  const [newAddress, setNewAddress] = useState({ label: '', address: '', phone: '' })
-  const [addingAddress, setAddingAddress] = useState(false)
-  const [savingAddress, setSavingAddress] = useState(false)
-
-  // Scheduled availability
-  const [scheduleOpen, setScheduleOpen] = useState('')   // e.g. "08:00"
-  const [scheduleClose, setScheduleClose] = useState('') // e.g. "20:00"
-  const [scheduleDays, setScheduleDays] = useState(['Mon','Tue','Wed','Thu','Fri'])
-  const [savingSchedule, setSavingSchedule] = useState(false)
-  const [scheduleEnabled, setScheduleEnabled] = useState(false)
-
   useEffect(() => {
     if (authLoading) return // wait until we actually know if there's a session
     if (!user) { navigate('/signin'); return }
@@ -235,20 +176,11 @@ export default function Dashboard() {
       setPayoutPhone(vend?.payout_phone || '')
       setPayoutNetwork(vend?.payout_network || '')
 
-      // Load vendor schedule if set
-      if (vend?.schedule_open) {
-        setScheduleOpen(vend.schedule_open || '')
-        setScheduleClose(vend.schedule_close || '')
-        setScheduleDays(vend.schedule_days ? JSON.parse(vend.schedule_days) : ['Mon','Tue','Wed','Thu','Fri'])
-        setScheduleEnabled(!!vend.schedule_enabled)
-      }
-
       const queries = [
-        supabase.from('orders').select('*, products(name,icon,vendor_id,vendors(name))').eq('buyer_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('orders').select('*, products(name,icon)').eq('buyer_id', user.id).order('created_at', { ascending: false }),
         supabase.from('order_reports').select('order_id').eq('reporter_id', user.id),
         supabase.from('profiles').select('referral_code, credit_balance, referred_by').eq('id', user.id).maybeSingle(),
         supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('address_book').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       ]
       if (vend?.id) {
         queries.push(supabase.from('products').select('*').eq('vendor_id', vend.id).order('created_at', { ascending: false }))
@@ -256,17 +188,16 @@ export default function Dashboard() {
       }
 
       const results = await Promise.all(queries)
-      const [{ data: ords }, { data: reports }, { data: prof }, { data: notifs }, { data: addrs }] = results
+      const [{ data: ords }, { data: reports }, { data: prof }, { data: notifs }] = results
       setOrders(ords || [])
       setReportedIds(new Set((reports || []).map(r => r.order_id)))
       setProfile(prof || null)
       setNotifications(notifs || [])
       setUnreadNotifCount((notifs || []).filter(n => !n.read).length)
-      setAddresses(addrs || [])
 
       if (vend?.id) {
-        const prods = results[5]?.data || []
-        const salesData = results[6]?.data || []
+        const prods = results[4]?.data || []
+        const salesData = results[5]?.data || []
         setMyProducts(prods)
         setSales(salesData)
         const totalRevenue = salesData.filter(o => o.status !== 'cancelled').reduce((a, o) => a + (o.total || 0), 0)
@@ -380,19 +311,16 @@ export default function Dashboard() {
   async function saveProductEdit() {
     if (!editingProduct) return
     setEditProductSaving(true)
-    const reorderedImages = editProductForm.images || editingProduct.images
     const updates = {
       name: editProductForm.name?.trim(),
       price: parseInt(editProductForm.price) || editingProduct.price,
       description: editProductForm.description?.trim(),
       category: editProductForm.category,
       stock_qty: editProductForm.stock_qty !== '' ? parseInt(editProductForm.stock_qty) : null,
-      variant_groups: editProductForm.variant_groups || null,
-      // Persist reordered images: first image becomes the cover
-      ...(reorderedImages && reorderedImages.length > 0 && {
-        images: reorderedImages,
-        image_url: reorderedImages[0], // first image is always the cover
-      }),
+      compare_at_price: editProductForm.compare_at_price ? parseInt(editProductForm.compare_at_price) : null,
+      variants: editProductForm.variants ? editProductForm.variants.split(',').map(v => v.trim()).filter(Boolean) : null,
+      available: editProductForm.available !== false,
+      price_tiers: editProductForm.price_tiers?.filter(t => t.label && t.price) || null,
     }
     if (!updates.name) { alert('Product name is required'); setEditProductSaving(false); return }
     const { error } = await supabase.from('products').update(updates).eq('id', editingProduct.id)
@@ -402,6 +330,17 @@ export default function Dashboard() {
       setEditingProduct(null)
     } else {
       alert('Could not save product: ' + error.message)
+    }
+  }
+
+  async function deleteProductFromEdit(productId) {
+    if (!confirm('Delete this product permanently? This cannot be undone.')) return
+    const { error } = await supabase.from('products').delete().eq('id', productId)
+    if (!error) {
+      setMyProducts(prev => prev.filter(p => p.id !== productId))
+      setEditingProduct(null)
+    } else {
+      alert('Could not delete product: ' + error.message)
     }
   }
 
@@ -474,127 +413,6 @@ export default function Dashboard() {
     }
   }
 
-  // ── Address Book ──────────────────────────────────────────────
-  async function saveAddress() {
-    if (!newAddress.address.trim()) { alert('Please enter an address'); return }
-    setSavingAddress(true)
-    const { data, error } = await supabase.from('address_book').insert({
-      user_id: user.id,
-      label: newAddress.label.trim() || 'Home',
-      address: newAddress.address.trim(),
-      phone: newAddress.phone.trim(),
-    }).select().single()
-    setSavingAddress(false)
-    if (!error && data) {
-      setAddresses(prev => [data, ...prev])
-      setNewAddress({ label: '', address: '', phone: '' })
-      setAddingAddress(false)
-    } else {
-      alert('Could not save address: ' + (error?.message || 'Unknown error'))
-    }
-  }
-
-  async function deleteAddress(id) {
-    if (!confirm('Remove this saved address?')) return
-    const { error } = await supabase.from('address_book').delete().eq('id', id)
-    if (!error) setAddresses(prev => prev.filter(a => a.id !== id))
-  }
-
-  // ── Scheduled Availability ─────────────────────────────────────
-  async function saveSchedule() {
-    if (!vendor) return
-    setSavingSchedule(true)
-    const { error } = await supabase.from('vendors').update({
-      schedule_open: scheduleOpen,
-      schedule_close: scheduleClose,
-      schedule_days: JSON.stringify(scheduleDays),
-      schedule_enabled: scheduleEnabled,
-    }).eq('id', vendor.id)
-    setSavingSchedule(false)
-    if (error) alert('Could not save schedule: ' + error.message)
-  }
-
-  // ── Order cancellation ─────────────────────────────────────────
-  const [cancellingOrder, setCancellingOrder] = useState(null)
-  const [cancelReason, setCancelReason] = useState('changed_mind')
-  const [cancelNote, setCancelNote] = useState('')
-  const [cancelling, setCancelling] = useState(false)
-
-  async function cancelOrder() {
-    if (!cancellingOrder) return
-    setCancelling(true)
-    const { error } = await supabase.from('orders').update({
-      status: 'cancelled',
-      cancel_reason: cancelReason,
-      cancel_note: cancelNote.trim(),
-      cancelled_at: new Date().toISOString(),
-    }).eq('id', cancellingOrder.id).eq('buyer_id', user.id)
-
-    if (!error) {
-      setOrders(prev => prev.map(o => o.id === cancellingOrder.id
-        ? { ...o, status: 'cancelled', cancel_reason: cancelReason }
-        : o))
-      // Notify vendor (fire and forget)
-      supabase.functions.invoke('notify-order-cancelled', {
-        body: { orderId: cancellingOrder.id, vendorId: cancellingOrder.products?.vendor_id, reason: cancelReason }
-      }).catch(() => {})
-      setCancellingOrder(null)
-      setCancelNote('')
-    } else {
-      alert('Could not cancel: ' + error.message)
-    }
-    setCancelling(false)
-  }
-
-  // ── Inline review prompt state ─────────────────────────────────
-  const [reviewingOrder, setReviewingOrder] = useState(null)
-  const [inlineRating, setInlineRating] = useState(0)
-  const [inlineText, setInlineText] = useState('')
-  const [inlineSubmitting, setInlineSubmitting] = useState(false)
-  const [reviewedOrderIds, setReviewedOrderIds] = useState(new Set())
-
-  async function submitInlineReview() {
-    if (!reviewingOrder || !inlineRating) return
-    setInlineSubmitting(true)
-    const { error } = await supabase.from('product_reviews').insert({
-      product_id: reviewingOrder.product_id,
-      vendor_id: reviewingOrder.products?.vendor_id,
-      user_id: user.id,
-      buyer_name: user.user_metadata?.full_name || 'Anonymous',
-      stars: inlineRating,
-      text: inlineText.trim(),
-      verified_purchase: true,
-    })
-    if (!error) {
-      setReviewedOrderIds(prev => new Set([...prev, reviewingOrder.id]))
-      setReviewingOrder(null)
-      setInlineRating(0)
-      setInlineText('')
-    } else {
-      alert('Could not submit review: ' + error.message)
-    }
-    setInlineSubmitting(false)
-  }
-
-  // ── Order filter helpers ──────────────────────────────────────
-  function filteredOrders() {
-    let result = [...orders]
-    if (orderStatusFilter !== 'all') result = result.filter(o => o.status === orderStatusFilter)
-    if (orderDateFilter !== 'all') {
-      const days = orderDateFilter === '7d' ? 7 : orderDateFilter === '30d' ? 30 : 90
-      const cutoff = new Date(Date.now() - days * 86400000)
-      result = result.filter(o => new Date(o.created_at) >= cutoff)
-    }
-    if (orderSearch.trim()) {
-      const q = orderSearch.toLowerCase()
-      result = result.filter(o =>
-        o.products?.name?.toLowerCase().includes(q) ||
-        o.products?.vendors?.name?.toLowerCase().includes(q)
-      )
-    }
-    return result
-  }
-
   if (authLoading) return <div className="loading" style={{minHeight:'60vh'}}><div className="spinner"/><span>Loading...</span></div>
   if (!user) return null
 
@@ -624,7 +442,7 @@ export default function Dashboard() {
             </div>
           ))}
           <div className="dash-nav-item sell-btn" onClick={() => navigate('/sell')}><span>➕</span>List Product</div>
-          <div className="dash-nav-item signout-btn" onClick={() => { signOut(); navigate('/') }}><span>🚪</span>Sign Out</div>
+          <div className="dash-nav-item signout-btn" onClick={() => { signOut(); navigate('/home') }}><span>🚪</span>Sign Out</div>
         </aside>
 
         {/* Main */}
@@ -714,59 +532,45 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {tab === 'orders' && (
+              {tab === 'orders' && (() => { return (
                 <div>
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
-                    <h2 className="dash-title" style={{margin:0}}>My Orders</h2>
-                    <span style={{fontSize:'12px',color:'var(--gray)',fontWeight:600}}>{filteredOrders().length} of {orders.length} orders</span>
-                  </div>
-
+                  <h2 className="dash-title">My Orders</h2>
                   {/* Filter bar */}
                   {orders.length > 0 && (
                     <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px',alignItems:'center'}}>
-                      <input
-                        value={orderSearch}
-                        onChange={e => setOrderSearch(e.target.value)}
-                        placeholder="Search orders…"
-                        style={{padding:'7px 12px',border:'1.5px solid var(--border)',borderRadius:'8px',fontSize:'13px',fontFamily:'inherit',outline:'none',minWidth:'140px'}}
-                      />
-                      <select value={orderStatusFilter} onChange={e => setOrderStatusFilter(e.target.value)}
-                        style={{padding:'7px 10px',border:'1.5px solid var(--border)',borderRadius:'8px',fontSize:'13px',fontFamily:'inherit',cursor:'pointer',background:'white'}}>
-                        <option value="all">All statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="transit">In Transit</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                      <select value={orderDateFilter} onChange={e => setOrderDateFilter(e.target.value)}
-                        style={{padding:'7px 10px',border:'1.5px solid var(--border)',borderRadius:'8px',fontSize:'13px',fontFamily:'inherit',cursor:'pointer',background:'white'}}>
-                        <option value="all">Any time</option>
-                        <option value="7d">Last 7 days</option>
-                        <option value="30d">Last 30 days</option>
-                        <option value="90d">Last 90 days</option>
-                      </select>
-                      {(orderStatusFilter !== 'all' || orderDateFilter !== 'all' || orderSearch) && (
-                        <button onClick={() => { setOrderStatusFilter('all'); setOrderDateFilter('all'); setOrderSearch('') }}
-                          style={{padding:'7px 12px',background:'var(--light)',border:'none',borderRadius:'8px',fontSize:'12px',fontWeight:700,cursor:'pointer',color:'var(--gray)',fontFamily:'inherit'}}>
-                          ✕ Clear
+                      <input placeholder="Search orders..." style={{flex:1,minWidth:'140px',border:'1.5px solid var(--border)',borderRadius:'8px',padding:'8px 12px',fontSize:'13px',outline:'none',fontFamily:'Inter,sans-serif'}}
+                        id="order-search-input" defaultValue=""
+                        onChange={e => {
+                          const v = e.target.value.toLowerCase()
+                          document.querySelectorAll('.order-row-filterable').forEach(el => {
+                            el.style.display = el.dataset.search?.includes(v) ? '' : 'none'
+                          })
+                        }}/>
+                      {['all','pending','confirmed','transit','delivered','cancelled'].map(s => (
+                        <button key={s} onClick={() => {
+                          document.querySelectorAll('.order-row-filterable').forEach(el => {
+                            el.style.display = (s === 'all' || el.dataset.status === s) ? '' : 'none'
+                          })
+                          document.querySelectorAll('.order-filter-btn').forEach(b => b.style.fontWeight = b.dataset.s === s ? '800' : '600')
+                        }} data-s={s} className="order-filter-btn"
+                          style={{background:'var(--light)',border:'1.5px solid var(--border)',borderRadius:'20px',padding:'5px 12px',fontSize:'11px',fontWeight:s==='all'?'800':'600',cursor:'pointer',textTransform:'capitalize',whiteSpace:'nowrap'}}>
+                          {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
                         </button>
-                      )}
+                      ))}
                     </div>
                   )}
-
                   {orders.length === 0
                     ? <div className="empty-state"><div className="empty-icon">🛍️</div><h3>No orders yet</h3><button className="btn-primary" onClick={() => navigate('/vendors')}>Browse Products</button></div>
-                    : filteredOrders().length === 0
-                    ? <div className="empty-state" style={{padding:'40px 0'}}><div className="empty-icon">🔍</div><h3>No matching orders</h3><p>Try adjusting your filters.</p></div>
                     : <div className="orders-list">
-                        {filteredOrders().map(o => (
-                          <div key={o.id} className="order-row order-row-expanded">
+                        {orders.map(o => (
+                          <div key={o.id} className="order-row order-row-expanded order-row-filterable"
+                            data-status={o.status || 'pending'}
+                            data-search={`${o.products?.name || ''} ${o.vendors?.name || ''} ${o.status || ''}`.toLowerCase()}>
                             <span className="order-icon">{o.products?.icon || '📦'}</span>
                             <div className="order-info">
                               <div className="order-name">{o.products?.name || 'Product'}</div>
-                              <div className="order-meta">{new Date(o.created_at).toLocaleDateString()} · MWK {Number(o.total || 0).toLocaleString()}</div>
-                              {o.products?.vendors?.name && <div style={{fontSize:'11px',color:'var(--gray)',marginBottom:'4px'}}>from {o.products.vendors.name}</div>}
+                              <div className="order-meta">{new Date(o.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} · MWK {Number(o.total || 0).toLocaleString()}</div>
+                              {o.vendors?.name && <div className="order-meta" style={{color:'var(--wolf)',fontWeight:600}}>from {o.vendors.name}</div>}
                               <OrderTimeline status={o.status || 'pending'} createdAt={o.created_at} receivedAt={o.received_at}/>
                               {o.received_at && <div className="order-received">✅ Marked received {new Date(o.received_at).toLocaleDateString()}</div>}
                             </div>
@@ -775,31 +579,13 @@ export default function Dashboard() {
                               {o.status === 'confirmed' && !o.received_at && (
                                 <button className="mini-btn confirm" onClick={() => markReceived(o.id)}>Mark as Received</button>
                               )}
-                              {/* Cancel — only while pending */}
-                              {o.status === 'pending' && (
-                                <button className="mini-btn report"
-                                  onClick={() => { setCancellingOrder(o); setCancelReason('changed_mind'); setCancelNote('') }}>
-                                  Cancel Order
-                                </button>
-                              )}
-                              {/* Review prompt for delivered orders */}
-                              {o.status === 'delivered' && !reviewedOrderIds.has(o.id) && (
-                                <button className="mini-btn confirm"
-                                  onClick={() => { setReviewingOrder(o); setInlineRating(0); setInlineText('') }}
-                                  style={{ background: '#fef3c7', color: '#92400e', borderColor: '#fde68a' }}>
-                                  ⭐ Leave a Review
-                                </button>
-                              )}
-                              {reviewedOrderIds.has(o.id) && (
-                                <span className="mini-note" style={{ color: '#166534' }}>✅ Review submitted</span>
-                              )}
                               {o.status === 'confirmed' && !o.received_at && !o.refund_status?.match(/requested|approved|refunded/) && (
                                 <button className="mini-btn report" onClick={async () => {
-                                  const reason = prompt('Briefly describe the issue (e.g. item not received, wrong item):')
+                                  const reason = prompt('Briefly describe the issue:')
                                   if (!reason) return
                                   const { error } = await supabase.from('order_reports').upsert({ order_id: o.id, reporter_id: user.id, reason: 'dispute', details: reason, status: 'open' })
                                   if (!error) await supabase.from('orders').update({ refund_status: 'requested' }).eq('id', o.id)
-                                  alert('Your dispute has been submitted. Our team will review it within 24 hours.')
+                                  alert('Dispute submitted. Our team will review within 24 hours.')
                                 }}>Request Refund</button>
                               )}
                               {o.refund_status && o.refund_status !== 'none' && (
@@ -810,8 +596,9 @@ export default function Dashboard() {
                               {o.status === 'confirmed' && (
                                 reportedIds.has(o.id)
                                   ? <span className="mini-note">Reported</span>
-                                  : <button className="mini-btn report" onClick={() => setReportingOrder(o)}>Report an Issue</button>
+                                  : <button className="mini-btn report" onClick={() => setReportingOrder(o)}>Report Issue</button>
                               )}
+                              <button className="mini-btn confirm" onClick={() => navigate(`/messages?vendor=${o.vendor_id}`)}>💬 Message Vendor</button>
                             </div>
                           </div>
                         ))}
@@ -845,11 +632,32 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-              )}
+              }})()
+              /* orders tab end */
 
               {tab === 'sales' && vendor && (
                 <div>
-                  <h2 className="dash-title">My Sales</h2>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'10px',marginBottom:'4px'}}>
+                    <h2 className="dash-title" style={{margin:0}}>My Sales</h2>
+                    {sales.length > 0 && (
+                      <button onClick={() => {
+                        const headers = ['Order ID','Product','Buyer','Total (MWK)','Status','Payout Status','Date']
+                        const rows = sales.map(o => [
+                          o.id, o.products?.name || 'Product', o.buyer_id,
+                          o.total || 0, o.status || 'pending', o.payout_status || 'pending',
+                          new Date(o.created_at).toLocaleDateString('en-GB')
+                        ])
+                        const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')
+                        const blob = new Blob([csv], { type: 'text/csv' })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url; a.download = `wolf-sales-${new Date().toISOString().slice(0,10)}.csv`
+                        a.click(); URL.revokeObjectURL(url)
+                      }} style={{background:'var(--light)',border:'1.5px solid var(--border)',borderRadius:'8px',padding:'7px 14px',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+                        📥 Export CSV
+                      </button>
+                    )}
+                  </div>
                   {!vendor.payout_phone && (
                     <div className="auth-error" style={{marginBottom:'16px',maxWidth:'480px'}}>
                       ⚠️ Set your payout phone number in Settings so you can be paid automatically when you make a sale.
@@ -1102,7 +910,34 @@ export default function Dashboard() {
                               <button className={`avail-toggle ${p.available ? 'on' : 'off'}`} onClick={() => toggleAvailability(p.id, p.available)}>
                                 {p.available ? '✅ Available' : '❌ Hidden'}
                               </button>
-                              <button className="mini-btn confirm" onClick={() => { setEditingProduct(p); setEditProductForm({ name: p.name, price: p.price, description: p.description || '', category: p.category || '', stock_qty: p.stock_qty ?? '', images: p.images || (p.image_url ? [p.image_url] : []), variant_groups: p.variant_groups || [] }) }}>✏️</button>
+                              <button className="mini-btn confirm" onClick={() => {
+                                setEditingProduct(p)
+                                setEditProductForm({
+                                  name: p.name, price: p.price,
+                                  description: p.description || '',
+                                  category: p.category || '',
+                                  stock_qty: p.stock_qty ?? '',
+                                  compare_at_price: p.compare_at_price || '',
+                                  variants: Array.isArray(p.variants) ? p.variants.join(', ') : (p.variants || ''),
+                                  available: p.available !== false,
+                                  price_tiers: p.price_tiers || [],
+                                })
+                              }}>✏️</button>
+                              <button className="mini-btn confirm" title="Duplicate product" onClick={async () => {
+                                if (!vendor) return
+                                const { data, error } = await supabase.from('products').insert({
+                                  vendor_id: vendor.id, name: p.name + ' (copy)', price: p.price,
+                                  description: p.description, category: p.category, icon: p.icon,
+                                  image_url: p.image_url, image_urls: p.image_urls,
+                                  stock_qty: p.stock_qty, condition: p.condition,
+                                  compare_at_price: p.compare_at_price, variants: p.variants,
+                                  available: false
+                                }).select().single()
+                                if (!error && data) {
+                                  setMyProducts(prev => [data, ...prev])
+                                  alert('✅ Product duplicated as "' + data.name + '" (hidden — edit and publish when ready)')
+                                }
+                              }}>⧉</button>
                               <button className="delete-btn" onClick={() => deleteProduct(p.id)}>🗑️</button>
                             </div>
                           </div>
@@ -1117,72 +952,6 @@ export default function Dashboard() {
                   <h2 className="dash-title">Account Settings</h2>
                   {vendor && <OnboardingChecklist vendor={vendor} myProducts={myProducts} payoutPhone={payoutPhone}/>}
                   <SettingsForm user={user} />
-
-                  {/* Address Book */}
-                  <div className="settings-card" style={{marginTop:'20px'}}>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
-                      <h4 style={{fontWeight:800,margin:0}}>📍 Saved Addresses</h4>
-                      {!addingAddress && (
-                        <button className="mini-btn confirm" onClick={() => setAddingAddress(true)}>+ Add Address</button>
-                      )}
-                    </div>
-
-                    {addresses.length === 0 && !addingAddress && (
-                      <p style={{fontSize:'13px',color:'var(--gray)',margin:'0 0 12px'}}>
-                        Save delivery addresses so you don't have to retype them every order.
-                      </p>
-                    )}
-
-                    {addresses.map(a => (
-                      <div key={a.id} style={{display:'flex',alignItems:'flex-start',gap:'10px',padding:'12px',background:'var(--light)',borderRadius:'10px',marginBottom:'8px'}}>
-                        <div style={{flex:1}}>
-                          <div style={{fontWeight:700,fontSize:'13px',marginBottom:'2px'}}>
-                            {a.label || 'Address'}
-                          </div>
-                          <div style={{fontSize:'12px',color:'#374151'}}>{a.address}</div>
-                          {a.phone && <div style={{fontSize:'12px',color:'var(--gray)',marginTop:'2px'}}>📱 {a.phone}</div>}
-                        </div>
-                        <button onClick={() => deleteAddress(a.id)}
-                          style={{background:'none',border:'none',cursor:'pointer',fontSize:'16px',color:'var(--gray)',padding:'4px',flexShrink:0}}>
-                          🗑️
-                        </button>
-                      </div>
-                    ))}
-
-                    {addingAddress && (
-                      <div style={{background:'var(--light)',borderRadius:'10px',padding:'16px',marginTop:'8px'}}>
-                        <div className="form-group" style={{marginBottom:'10px'}}>
-                          <label className="form-label">Label</label>
-                          <input className="form-input" value={newAddress.label}
-                            onChange={e => setNewAddress(a => ({...a, label: e.target.value}))}
-                            placeholder="e.g. Home, Hostel Room 204"/>
-                        </div>
-                        <div className="form-group" style={{marginBottom:'10px'}}>
-                          <label className="form-label">Delivery Address *</label>
-                          <input className="form-input" value={newAddress.address}
-                            onChange={e => setNewAddress(a => ({...a, address: e.target.value}))}
-                            placeholder="e.g. Block C, Chancellor College, Zomba"/>
-                        </div>
-                        <div className="form-group" style={{marginBottom:'12px'}}>
-                          <label className="form-label">Phone at this address</label>
-                          <input className="form-input" value={newAddress.phone}
-                            onChange={e => setNewAddress(a => ({...a, phone: e.target.value}))}
-                            placeholder="+265 9xx xxx xxx"/>
-                        </div>
-                        <div style={{display:'flex',gap:'8px'}}>
-                          <button onClick={() => { setAddingAddress(false); setNewAddress({label:'',address:'',phone:''}) }}
-                            style={{flex:1,background:'white',border:'1.5px solid var(--border)',borderRadius:'10px',padding:'9px',fontWeight:600,fontSize:'13px',cursor:'pointer',fontFamily:'inherit'}}>
-                            Cancel
-                          </button>
-                          <button onClick={saveAddress} disabled={savingAddress}
-                            style={{flex:1,background:'var(--wolf)',color:'white',border:'none',borderRadius:'10px',padding:'9px',fontWeight:700,fontSize:'13px',cursor:'pointer',fontFamily:'inherit',opacity:savingAddress?0.6:1}}>
-                            {savingAddress ? 'Saving…' : 'Save Address'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
                   {profile && (
                     <div className="settings-card" style={{marginTop:'20px'}}>
                       <h4 style={{marginBottom:'12px',fontWeight:800}}>🎁 Referral Program</h4>
@@ -1223,65 +992,6 @@ export default function Dashboard() {
                       {payoutSaved && <div style={{color:'var(--green)',fontSize:'13px',marginTop:'10px',fontWeight:600}}>✅ Payout details saved</div>}
                     </div>
                   )}
-
-                  {/* Scheduled Store Hours (vendor only) */}
-                  {vendor && (
-                    <div className="settings-card" style={{marginTop:'20px'}}>
-                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'4px'}}>
-                        <h3 style={{fontSize:'15px',fontWeight:800,margin:0}}>🕐 Scheduled Hours</h3>
-                        <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'13px',fontWeight:600}}>
-                          <input type="checkbox" checked={scheduleEnabled} onChange={e => setScheduleEnabled(e.target.checked)}
-                            style={{width:'16px',height:'16px',accentColor:'var(--wolf)'}}/>
-                          Enable auto-schedule
-                        </label>
-                      </div>
-                      <p style={{fontSize:'12.5px',color:'var(--gray)',marginBottom:'16px'}}>
-                        Set when your store opens and closes automatically each day. Outside these hours, your store shows as unavailable.
-                      </p>
-
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'16px'}}>
-                        <div className="form-group" style={{marginBottom:0}}>
-                          <label className="form-label">Open at</label>
-                          <input type="time" className="form-input" value={scheduleOpen}
-                            onChange={e => setScheduleOpen(e.target.value)} disabled={!scheduleEnabled}/>
-                        </div>
-                        <div className="form-group" style={{marginBottom:0}}>
-                          <label className="form-label">Close at</label>
-                          <input type="time" className="form-input" value={scheduleClose}
-                            onChange={e => setScheduleClose(e.target.value)} disabled={!scheduleEnabled}/>
-                        </div>
-                      </div>
-
-                      <div style={{marginBottom:'16px'}}>
-                        <label className="form-label">Active days</label>
-                        <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
-                          {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => (
-                            <button key={d} type="button" disabled={!scheduleEnabled}
-                              onClick={() => setScheduleDays(prev => prev.includes(d) ? prev.filter(x=>x!==d) : [...prev,d])}
-                              style={{
-                                padding:'6px 12px',borderRadius:'8px',border:'1.5px solid',fontSize:'12px',fontWeight:700,
-                                cursor:scheduleEnabled?'pointer':'default',fontFamily:'inherit',transition:'all 0.15s',
-                                background: scheduleDays.includes(d) && scheduleEnabled ? 'var(--wolf)' : 'white',
-                                color: scheduleDays.includes(d) && scheduleEnabled ? 'white' : 'var(--gray)',
-                                borderColor: scheduleDays.includes(d) && scheduleEnabled ? 'var(--wolf)' : 'var(--border)',
-                                opacity: scheduleEnabled ? 1 : 0.5,
-                              }}>
-                              {d}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <button className="btn-primary" onClick={saveSchedule} disabled={savingSchedule || !scheduleEnabled}>
-                        {savingSchedule ? 'Saving…' : 'Save Schedule'}
-                      </button>
-                      {!scheduleEnabled && (
-                        <p style={{fontSize:'12px',color:'var(--gray)',marginTop:'8px',marginBottom:0}}>
-                          Enable auto-schedule above to configure and save hours.
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
             </>
@@ -1289,138 +999,85 @@ export default function Dashboard() {
         </main>
       </div>
 
-      {/* Cancel Order Modal */}
-      {cancellingOrder && (
-        <div className="modal-overlay" onClick={() => setCancellingOrder(null)}>
-          <div className="modal-card" style={{ maxWidth: '420px' }} onClick={e => e.stopPropagation()}>
-            <h3>Cancel Order</h3>
-            <p className="modal-sub" style={{ marginBottom: '16px' }}>
-              {cancellingOrder.products?.name || 'This order'} · MWK {Number(cancellingOrder.total || 0).toLocaleString()}
-            </p>
-            <div className="form-group">
-              <label className="form-label">Why are you cancelling?</label>
-              <select className="form-input" value={cancelReason} onChange={e => setCancelReason(e.target.value)}>
-                <option value="changed_mind">I changed my mind</option>
-                <option value="found_elsewhere">Found it cheaper elsewhere</option>
-                <option value="taking_too_long">Taking too long to confirm</option>
-                <option value="ordered_by_mistake">Ordered by mistake</option>
-                <option value="other">Other reason</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Note <span style={{ fontWeight: 400, color: 'var(--gray)' }}>(optional)</span></label>
-              <textarea className="form-input" rows={2} value={cancelNote}
-                onChange={e => setCancelNote(e.target.value)} placeholder="Anything else you'd like to tell the vendor?" />
-            </div>
-            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: '#92400e', marginBottom: '16px' }}>
-              ⚠️ Once cancelled, you'll need to place a new order if you change your mind. Cancellations can only be done before the vendor confirms.
-            </div>
-            <div className="modal-actions">
-              <button className="continue-btn" onClick={() => setCancellingOrder(null)}>Keep Order</button>
-              <button onClick={cancelOrder} disabled={cancelling}
-                style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '10px', padding: '10px 20px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit', opacity: cancelling ? 0.6 : 1 }}>
-                {cancelling ? 'Cancelling…' : 'Yes, Cancel Order'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Inline Review Modal (from Dashboard order list) */}
-      {reviewingOrder && (
-        <div className="modal-overlay" onClick={() => setReviewingOrder(null)}>
-          <div className="modal-card" style={{ maxWidth: '420px' }} onClick={e => e.stopPropagation()}>
-            <h3>⭐ Review Your Purchase</h3>
-            <p className="modal-sub" style={{ marginBottom: '4px' }}>{reviewingOrder.products?.name || 'Product'}</p>
-            <span style={{ fontSize: '11px', fontWeight: 700, background: '#dcfce7', color: '#166534', borderRadius: '20px', padding: '2px 10px', border: '1px solid #bbf7d0', display: 'inline-block', marginBottom: '16px' }}>
-              ✅ Verified Purchase
-            </span>
-            <div className="form-group">
-              <label className="form-label">Your rating *</label>
-              <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                {[1,2,3,4,5].map(n => (
-                  <button key={n} type="button" onClick={() => setInlineRating(n)}
-                    style={{ background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer', color: inlineRating >= n ? '#f59e0b' : '#d1d5db', padding: '0 2px' }}>★</button>
-                ))}
-              </div>
-              {inlineRating > 0 && (
-                <div style={{ fontSize: '12px', color: 'var(--gray)', fontWeight: 600 }}>
-                  {['','Poor','Fair','Good','Very Good','Excellent!'][inlineRating]}
-                </div>
-              )}
-            </div>
-            <div className="form-group">
-              <label className="form-label">Review <span style={{ fontWeight: 400, color: 'var(--gray)' }}>(optional)</span></label>
-              <textarea className="form-input" rows={3} value={inlineText}
-                onChange={e => setInlineText(e.target.value)} placeholder="How was the product? Was it as described?" />
-            </div>
-            <div className="modal-actions">
-              <button className="continue-btn" onClick={() => setReviewingOrder(null)}>Skip</button>
-              <button className="btn-primary" onClick={submitInlineReview} disabled={inlineSubmitting || !inlineRating}>
-                {inlineSubmitting ? 'Submitting…' : 'Submit Review'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Product Modal — with image reorder */}
+      {/* Edit Product Modal */}
       {editingProduct && (
         <div className="modal-overlay" onClick={() => setEditingProduct(null)}>
-          <div className="modal-card" style={{maxWidth:'480px',maxHeight:'90vh',overflowY:'auto'}} onClick={e => e.stopPropagation()}>
-            <h3>✏️ Edit Product</h3>
+          <div className="modal-card" style={{maxWidth:'500px',maxHeight:'90vh',overflowY:'auto'}} onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
+              <h3 style={{margin:0}}>✏️ Edit Product</h3>
+              <button onClick={() => setEditingProduct(null)} style={{background:'none',border:'none',fontSize:'20px',cursor:'pointer',color:'var(--gray)'}}>✕</button>
+            </div>
 
-            {/* Image reorder */}
-            {editingProduct.images && editingProduct.images.length > 1 && (
-              <div style={{marginBottom:'16px'}}>
-                <label className="form-label">Cover Photo — drag to reorder</label>
-                <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'6px'}}>
-                  {(editProductForm.images || editingProduct.images).map((img, idx) => (
-                    <div key={img} style={{position:'relative',flexShrink:0,width:'72px'}}>
-                      <img src={img} alt="" style={{width:'72px',height:'72px',objectFit:'cover',borderRadius:'8px',border: idx===0 ? '2.5px solid var(--wolf)' : '1.5px solid var(--border)'}}/>
-                      {idx === 0 && (
-                        <div style={{position:'absolute',top:'3px',left:'3px',background:'var(--wolf)',color:'white',fontSize:'9px',fontWeight:800,padding:'1px 5px',borderRadius:'4px'}}>COVER</div>
-                      )}
-                      {idx > 0 && (
-                        <button
-                          onClick={() => {
-                            const imgs = [...(editProductForm.images || editingProduct.images)]
-                            const [item] = imgs.splice(idx, 1)
-                            imgs.unshift(item)
-                            setEditProductForm(f => ({...f, images: imgs}))
-                          }}
-                          style={{position:'absolute',bottom:'3px',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.65)',color:'white',border:'none',borderRadius:'4px',padding:'2px 6px',fontSize:'10px',fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>
-                          Make Cover
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <p style={{fontSize:'11px',color:'var(--gray)',marginTop:'4px',marginBottom:0}}>
-                  Tap "Make Cover" on any photo to set it as the main product image.
-                </p>
+            <div className="form-group"><label className="form-label">Product Name *</label>
+              <input className="form-input" value={editProductForm.name||''} onChange={e=>setEditProductForm(f=>({...f,name:e.target.value}))}/>
+            </div>
+
+            {/* Base price + compare-at */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+              <div className="form-group"><label className="form-label">Base Price (MWK) *</label>
+                <input className="form-input" type="number" value={editProductForm.price||''} onChange={e=>setEditProductForm(f=>({...f,price:e.target.value}))}/>
               </div>
-            )}
+              <div className="form-group"><label className="form-label">Original Price (MWK)</label>
+                <input className="form-input" type="number" value={editProductForm.compare_at_price||''} onChange={e=>setEditProductForm(f=>({...f,compare_at_price:e.target.value}))} placeholder="Was price (optional)"/>
+              </div>
+            </div>
 
-            <div className="form-group"><label className="form-label">Product Name *</label><input className="form-input" value={editProductForm.name||''} onChange={e=>setEditProductForm(f=>({...f,name:e.target.value}))}/></div>
-            <div className="form-group"><label className="form-label">Price (MWK) *</label><input className="form-input" type="number" value={editProductForm.price||''} onChange={e=>setEditProductForm(f=>({...f,price:e.target.value}))}/></div>
+            {/* Price tiers */}
+            <div className="form-group">
+              <label className="form-label" style={{display:'flex',justifyContent:'space-between'}}>
+                <span>Price Tiers <span style={{fontWeight:400,color:'var(--gray)'}}>— e.g. Small / Large at different prices</span></span>
+                <button type="button" onClick={() => setEditProductForm(f=>({...f, price_tiers:[...(f.price_tiers||[]),{label:'',price:''}]}))}
+                  style={{background:'none',border:'none',color:'var(--wolf)',fontWeight:700,cursor:'pointer',fontSize:'12px'}}>+ Add Tier</button>
+              </label>
+              {(editProductForm.price_tiers||[]).map((tier, i) => (
+                <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',alignItems:'center'}}>
+                  <input className="form-input" style={{flex:1}} placeholder="Label (e.g. Large)" value={tier.label}
+                    onChange={e => setEditProductForm(f => { const t=[...f.price_tiers]; t[i]={...t[i],label:e.target.value}; return {...f,price_tiers:t} })}/>
+                  <input className="form-input" style={{flex:1}} type="number" placeholder="Price (MWK)" value={tier.price}
+                    onChange={e => setEditProductForm(f => { const t=[...f.price_tiers]; t[i]={...t[i],price:e.target.value}; return {...f,price_tiers:t} })}/>
+                  <button type="button" onClick={() => setEditProductForm(f=>({...f,price_tiers:f.price_tiers.filter((_,j)=>j!==i)}))}
+                    style={{background:'#fee2e2',border:'none',borderRadius:'6px',padding:'6px 10px',cursor:'pointer',color:'#ef4444',fontWeight:700,flexShrink:0}}>✕</button>
+                </div>
+              ))}
+              {(editProductForm.price_tiers||[]).length === 0 && <div style={{fontSize:'12px',color:'var(--gray)'}}>No price tiers — add them if this product comes in different sizes or options with different prices.</div>}
+            </div>
+
+            <div className="form-group"><label className="form-label">Variants <span style={{fontWeight:400,color:'var(--gray)'}}>comma-separated</span></label>
+              <input className="form-input" value={editProductForm.variants||''} onChange={e=>setEditProductForm(f=>({...f,variants:e.target.value}))} placeholder="e.g. Small, Medium, Large"/>
+            </div>
+
             <div className="form-group"><label className="form-label">Category</label>
               <select className="form-input" value={editProductForm.category||''} onChange={e=>setEditProductForm(f=>({...f,category:e.target.value}))}>
                 {['Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living','Sports & Fitness','Auto Parts','Other'].map(c=><option key={c}>{c}</option>)}
               </select>
             </div>
-            <div className="form-group"><label className="form-label">Description</label><textarea className="form-input" rows={3} value={editProductForm.description||''} onChange={e=>setEditProductForm(f=>({...f,description:e.target.value}))}/></div>
-            <div className="form-group"><label className="form-label">Stock Quantity <span style={{color:'var(--gray)',fontWeight:400}}>(blank = unlimited)</span></label><input className="form-input" type="number" min="0" value={editProductForm.stock_qty??''} onChange={e=>setEditProductForm(f=>({...f,stock_qty:e.target.value}))}/></div>
-            <div className="form-group">
-              <label className="form-label">Variants <span style={{fontWeight:400,color:'var(--gray)'}}>optional</span></label>
-              <EditVariantGroups
-                variantGroups={editProductForm.variant_groups || []}
-                setVariantGroups={vg => setEditProductForm(f => ({...f, variant_groups: vg}))}
-              />
+
+            <div className="form-group"><label className="form-label">Description</label>
+              <textarea className="form-input" rows={3} value={editProductForm.description||''} onChange={e=>setEditProductForm(f=>({...f,description:e.target.value}))}/>
             </div>
-            <div className="modal-actions">
-              <button className="continue-btn" onClick={() => setEditingProduct(null)}>Cancel</button>
-              <button className="btn-primary" onClick={saveProductEdit} disabled={editProductSaving}>{editProductSaving?'Saving...':'Save Changes'}</button>
+
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+              <div className="form-group"><label className="form-label">Stock Qty <span style={{fontWeight:400,color:'var(--gray)'}}>blank=unlimited</span></label>
+                <input className="form-input" type="number" min="0" value={editProductForm.stock_qty??''} onChange={e=>setEditProductForm(f=>({...f,stock_qty:e.target.value}))}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Availability</label>
+                <div style={{display:'flex',alignItems:'center',gap:'8px',height:'42px'}}>
+                  <input type="checkbox" id="edit-avail" checked={editProductForm.available!==false} onChange={e=>setEditProductForm(f=>({...f,available:e.target.checked}))} style={{accentColor:'var(--wolf)',width:'16px',height:'16px'}}/>
+                  <label htmlFor="edit-avail" style={{fontSize:'13px',cursor:'pointer',fontWeight:600}}>{editProductForm.available!==false?'Listed & visible':'Hidden from buyers'}</label>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions" style={{justifyContent:'space-between'}}>
+              <button onClick={() => deleteProductFromEdit(editingProduct.id)}
+                style={{background:'#fee2e2',color:'#dc2626',border:'1.5px solid #fecaca',borderRadius:'8px',padding:'9px 16px',fontWeight:700,fontSize:'13px',cursor:'pointer'}}>
+                🗑️ Delete Product
+              </button>
+              <div style={{display:'flex',gap:'8px'}}>
+                <button className="continue-btn" onClick={() => setEditingProduct(null)}>Cancel</button>
+                <button className="btn-primary" onClick={saveProductEdit} disabled={editProductSaving}>{editProductSaving?'Saving...':'Save Changes'}</button>
+              </div>
             </div>
           </div>
         </div>

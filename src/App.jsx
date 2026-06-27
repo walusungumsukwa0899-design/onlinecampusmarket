@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { CartProvider, useCart } from './lib/CartContext'
 import { AuthProvider, useAuth } from './lib/AuthContext'
-import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Marketplaces from './pages/Marketplaces'
@@ -45,7 +44,7 @@ function EmailVerificationBanner() {
   }
 
   return (
-    <div className="email-verify-banner" style={{ background: '#fffbeb', borderBottom: '1.5px solid #fde68a', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', fontSize: '13px', position: 'fixed', top: '64px', left: 0, right: 0, zIndex: 198 }}>
+    <div style={{ background: '#fffbeb', borderBottom: '1.5px solid #fde68a', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', fontSize: '13px', position: 'fixed', top: '60px', left: 0, right: 0, zIndex: 999 }}>
       <span>📧 <strong>Verify your email</strong> — check your inbox for a link from Wolf Marketplace.</span>
       {!resent
         ? <button onClick={resend} style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>Resend Email</button>
@@ -68,64 +67,80 @@ function Toast() {
   return <div className="toast">{toast}</div>
 }
 
-/** Auth gate: unauthenticated users visiting "/" see SignIn first */
-function AuthGatedHome() {
-  const { user, loading } = useAuth()
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🐺</div>
-          <div className="spinner" style={{ margin: '0 auto' }} />
-        </div>
+function CookieBanner() {
+  const [visible, setVisible] = useState(() => !localStorage.getItem('wolf_cookie_ok'))
+  if (!visible) return null
+  return (
+    <div style={{ position: 'fixed', bottom: '70px', left: '16px', right: '16px', maxWidth: '540px', margin: '0 auto', background: 'white', border: '1.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', zIndex: 9998, boxShadow: '0 8px 32px rgba(0,0,0,.15)', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ flex: 1, fontSize: '13px', color: '#374151', lineHeight: 1.5 }}>
+        🍪 We use cookies to keep you signed in and improve your experience.{' '}
+        <a href="/privacy" style={{ color: 'var(--wolf)', fontWeight: 600 }}>Privacy Policy</a>
       </div>
-    )
-  }
-  if (!user) return <SignIn isLanding />
-  return <Home />
+      <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+        <button onClick={() => { localStorage.setItem('wolf_cookie_ok', '1'); setVisible(false) }}
+          style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
+          Accept
+        </button>
+        <button onClick={() => setVisible(false)}
+          style={{ background: 'var(--light)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+          Dismiss
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function AppShell({ children }) {
+  const { pathname } = useLocation()
+  const isLanding = pathname === '/' || pathname === '/signin'
+  return (
+    <>
+      <ScrollToTop />
+      {!isLanding && <Navbar />}
+      {!isLanding && <EmailVerificationBanner />}
+      <Toast />
+      {children}
+      <CookieBanner />
+    </>
+  )
 }
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <CartProvider>
-          <ScrollToTop />
-          <Navbar />
-          <EmailVerificationBanner />
-          <Toast />
+    <AuthProvider>
+      <CartProvider>
+        <AppShell>
           <Routes>
-            {/* "/" shows Sign In for guests, Home for authenticated users */}
-            <Route path="/" element={<AuthGatedHome />} />
+            <Route path="/" element={<SignIn />} />
             <Route path="/home" element={<Home />} />
             <Route path="/marketplaces" element={<Marketplaces />} />
-            <Route path="/vendors" element={<Vendors />} />
-            <Route path="/vendors/:id" element={<VendorProfile />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/sell" element={<Sell />} />
-            <Route path="/delivery" element={<Delivery />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/help" element={<HelpCenter />} />
-            <Route path="/safety" element={<SafetyPolicy />} />
-            <Route path="/report" element={<ReportIssue />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/wishlist" element={<Wishlist />} />
-            <Route path="/products/:id" element={<ProductDetail />} />
-            <Route path="/order-confirmation/:chargeId" element={<OrderConfirmation />} />
-            <Route path="/category/:slug" element={<Category />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/referrals" element={<Referrals />} />
-            <Route path="/disputes" element={<Disputes />} />
-            <Route path="/trending" element={<Trending />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </CartProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+          <Route path="/vendors" element={<Vendors />} />
+          <Route path="/vendors/:id" element={<VendorProfile />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/sell" element={<Sell />} />
+          <Route path="/delivery" element={<Delivery />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="/safety" element={<SafetyPolicy />} />
+          <Route path="/report" element={<ReportIssue />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/order-confirmation/:chargeId" element={<OrderConfirmation />} />
+          <Route path="/category/:slug" element={<Category />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/referrals" element={<Referrals />} />
+          <Route path="/disputes" element={<Disputes />} />
+          <Route path="/trending" element={<Trending />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        </AppShell>
+      </CartProvider>
+    </AuthProvider>
   )
 }

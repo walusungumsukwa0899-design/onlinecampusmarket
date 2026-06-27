@@ -8,106 +8,6 @@ import './Sell.css'
 const CATS = ['Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living','Sports & Fitness','Auto Parts','Other']
 const UNIS = ['UNIMA','The Polytechnic','Mzuzu University','MUST','College of Medicine','Catholic University of Malawi','MUBAS','LUANAR','Malawi Adventist University','Livingstonia University','Daeyang Luke University','NIPA','Other']
 
-// ── Variant Group Builder ─────────────────────────────────────
-const PRESET_GROUPS = [
-  { name: 'Size', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
-  { name: 'Color', options: ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow'] },
-  { name: 'Material', options: [] },
-  { name: 'Flavour', options: [] },
-]
-
-function VariantGroupBuilder({ variantGroups, setVariantGroups }) {
-  const [draftOption, setDraftOption] = useState({}) // { groupIdx: 'text' }
-
-  function addGroup() {
-    setVariantGroups(g => [...g, { name: '', options: [] }])
-  }
-
-  function removeGroup(idx) {
-    setVariantGroups(g => g.filter((_, i) => i !== idx))
-  }
-
-  function setGroupName(idx, name) {
-    setVariantGroups(g => g.map((grp, i) => i === idx ? { ...grp, name } : grp))
-    // Auto-fill preset options when a known name is typed
-    const preset = PRESET_GROUPS.find(p => p.name.toLowerCase() === name.toLowerCase())
-    if (preset?.options.length) {
-      setVariantGroups(g => g.map((grp, i) => i === idx ? { ...grp, name, options: grp.options.length ? grp.options : preset.options } : grp))
-    }
-  }
-
-  function addOption(idx) {
-    const text = (draftOption[idx] || '').trim()
-    if (!text) return
-    setVariantGroups(g => g.map((grp, i) => i === idx ? { ...grp, options: [...grp.options, text] } : grp))
-    setDraftOption(d => ({ ...d, [idx]: '' }))
-  }
-
-  function removeOption(groupIdx, optIdx) {
-    setVariantGroups(g => g.map((grp, i) => i === groupIdx ? { ...grp, options: grp.options.filter((_, oi) => oi !== optIdx) } : grp))
-  }
-
-  return (
-    <div>
-      {variantGroups.map((grp, idx) => (
-        <div key={idx} style={{ background: 'var(--light)', borderRadius: '12px', padding: '14px', marginBottom: '10px', border: '1.5px solid var(--border)' }}>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
-            <input
-              className="form-input" value={grp.name}
-              onChange={e => setGroupName(idx, e.target.value)}
-              placeholder="Group name (e.g. Size, Colour)"
-              style={{ flex: 1, padding: '7px 12px', fontSize: '13px' }}
-              list={`vg-presets-${idx}`}
-            />
-            <datalist id={`vg-presets-${idx}`}>
-              {PRESET_GROUPS.map(p => <option key={p.name} value={p.name} />)}
-            </datalist>
-            <button type="button" onClick={() => removeGroup(idx)}
-              style={{ background: '#fee2e2', border: 'none', borderRadius: '8px', padding: '7px 10px', cursor: 'pointer', color: '#b91c1c', fontWeight: 700, fontSize: '13px', flexShrink: 0, fontFamily: 'inherit' }}>
-              Remove
-            </button>
-          </div>
-
-          {/* Options chips */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
-            {grp.options.map((opt, oi) => (
-              <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'white', border: '1.5px solid var(--wolf)', borderRadius: '20px', padding: '3px 10px', fontSize: '12px', fontWeight: 700, color: 'var(--wolf)' }}>
-                {opt}
-                <button type="button" onClick={() => removeOption(idx, oi)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 4px', color: 'var(--wolf)', fontSize: '14px', lineHeight: 1 }}>×</button>
-              </div>
-            ))}
-          </div>
-
-          {/* Add option input */}
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <input className="form-input" value={draftOption[idx] || ''}
-              onChange={e => setDraftOption(d => ({ ...d, [idx]: e.target.value }))}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOption(idx) } }}
-              placeholder="Type option, press Enter"
-              style={{ flex: 1, padding: '7px 12px', fontSize: '13px' }}
-            />
-            <button type="button" onClick={() => addOption(idx)}
-              style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '8px', padding: '7px 14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-              + Add
-            </button>
-          </div>
-        </div>
-      ))}
-
-      <button type="button" onClick={addGroup}
-        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--light)', border: '1.5px dashed var(--border)', borderRadius: '10px', padding: '9px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', color: 'var(--gray)', width: '100%', justifyContent: 'center', fontFamily: 'inherit' }}>
-        + Add Variant Group
-      </button>
-      {variantGroups.length > 0 && (
-        <div style={{ fontSize: '11px', color: 'var(--gray)', marginTop: '6px' }}>
-          Buyers will see a separate picker for each group — e.g. "Size" and "Colour" shown separately.
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function Sell() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -116,7 +16,6 @@ export default function Sell() {
   const [photoPreviews, setPhotoPreviews] = useState([])
   const [photoFiles, setPhotoFiles] = useState([])
   const [selectedCat, setSelectedCat] = useState('')
-  const [variantGroups, setVariantGroups] = useState([]) // [{ name:'Size', options:['S','M','L'] }]
   const [form, setForm] = useState({
     name:'', price:'', description:'', phone:'', location:'', university:'',
     delivery:'', deliveryTime:'', deliveryFee:'', hours:''
@@ -213,8 +112,8 @@ export default function Sell() {
       stock_qty: form.stockQty ? parseInt(form.stockQty) : null,
       condition: form.condition || 'New',
       compare_at_price: form.compareAtPrice ? parseInt(form.compareAtPrice) : null,
-      variants: null, // legacy — no longer used for new listings
-      variant_groups: variantGroups.length > 0 ? variantGroups : null,
+      variants: form.variants ? form.variants.split(',').map(v => v.trim()).filter(Boolean) : null,
+      price_tiers: priceTiers.filter(t => t.label && t.price).length > 0 ? priceTiers.filter(t => t.label && t.price) : null,
       available: true,
     })
 
@@ -251,7 +150,7 @@ export default function Sell() {
     </div>
   )
 
-  const [csvMode, setCsvMode] = useState(false)
+  const [priceTiers, setPriceTiers] = useState([]) // [{label, price}]
   const [csvText, setCsvText] = useState('')
   const [csvImporting, setCsvImporting] = useState(false)
   const [csvResults, setCsvResults] = useState(null)
@@ -361,7 +260,26 @@ export default function Sell() {
         </div>
         <div className="form-group">
           <label className="form-label">Variants <span style={{fontWeight:400,color:"var(--gray)"}}>optional — e.g. sizes or colours</span></label>
-          <VariantGroupBuilder variantGroups={variantGroups} setVariantGroups={setVariantGroups} />
+          <input className="form-input" value={form.variants||''} onChange={e => set('variants', e.target.value)} placeholder="e.g. Small, Medium, Large  or  Black, White, Red"/>
+          <div style={{fontSize:'11px',color:'var(--gray)',marginTop:'4px'}}>Separate options with commas. Buyers will see a dropdown to pick.</div>
+        </div>
+        {/* Price tiers */}
+        <div className="form-group">
+          <label className="form-label" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span>Price Tiers <span style={{fontWeight:400,color:'var(--gray)'}}>— optional, for items with different sizes/options at different prices</span></span>
+            <button type="button" onClick={() => setPriceTiers(t => [...t, {label:'',price:''}])}
+              style={{background:'none',border:'none',color:'var(--wolf)',fontWeight:700,cursor:'pointer',fontSize:'12px',whiteSpace:'nowrap'}}>+ Add Tier</button>
+          </label>
+          {priceTiers.map((tier, i) => (
+            <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px'}}>
+              <input className="form-input" style={{flex:1}} placeholder="Label (e.g. Large pizza)" value={tier.label}
+                onChange={e => setPriceTiers(t => { const n=[...t]; n[i]={...n[i],label:e.target.value}; return n })}/>
+              <input className="form-input" style={{flex:1}} type="number" placeholder="Price (MWK)" value={tier.price}
+                onChange={e => setPriceTiers(t => { const n=[...t]; n[i]={...n[i],price:e.target.value}; return n })}/>
+              <button type="button" onClick={() => setPriceTiers(t => t.filter((_,j) => j!==i))}
+                style={{background:'#fee2e2',border:'none',borderRadius:'8px',padding:'0 10px',cursor:'pointer',color:'#ef4444',fontWeight:700,flexShrink:0}}>✕</button>
+            </div>
+          ))}
         </div>
         <div className="form-group">
           <label className="form-label">Description</label>

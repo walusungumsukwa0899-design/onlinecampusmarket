@@ -6,6 +6,8 @@ import { useCart } from '../lib/CartContext'
 import { useAuth } from '../lib/AuthContext'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import ImageLightbox from '../components/ImageLightbox'
+import { sanitizeText } from '../lib/sanitize'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -22,9 +24,10 @@ export default function ProductDetail() {
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewSubmitting, setReviewSubmitting] = useState(false)
   const [reviewDone, setReviewDone] = useState(false)
-  const [selectedVariants, setSelectedVariants] = useState({}) // { Size: 'M', Color: 'Red' }
+  const [selectedVariant, setSelectedVariant] = useState('')
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIdx, setLightboxIdx] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [hasVerifiedPurchase, setHasVerifiedPurchase] = useState(false)
   const [imgIdx, setImgIdx] = useState(0)
 
   useEffect(() => { loadProduct() }, [id])
@@ -61,12 +64,6 @@ export default function ProductDetail() {
       // Load product-level reviews
       const { data: revs } = await supabase.from('product_reviews').select('*').eq('product_id', id).order('created_at', { ascending: false })
       setProductReviews(revs || [])
-      // Check if current user has a delivered order for this product (verified purchase)
-      if (user) {
-        const { data: purchaseCheck } = await supabase.from('orders')
-          .select('id').eq('product_id', id).eq('buyer_id', user.id).eq('status', 'delivered').maybeSingle()
-        setHasVerifiedPurchase(!!purchaseCheck)
-      }
       // Check restock subscription
       if (user) {
         const { data: sub } = await supabase.from('restock_alerts').select('id').eq('product_id', id).eq('user_id', user.id).maybeSingle()
@@ -90,31 +87,9 @@ export default function ProductDetail() {
 
   if (!product) return null
 
-  const images = product.images?.length ? product.images : (product.image_urls?.length ? product.image_urls : (product.image_url ? [product.image_url] : []))
-
-  // Support both new grouped format and legacy flat array
-  const variantGroups = Array.isArray(product.variant_groups) && product.variant_groups.length > 0
-    ? product.variant_groups
-    : (Array.isArray(product.variants) && product.variants.length > 0
-        ? [{ name: 'Option', options: product.variants }]
-        : (typeof product.variants === 'string' && product.variants
-            ? [{ name: 'Option', options: product.variants.split(',').map(v => v.trim()).filter(Boolean) }]
-            : []))
-
-  const variantLabel = Object.entries(selectedVariants).map(([k, v]) => `${k}: ${v}`).join(', ')
-  const allVariantsSelected = variantGroups.length === 0 || variantGroups.every(g => selectedVariants[g.name])
-
-  const cartItem = {
-    id: product.id,
-    name: product.name + (variantLabel ? ` (${variantLabel})` : ''),
-    price: `MWK ${Number(product.price).toLocaleString()}`,
-    rawPrice: product.price,
-    icon: product.icon || '📦',
-    seller: vendor?.name,
-    vendor_id: product.vendor_id,
-    image_url: product.image_url,
-    selectedVariants: Object.keys(selectedVariants).length > 0 ? selectedVariants : null,
-  }
+  const images = product.image_urls?.length ? product.image_urls : (product.image_url ? [product.image_url] : [])
+  const variants = Array.isArray(product.variants) ? product.variants : (product.variants ? product.variants.split(',').map(v=>v.trim()).filter(Boolean) : [])
+  const cartItem = { id: product.id, name: product.name + (selectedVariant ? ` (${selectedVariant})` : ''), price: `MWK ${Number(product.price).toLocaleString()}`, rawPrice: product.price, icon: product.icon || '📦', seller: vendor?.name, vendor_id: product.vendor_id, image_url: product.image_url }
   const whatsappMsg = encodeURIComponent(`Hi! I saw your product "${product.name}" on Wolf Marketplace and I'm interested. Is it still available?`)
   const whatsappUrl = vendor?.phone ? `https://wa.me/${vendor.phone.replace(/\D/g,'')}?text=${whatsappMsg}` : null
   const shareUrl = `${window.location.origin}/products/${product.id}`
@@ -140,15 +115,21 @@ export default function ProductDetail() {
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '32px' }}>
           {/* Image gallery */}
           <div>
-            <div style={{ borderRadius: '16px', overflow: 'hidden', background: 'var(--light)', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '80px', marginBottom: '10px', position: 'relative' }}>
+            <div style={{ borderRadius: '16px', overflow: 'hidden', background: 'var(--light)', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '80px', marginBottom: '10px', position: 'relative', cursor: images.length > 0 ? 'zoom-in' : 'default' }}
+              onClick={() => { if (images.length > 0) { setLightboxIdx(imgIdx); setLightboxOpen(true) } }}>
               {images.length > 0
-                ? <img src={images[imgIdx]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ? <img src={images[imgIdx]} alt={product.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <span>{product.icon || '📦'}</span>
               }
+              {images.length > 0 && (
+                <div style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'rgba(0,0,0,.5)', color: 'white', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: 700 }}>
+                  🔍 Tap to zoom
+                </div>
+              )}
               {images.length > 1 && (
                 <>
-                  <button onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '16px' }}>‹</button>
-                  <button onClick={() => setImgIdx(i => (i + 1) % images.length)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '16px' }}>›</button>
+                  <button onClick={e => { e.stopPropagation(); setImgIdx(i => (i - 1 + images.length) % images.length) }} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '16px' }}>‹</button>
+                  <button onClick={e => { e.stopPropagation(); setImgIdx(i => (i + 1) % images.length) }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '16px' }}>›</button>
                 </>
               )}
             </div>
@@ -181,47 +162,35 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Grouped variant selectors */}
-            {variantGroups.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {variantGroups.map(group => (
-                  <div key={group.name}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px' }}>
-                      {group.name}
-                      {selectedVariants[group.name] && (
-                        <span style={{ color: 'var(--wolf)', fontWeight: 600, marginLeft: '8px' }}>
-                          — {selectedVariants[group.name]}
-                        </span>
-                      )}
+            {/* Price tiers */}
+            {Array.isArray(product.price_tiers) && product.price_tiers.length > 0 && (
+              <div style={{marginBottom:'12px'}}>
+                <div style={{fontSize:'13px',fontWeight:700,marginBottom:'8px'}}>Pricing Options</div>
+                <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                  {product.price_tiers.map((t,i) => (
+                    <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 14px',background:'var(--light)',borderRadius:'8px',border:'1.5px solid var(--border)'}}>
+                      <span style={{fontWeight:600,fontSize:'13px'}}>{t.label}</span>
+                      <span style={{fontWeight:800,color:'var(--wolf)',fontSize:'14px'}}>MWK {Number(t.price).toLocaleString()}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {group.options.map(opt => {
-                        const selected = selectedVariants[group.name] === opt
-                        return (
-                          <button key={opt}
-                            onClick={() => setSelectedVariants(sv => ({
-                              ...sv,
-                              [group.name]: sv[group.name] === opt ? undefined : opt,
-                            }))}
-                            style={{
-                              padding: '7px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '13px',
-                              cursor: 'pointer', transition: 'all .15s', fontFamily: 'inherit',
-                              border: `1.5px solid ${selected ? 'var(--wolf)' : 'var(--border)'}`,
-                              background: selected ? 'var(--wolf)' : 'white',
-                              color: selected ? 'white' : 'var(--black)',
-                            }}>
-                            {opt}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-                {variantGroups.length > 0 && !allVariantsSelected && (
-                  <div style={{ fontSize: '12px', color: '#f97316', fontWeight: 600 }}>
-                    ⚠️ Please select all options before adding to cart.
-                  </div>
-                )}
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Variant selector */}
+            {variants.length > 0 && (
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px' }}>
+                  Select Option {selectedVariant && <span style={{ color: 'var(--wolf)' }}>— {selectedVariant}</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {variants.map(v => (
+                    <button key={v} onClick={() => setSelectedVariant(v === selectedVariant ? '' : v)}
+                      style={{ padding: '7px 16px', borderRadius: '8px', border: `1.5px solid ${selectedVariant === v ? 'var(--wolf)' : 'var(--border)'}`, background: selectedVariant === v ? 'var(--wolf)' : 'white', color: selectedVariant === v ? 'white' : 'var(--black)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all .15s' }}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -237,7 +206,7 @@ export default function ProductDetail() {
             )}
 
             {product.description && (
-              <p style={{ fontSize: '14px', color: 'var(--gray)', lineHeight: 1.6, margin: 0 }}>{product.description}</p>
+              <p style={{ fontSize: '14px', color: 'var(--gray)', lineHeight: 1.6, margin: 0 }}>{sanitizeText(product.description)}</p>
             )}
 
             {/* Vendor */}
@@ -255,13 +224,9 @@ export default function ProductDetail() {
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button className="btn-primary" style={{ flex: 1, minWidth: '120px' }}
-                disabled={!product.available || product.stock_qty === 0 || !allVariantsSelected}
+                disabled={!product.available || product.stock_qty === 0}
                 onClick={() => addToCart(cartItem)}>
-                {!product.available || product.stock_qty === 0
-                  ? 'Unavailable'
-                  : !allVariantsSelected
-                  ? 'Select options first'
-                  : '🛒 Add to Cart'}
+                {product.available && product.stock_qty !== 0 ? '🛒 Add to Cart' : 'Unavailable'}
               </button>
               <button onClick={() => toggleWishlist(cartItem)}
                 style={{ background: isWishlisted(product.id) ? '#fee2e2' : 'var(--light)', border: 'none', borderRadius: '10px', padding: '0 16px', cursor: 'pointer', fontSize: '20px' }}>
@@ -322,19 +287,7 @@ export default function ProductDetail() {
           {/* Write a review */}
           {user && !reviewDone && (
             <div style={{ background: 'white', border: '1.5px solid var(--border)', borderRadius: '14px', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <div style={{ fontWeight: 800, fontSize: '14px' }}>Write a review</div>
-                {hasVerifiedPurchase && (
-                  <span style={{ fontSize: '11px', fontWeight: 700, background: '#dcfce7', color: '#166534', borderRadius: '20px', padding: '2px 10px', border: '1px solid #bbf7d0' }}>
-                    ✅ Verified Purchase
-                  </span>
-                )}
-              </div>
-              {!hasVerifiedPurchase && (
-                <div style={{ fontSize: '12px', color: '#f97316', background: '#fff7ed', borderRadius: '8px', padding: '8px 12px', marginBottom: '12px', fontWeight: 600 }}>
-                  💡 Reviews are more trusted when from verified buyers. Yours will be marked as unverified.
-                </div>
-              )}
+              <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '12px' }}>Write a review</div>
               <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
                 {[1,2,3,4,5].map(n => (
                   <button key={n} onClick={() => setReviewRating(n)}
@@ -348,19 +301,17 @@ export default function ProductDetail() {
                 disabled={reviewSubmitting || !reviewRating}
                 onClick={async () => {
                   if (!reviewRating) { alert('Please select a star rating'); return }
+                  // Check if user already reviewed this product
                   const { data: existing } = await supabase.from('product_reviews').select('id').eq('product_id', id).eq('user_id', user.id).maybeSingle()
-                  if (existing) { alert('You have already reviewed this product.'); return }
+                  if (existing) { alert('You have already reviewed this product.'); setReviewSubmitting(false); return }
                   setReviewSubmitting(true)
                   const { error } = await supabase.from('product_reviews').insert({
                     product_id: id, vendor_id: product.vendor_id, user_id: user.id,
                     buyer_name: user.user_metadata?.full_name || 'Anonymous',
-                    stars: reviewRating, text: reviewText.trim(),
-                    verified_purchase: hasVerifiedPurchase,
+                    stars: reviewRating, text: reviewText.trim()
                   })
                   if (!error) {
-                    setProductReviews(prev => [{ stars: reviewRating, text: reviewText.trim(),
-                      buyer_name: user.user_metadata?.full_name || 'Anonymous',
-                      verified_purchase: hasVerifiedPurchase, created_at: new Date().toISOString() }, ...prev])
+                    setProductReviews(prev => [{ stars: reviewRating, text: reviewText.trim(), buyer_name: user.user_metadata?.full_name || 'Anonymous', created_at: new Date().toISOString() }, ...prev])
                     setReviewDone(true)
                   }
                   setReviewSubmitting(false)
@@ -388,14 +339,7 @@ export default function ProductDetail() {
                         {[1,2,3,4,5].map(n => <span key={n} style={{ color: n <= r.stars ? '#f59e0b' : '#d1d5db', fontSize: '12px' }}>★</span>)}
                       </div>
                     </div>
-                    <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--gray)' }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</div>
-                      {r.verified_purchase && (
-                        <span style={{ fontSize: '10px', fontWeight: 700, background: '#dcfce7', color: '#166534', borderRadius: '20px', padding: '1px 8px', border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>
-                          ✅ Verified
-                        </span>
-                      )}
-                    </div>
+                    <div style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--gray)' }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</div>
                   </div>
                   {r.text && <p style={{ fontSize: '13px', color: 'var(--black)', margin: 0, lineHeight: 1.6 }}>{r.text}</p>}
                 </div>
@@ -412,7 +356,7 @@ export default function ProductDetail() {
               {related.map(p => (
                 <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                   <div className="product-img">
-                    {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span>{p.icon || '📦'}</span>}
+                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span>{p.icon || '📦'}</span>}
                   </div>
                   <div className="product-info">
                     <div className="product-name">{p.name}</div>
@@ -427,6 +371,15 @@ export default function ProductDetail() {
         )}
       </div>
       <Footer />
+      {lightboxOpen && (
+        <ImageLightbox
+          images={images}
+          activeIndex={lightboxIdx}
+          onClose={() => setLightboxOpen(false)}
+          onPrev={() => setLightboxIdx(i => (i - 1 + images.length) % images.length)}
+          onNext={(delta) => setLightboxIdx(i => typeof delta === 'number' ? Math.abs(i + delta) % images.length : (i + 1) % images.length)}
+        />
+      )}
     </div>
   )
 }

@@ -81,8 +81,6 @@ export default function VendorProfile() {
     return () => supabase.removeChannel(channel)
   }, [id])
 
-  const [responseRate, setResponseRate] = useState(null)
-
   async function loadVendor() {
     try {
       const { data } = await supabase.from('vendors').select('*').eq('id', id).single()
@@ -90,28 +88,6 @@ export default function VendorProfile() {
       if (user) {
         const { data: fol } = await supabase.from('vendor_follows').select('id').eq('vendor_id', id).eq('user_id', user.id).maybeSingle()
         setFollowing(!!fol)
-      }
-      // Calculate response rate: % of buyer messages that got a vendor reply within 24h
-      const { data: msgs } = await supabase.from('messages')
-        .select('sender, created_at, buyer_id')
-        .eq('vendor_id', id)
-        .order('created_at', { ascending: true })
-      if (msgs && msgs.length > 0) {
-        // Group by buyer and find if there's a vendor reply after each buyer message
-        const buyerMsgMap = new Map()
-        for (const m of msgs) {
-          if (!buyerMsgMap.has(m.buyer_id)) buyerMsgMap.set(m.buyer_id, [])
-          buyerMsgMap.get(m.buyer_id).push(m)
-        }
-        let totalConvos = 0, replied = 0
-        for (const thread of buyerMsgMap.values()) {
-          const firstBuyer = thread.find(m => m.sender === 'buyer')
-          if (!firstBuyer) continue
-          totalConvos++
-          const vendorReply = thread.find(m => m.sender === 'vendor' && new Date(m.created_at) > new Date(firstBuyer.created_at))
-          if (vendorReply) replied++
-        }
-        if (totalConvos > 0) setResponseRate(Math.round((replied / totalConvos) * 100))
       }
     } catch (err) {
       console.error('Failed to load vendor:', err)
@@ -257,6 +233,11 @@ export default function VendorProfile() {
       delivery_area: vendor.delivery_area || '',
       delivery_time: vendor.delivery_time || '',
       delivery_fee: vendor.delivery_fee || '',
+      delivery_zones: vendor.delivery_zones || '',
+      payout_phone: vendor.payout_phone || '',
+      payout_network: vendor.payout_network || '',
+      is_available: vendor.is_available !== false,
+      unavailable_reason: vendor.unavailable_reason || '',
     })
     setEditMode(true)
   }
@@ -276,6 +257,8 @@ export default function VendorProfile() {
       delivery_zones: editForm.delivery_zones?.trim() || null,
       payout_phone: editForm.payout_phone?.trim() || null,
       payout_network: editForm.payout_network || null,
+      is_available: editForm.is_available !== false,
+      unavailable_reason: editForm.is_available === false ? (editForm.unavailable_reason?.trim() || null) : null,
     }
     const { error } = await supabase.from('vendors').update(updates).eq('id', id)
     setEditSaving(false)
@@ -359,11 +342,6 @@ export default function VendorProfile() {
               <span>📍 {vendor.university}</span>
               <span style={{color:'#4ade80'}}>✅ Verified</span>
               {avgRating && <span>⭐ {avgRating} ({reviews.length} reviews)</span>}
-              {responseRate !== null && (
-                <span style={{color: responseRate >= 80 ? '#22c55e' : responseRate >= 50 ? '#f59e0b' : '#ef4444'}}>
-                  💬 {responseRate}% response rate
-                </span>
-              )}
             </div>
             {isOwner && (
               <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'8px'}}>
@@ -432,7 +410,7 @@ export default function VendorProfile() {
                   <div key={p.id} className="product-card">
                     <div className="product-img" style={{position:"relative", cursor: p.image_urls?.length > 1 ? 'zoom-in' : 'default'}}
                       onClick={() => p.image_urls?.length > 1 && setGalleryProduct({images: p.image_urls, idx: 0})}>
-                      {p.image_url ? <img src={p.image_url} alt={p.name}/> : <span>{p.icon||'📦'}</span>}
+                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy"/> : <span>{p.icon||'📦'}</span>}
                       {p.image_urls?.length > 1 && (
                         <div style={{position:'absolute',bottom:'6px',left:0,right:0,display:'flex',justifyContent:'center',gap:'4px'}}>
                           {p.image_urls.map((_,i) => <span key={i} style={{width:'5px',height:'5px',borderRadius:'50%',background:'white',opacity:0.9,display:'block'}}/>)}
@@ -478,20 +456,6 @@ export default function VendorProfile() {
                 <div className="ci"><div className="ci-icon">📧</div><div><div className="ci-label">Email</div><div className="ci-val">{vendor.email || 'Not provided'}</div></div></div>
                 <div className="ci"><div className="ci-icon">📍</div><div><div className="ci-label">Location</div><div className="ci-val">{vendor.location || 'Not provided'}</div></div></div>
                 <div className="ci"><div className="ci-icon">⏰</div><div><div className="ci-label">Open Hours</div><div className="ci-val">{vendor.hours || 'Not specified'}</div></div></div>
-                {responseRate !== null && (
-                  <div className="ci">
-                    <div className="ci-icon">💬</div>
-                    <div>
-                      <div className="ci-label">Response Rate</div>
-                      <div className="ci-val" style={{color: responseRate >= 80 ? '#22c55e' : responseRate >= 50 ? '#f59e0b' : '#ef4444', fontWeight: 700}}>
-                        {responseRate}%
-                        <span style={{fontWeight:400,color:'var(--gray)',fontSize:'12px',marginLeft:'6px'}}>
-                          {responseRate >= 80 ? 'Usually responds quickly' : responseRate >= 50 ? 'Responds within a few hours' : 'May take time to respond'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
               <div className="delivery-section">
                 <div className="ci-section-title">🚚 Delivery Details</div>
@@ -709,6 +673,16 @@ export default function VendorProfile() {
                 <option value="airtel">Airtel Money</option>
                 <option value="tnm">TNM Mpamba</option>
               </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">🏖️ Vacation Mode</label>
+              <label style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',cursor:'pointer',marginBottom:'8px'}}>
+                <input type="checkbox" checked={editForm.is_available === false} onChange={e => setEditForm(ef => ({...ef, is_available: !e.target.checked}))} style={{accentColor:'var(--wolf)'}}/>
+                Mark store as temporarily unavailable
+              </label>
+              {editForm.is_available === false && (
+                <input className="form-input" value={editForm.unavailable_reason || ''} onChange={e => setEditForm(ef => ({...ef, unavailable_reason: e.target.value}))} placeholder="Reason (e.g. Away until 15 Jan — back soon!)"/>
+              )}
             </div>
             <div className="modal-actions">
               <button className="continue-btn" onClick={() => setEditMode(false)}>Cancel</button>

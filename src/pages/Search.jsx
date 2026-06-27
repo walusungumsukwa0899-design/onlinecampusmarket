@@ -49,6 +49,11 @@ export default function Search() {
   async function doSearch(q, cat, s, min, max) {
     setLoading(true)
     setSearched(true)
+    // Track search query analytics
+    if (q?.trim()) {
+      supabase.from('search_analytics').insert({ query: q.trim().toLowerCase(), results_count: 0, category: cat !== 'All' ? cat : null })
+        .then(() => {}).catch(() => {})
+    }
     try {
       let qb = supabase.from('products').select('*, vendors(name, university, avatar_url, icon, avg_rating, review_count)').eq('available', true)
       if (q?.trim()) qb = qb.or(`name.ilike.%${q.trim()}%,description.ilike.%${q.trim()}%`)
@@ -61,17 +66,7 @@ export default function Search() {
       else qb = qb.order('created_at', { ascending: false })
       qb = qb.limit(60)
       const { data } = await qb
-      const filtered = (data || []).filter(p => p.vendor_id && p.vendors)
-      setResults(filtered)
-
-      // Track search analytics (fire-and-forget, only for non-empty queries)
-      if (q?.trim()) {
-        supabase.from('search_analytics').insert({
-          query: q.trim().toLowerCase(),
-          category: cat !== 'All' ? cat : null,
-          result_count: filtered.length,
-        }).then(() => {}).catch(() => {})
-      }
+      setResults((data || []).filter(p => p.vendor_id && p.vendors))
     } catch (err) {
       console.error(err)
     } finally {
@@ -183,10 +178,31 @@ export default function Search() {
         {loading ? (
           <div className="loading"><div className="spinner" /><span>Searching...</span></div>
         ) : !searched ? (
-          <div className="empty-state">
-            <div className="empty-icon">🔍</div>
-            <h3>Search for anything</h3>
-            <p>Try "second-hand laptop", "jollof rice", "Syne font t-shirt"…</p>
+          <div>
+            <div style={{marginBottom:'28px'}}>
+              <div style={{fontSize:'12px',fontWeight:700,color:'var(--gray)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:'12px'}}>Popular Searches</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
+                {['Laptop','Hoodie','Jollof rice','Textbooks','Phone charger','Earrings','Football boots','Room to rent'].map(s => (
+                  <button key={s} onClick={() => { setQuery(s); handleQueryChange(s) }}
+                    style={{background:'white',border:'1.5px solid var(--border)',borderRadius:'20px',padding:'6px 14px',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'var(--black)',transition:'all .15s'}}
+                    onMouseEnter={e=>{e.currentTarget.style.background='var(--wolf)';e.currentTarget.style.color='white';e.currentTarget.style.borderColor='var(--wolf)'}}
+                    onMouseLeave={e=>{e.currentTarget.style.background='white';e.currentTarget.style.color='var(--black)';e.currentTarget.style.borderColor='var(--border)'}}>
+                    🔍 {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:'12px',fontWeight:700,color:'var(--gray)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:'12px'}}>Browse by Category</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
+                {['Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living'].map(c => (
+                  <button key={c} onClick={() => { setCategory(c); doSearch('', c, sort, minPrice, maxPrice); setSearched(true) }}
+                    style={{background:'var(--light)',border:'1.5px solid var(--border)',borderRadius:'20px',padding:'6px 14px',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         ) : results.length === 0 ? (
           <div className="empty-state">
@@ -201,7 +217,7 @@ export default function Search() {
               return (
                 <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                   <div className="product-img">
-                    {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span>{p.icon || '📦'}</span>}
+                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span>{p.icon || '📦'}</span>}
                   </div>
                   <div className="product-body">
                     <div className="product-name">{p.name}</div>

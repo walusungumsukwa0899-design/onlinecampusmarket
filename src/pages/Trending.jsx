@@ -18,10 +18,12 @@ export default function Trending() {
   async function load() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     const [{ data: trend }, { data: newest }, { data: sale }] = await Promise.all([
-      // Trending = most views + orders in last 7 days
+      // Trending = most views, fallback to newest if no views recorded yet
       supabase.from('products').select('*, vendors(name, avg_rating)')
-        .eq('available', true).gt('view_count', 0)
-        .order('view_count', { ascending: false }).limit(20),
+        .eq('available', true)
+        .order('view_count', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(20),
       // New arrivals = listed in last 7 days
       supabase.from('products').select('*, vendors(name, avg_rating)')
         .eq('available', true).gte('created_at', sevenDaysAgo)
@@ -79,7 +81,7 @@ export default function Trending() {
               return (
                 <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                   <div className="product-img" style={{position:'relative'}}>
-                    {p.image_url ? <img src={p.image_url} alt={p.name}/> : <span>{p.icon||'📦'}</span>}
+                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy"/> : <span>{p.icon||'📦'}</span>}
                     {tab==='trending' && i < 3 && (
                       <div style={{position:'absolute',top:'8px',left:'8px',background:['#E8630A','#6366f1','#0ea5e9'][i],color:'white',borderRadius:'20px',padding:'3px 10px',fontSize:'10px',fontWeight:900}}>
                         {['🥇 #1','🥈 #2','🥉 #3'][i]}

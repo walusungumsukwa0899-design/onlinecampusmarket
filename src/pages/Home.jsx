@@ -9,8 +9,8 @@ import './Home.css'
 
 const CATEGORIES = [
   {icon:'👗',name:'Fashion & Clothing'},{icon:'📱',name:'Electronics'},{icon:'🍱',name:'Food & Drinks'},
-  {icon:'📚',name:'Books & Stationery'},{icon:'✏️',name:'Stationery & Art'},{icon:'💊',name:'Beauty & Health'},
-  {icon:'🏠',name:'Home & Living'},{icon:'💄',name:'Cosmetics'},{icon:'⚽',name:'Sports & Fitness'},
+  {icon:'📚',name:'Books & Stationery'},{icon:'✏️',name:'Books & Stationery'},{icon:'💊',name:'Beauty & Health'},
+  {icon:'🏠',name:'Home & Living'},{icon:'💄',name:'Beauty & Health'},{icon:'⚽',name:'Sports & Fitness'},
   {icon:'🔧',name:'Auto Parts'},{icon:'🛠️',name:'Services'},{icon:'📦',name:'Other'},
 ]
 
@@ -138,7 +138,7 @@ export default function Home() {
                 {products.map(p => (
                   <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                     <div className="product-img">
-                      {p.image_url ? <img src={p.image_url} alt={p.name}/> : <span>{p.icon || '📦'}</span>}
+                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy"/> : <span>{p.icon || '📦'}</span>}
                     </div>
                     <div className="product-body">
                       <div className="product-name">{p.name}</div>
@@ -180,7 +180,7 @@ export default function Home() {
               {recentlyViewed.map(p => (
                 <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                   <div className="product-img">
-                    {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span>{p.icon || '📦'}</span>}
+                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span>{p.icon || '📦'}</span>}
                   </div>
                   <div className="product-body">
                     <div className="product-name">{p.name}</div>
