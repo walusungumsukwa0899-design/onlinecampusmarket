@@ -464,7 +464,7 @@ export default function Dashboard() {
                     )}
                   </div>
                   {notifications.length === 0
-                    ? <div className="empty-state"><div className="empty-icon">🔔</div><h3>No notifications yet</h3><p>We'll notify you when orders confirm, messages arrive, and more.</p></div>
+                    ? <div className="empty-state"><div className="empty-icon">🔔</div><h3>No notifications yet</h3><p>We&apos;ll notify you when orders confirm, messages arrive, and more.</p></div>
                     : <div className="orders-list">
                         {notifications.map(n => (
                           <div key={n.id} className="order-row" style={{cursor:n.url?'pointer':'default',background:n.read?undefined:'var(--wolf-light)',borderLeft:n.read?undefined:'3px solid var(--wolf)'}}
@@ -616,7 +616,7 @@ export default function Dashboard() {
                             <option value="not_delivered">Never received the item</option>
                             <option value="wrong_item">Received the wrong item</option>
                             <option value="damaged">Item was damaged</option>
-                            <option value="vendor_unresponsive">Vendor isn't responding</option>
+                            <option value="vendor_unresponsive">Vendor isn&apos;t responding</option>
                             <option value="other">Other</option>
                           </select>
                         </div>
@@ -664,7 +664,7 @@ export default function Dashboard() {
                     </div>
                   )}
                   {sales.length === 0
-                    ? <div className="empty-state"><div className="empty-icon">💵</div><h3>No sales yet</h3><p>Once buyers purchase your products, they'll show up here.</p></div>
+                    ? <div className="empty-state"><div className="empty-icon">💵</div><h3>No sales yet</h3><p>Once buyers purchase your products, they&apos;ll show up here.</p></div>
                     : <div className="orders-list">
                         {sales.map(o => (
                           <div key={o.id} className="order-row">

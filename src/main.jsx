@@ -9,6 +9,15 @@ import './index.css'
 // Validate env vars before anything renders
 checkEnv()
 
+// Global error handler — prevents silent blank page on uncaught errors
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled promise rejection:', e.reason)
+})
+
+window.addEventListener('error', (e) => {
+  console.error('Global error:', e.message, e.filename, e.lineno)
+})
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

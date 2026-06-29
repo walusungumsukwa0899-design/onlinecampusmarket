@@ -11,7 +11,7 @@ export default function Footer() {
               <div className="footer-logo-icon">🐺</div>
               <div className="footer-logo-text">Wolf <span>Market</span></div>
             </div>
-            <p>Malawi's campus marketplace connecting student buyers and sellers across all universities.</p>
+            <p>Malawi&apos;s campus marketplace connecting student buyers and sellers across all universities.</p>
           </div>
           <div className="footer-col">
             <h4>Marketplace</h4>

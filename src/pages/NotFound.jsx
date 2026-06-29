@@ -24,7 +24,7 @@ export default function NotFound() {
       <div style={{ maxWidth: '560px', width: '100%', textAlign: 'center' }}>
         <div style={{ fontSize: '80px', marginBottom: '16px' }}>🐺</div>
         <h1 style={{ color: 'white', fontWeight: 900, fontSize: '32px', marginBottom: '8px', fontFamily: 'Syne,sans-serif' }}>404</h1>
-        <h2 style={{ color: 'white', fontWeight: 700, fontSize: '20px', marginBottom: '12px' }}>This page doesn't exist</h2>
+        <h2 style={{ color: 'white', fontWeight: 700, fontSize: '20px', marginBottom: '12px' }}>This page doesn&apos;t exist</h2>
         <p style={{ color: 'rgba(255,255,255,.65)', fontSize: '14px', marginBottom: '32px', lineHeight: 1.6 }}>
           The link may have expired or the page was moved. Here are some places to go instead:
         </p>

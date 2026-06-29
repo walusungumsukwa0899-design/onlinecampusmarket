@@ -58,7 +58,7 @@ export default function Home() {
     <div className="home-page">
       {/* HERO */}
       <section className="hero">
-        <div className="hero-badge">🐺 Malawi's Campus Marketplace</div>
+        <div className="hero-badge">🐺 Malawi&apos;s Campus Marketplace</div>
         <h1>Shop Smart.<br/><span>Study Hard.</span></h1>
         <p>Buy and sell everything on campus — fashion, food, electronics, books and more. Delivered to your hostel door.</p>
         <div className="hero-btns">

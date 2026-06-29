@@ -113,7 +113,7 @@ export default function SignIn() {
           <div className="signin-logo">
             <div className="signin-logo-icon">🐺</div>
             <div className="signin-logo-text">Wolf Marketplace</div>
-            <div className="signin-logo-sub">Malawi's Campus Marketplace</div>
+            <div className="signin-logo-sub">Malawi&apos;s Campus Marketplace</div>
           </div>
 
           {tab !== 'reset' && (
@@ -126,7 +126,7 @@ export default function SignIn() {
           {tab === 'reset' && (
             <>
               <h3 style={{ marginBottom: '4px', fontWeight: 800 }}>Reset your password</h3>
-              <p style={{ fontSize: '13px', color: 'var(--gray)', marginBottom: '16px' }}>Enter your email and we'll send a reset link.</p>
+              <p style={{ fontSize: '13px', color: 'var(--gray)', marginBottom: '16px' }}>Enter your email and we&apos;ll send a reset link.</p>
               <div className="form-group">
                 <label className="form-label">Email</label>
                 <input className="form-input" type="email" value={form.email} onChange={e => set('email', e.target.value)} onKeyDown={onKey} placeholder="you@example.com" autoFocus />
@@ -228,7 +228,7 @@ function LandingHero() {
           <div style={{ width: '52px', height: '52px', background: 'rgba(232,99,10,.2)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', border: '1.5px solid rgba(232,99,10,.4)' }}>🐺</div>
           <div>
             <div style={{ color: 'white', fontWeight: 900, fontSize: '18px', fontFamily: 'Syne,sans-serif' }}>Wolf Marketplace</div>
-            <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '12px' }}>Malawi's Campus Marketplace</div>
+            <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '12px' }}>Malawi&apos;s Campus Marketplace</div>
           </div>
         </div>
         <h1 className="landing-headline">

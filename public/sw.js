@@ -1,7 +1,7 @@
 // Wolf Marketplace Service Worker
 // Caches app shell for offline-friendly PWA experience on campus networks.
 
-const CACHE_NAME = 'wolf-market-v3'
+const CACHE_NAME = 'wolf-market-v8'
 const OFFLINE_URL = '/offline.html'
 
 const APP_SHELL = [

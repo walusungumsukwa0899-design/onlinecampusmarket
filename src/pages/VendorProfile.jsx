@@ -550,7 +550,7 @@ export default function VendorProfile() {
           <div className="reviews-pane">
             <div className="add-review">
               {isOwner ? (
-                <div className="success-msg" style={{background:'var(--light)'}}>You can't review your own store.</div>
+                <div className="success-msg" style={{background:'var(--light)'}}>You can&apos;t review your own store.</div>
               ) : hasReviewed || reviewSuccess ? (
                 <div className="success-msg">✅ {reviewSuccess ? 'Review posted! Thank you.' : "You've already reviewed this store."}</div>
               ) : !user ? (

@@ -8,7 +8,7 @@ export function Delivery() {
     <div className="page-wrap">
       <div className="delivery-hero">
         <h1>Delivery, <span>Vendor</span><br/>to You</h1>
-        <p>Wolf Market handles payments — delivery is arranged directly between you and the vendor you're buying from.</p>
+        <p>Wolf Market handles payments — delivery is arranged directly between you and the vendor you&apos;re buying from.</p>
       </div>
       <div className="steps-section">
         <div className="container">
@@ -33,7 +33,7 @@ export function Delivery() {
         <div className="container">
           <div className="section-header"><div className="eyebrow">Good to Know</div><h2 className="section-title">Delivery Is Set by Each Vendor</h2></div>
           <p className="delivery-disclaimer">
-            Wolf Market is a marketplace, not a delivery service — we don't dispatch riders or set delivery fees.
+            Wolf Market is a marketplace, not a delivery service — we don&apos;t dispatch riders or set delivery fees.
             Each vendor decides how they get items to you: some deliver around campus, others ask buyers to pick up.
             Delivery time, cost (if any), and coverage area are agreed between you and the vendor directly, usually
             over chat right after you pay. Check a vendor's profile or ask them before ordering if delivery details matter to you.
@@ -78,7 +78,7 @@ export function Contact() {
       <div className="container" style={{padding:'48px 24px 64px'}}>
         <div className="section-header">
           <div className="eyebrow">Get in Touch</div>
-          <h2 className="section-title">We're Here to Help</h2>
+          <h2 className="section-title">We&apos;re Here to Help</h2>
           <p className="section-sub">Questions about buying, selling, or delivery? Reach us anytime.</p>
         </div>
         <div className="contact-layout">
@@ -102,7 +102,7 @@ export function Contact() {
             <h3>Send a Message</h3>
             <div className="form-group"><label className="form-label">Full Name</label><input className="form-input" placeholder="Your name" value={form.name} onChange={e => set('name', e.target.value)}/></div>
             <div className="form-group"><label className="form-label">Phone or Email</label><input className="form-input" placeholder="+265 or email" value={form.contact} onChange={e => set('contact', e.target.value)}/></div>
-            <div className="form-group"><label className="form-label">Subject</label><input className="form-input" placeholder="What's this about?" value={form.subject} onChange={e => set('subject', e.target.value)}/></div>
+            <div className="form-group"><label className="form-label">Subject</label><input className="form-input" placeholder="What&apos;s this about?" value={form.subject} onChange={e => set('subject', e.target.value)}/></div>
             <div className="form-group"><label className="form-label">Message</label><textarea className="form-input" placeholder="How can we help?" value={form.message} onChange={e => set('message', e.target.value)}/></div>
             <div className="form-group">
               <label className="form-label">Send to</label>

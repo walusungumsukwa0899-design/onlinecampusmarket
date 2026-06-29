@@ -57,7 +57,7 @@ export default function SafetyPolicy() {
         <div className="section-header">
           <div className="eyebrow">Safety Policy</div>
           <h2 className="section-title">Staying Safe on Wolf Market</h2>
-          <p className="section-sub">Simple guidelines to help you buy and sell safely across Malawi's campuses.</p>
+          <p className="section-sub">Simple guidelines to help you buy and sell safely across Malawi&apos;s campuses.</p>
         </div>
 
         <div className="safety-grid">
@@ -74,7 +74,7 @@ export default function SafetyPolicy() {
 
         <div className="safety-note">
           <strong>Spotted something unsafe?</strong>
-          <p>Don't hesitate to report it. Every report helps keep the Wolf Market community safe.</p>
+          <p>Don&apos;t hesitate to report it. Every report helps keep the Wolf Market community safe.</p>
           <Link to="/report" className="btn-primary">Report an Issue</Link>
         </div>
       </div>

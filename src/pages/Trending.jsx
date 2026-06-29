@@ -51,7 +51,7 @@ export default function Trending() {
       <div style={{background:'linear-gradient(135deg,#0e1a12,#1a3a20)',padding:'80px 24px 0'}}>
         <div style={{maxWidth:'1100px',margin:'0 auto'}}>
           <h1 style={{color:'white',fontWeight:900,fontSize:'26px',marginBottom:'4px'}}>🔥 Discover</h1>
-          <p style={{color:'rgba(255,255,255,.7)',fontSize:'14px',marginBottom:'20px'}}>What's hot, what's new, and what's on sale right now</p>
+          <p style={{color:'rgba(255,255,255,.7)',fontSize:'14px',marginBottom:'20px'}}>What&apos;s hot, what&apos;s new, and what&apos;s on sale right now</p>
           <div style={{display:'flex',gap:'4px'}}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
