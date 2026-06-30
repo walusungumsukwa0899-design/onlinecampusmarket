@@ -15,9 +15,20 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Timeout fallback: if getSession hangs (bad network/env vars), stop loading after 5s
+    const sessionTimeout = setTimeout(() => {
+      console.warn('Wolf Marketplace: getSession timed out — showing app without auth')
+      setLoading(false)
+    }, 5000)
+
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      clearTimeout(sessionTimeout)
       if (error) console.error('Failed to get session:', extractError(error))
       setUser(session?.user ?? null)
+      setLoading(false)
+    }).catch((err) => {
+      clearTimeout(sessionTimeout)
+      console.error('getSession threw:', err)
       setLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
