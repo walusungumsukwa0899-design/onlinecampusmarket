@@ -76,14 +76,15 @@ export default function ProductDetail() {
     }
   }
 
-  if (loading) return <div className="loading"><div className="spinner"/><span>Loading product...</span></div>
-  // SEO — only runs when product is loaded, so no null-derived strings
+  // SEO — runs every render; falls back to defaults while product is still loading
   useSEO({
     title: product ? `${product.name} – MWK ${Number(product.price).toLocaleString()}` : 'Product',
-    description: product.description || `Buy ${product.name} from ${vendor?.name} on Wolf Marketplace.`,
-    image: product.image_url || undefined,
+    description: product?.description || `Buy ${product?.name || 'this product'} from ${vendor?.name || 'a campus vendor'} on Wolf Marketplace.`,
+    image: product?.image_url || undefined,
     url: window.location.href,
   })
+
+  if (loading) return <div className="loading"><div className="spinner"/><span>Loading product...</span></div>
 
   if (!product) return null
 

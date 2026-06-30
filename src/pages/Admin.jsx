@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 
-const ADMIN_EMAILS = ['admin@wolfmarketplace.mw', 'walusungumsukwa0899@gmail.com']
-
 export default function Admin() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
@@ -18,14 +16,24 @@ export default function Admin() {
   const [payoutRequests, setPayoutRequests] = useState([])
   const [stats, setStats] = useState({ orders: 0, vendors: 0, revenue: 0 })
   const [loading, setLoading] = useState(true)
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email)
+  const [isAdmin, setIsAdmin] = useState(null) // null = still checking, true/false = resolved
 
   useEffect(() => {
     if (authLoading) return
     if (!user) { navigate('/signin'); return }
-    if (!isAdmin) { navigate('/home'); return }
-    loadAll()
+    checkAdmin()
   }, [user, authLoading])
+
+  async function checkAdmin() {
+    const { data, error } = await supabase.from('profiles').select('is_admin').eq('id', user.id).maybeSingle()
+    if (error || !data?.is_admin) {
+      setIsAdmin(false)
+      navigate('/home')
+      return
+    }
+    setIsAdmin(true)
+    loadAll()
+  }
 
   useEffect(() => {
     if (activeDispute) loadDisputeMsgs(activeDispute.id)

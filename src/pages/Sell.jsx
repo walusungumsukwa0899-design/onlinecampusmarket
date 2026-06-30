@@ -20,6 +20,11 @@ export default function Sell() {
     name:'', price:'', description:'', phone:'', location:'', university:'',
     delivery:'', deliveryTime:'', deliveryFee:'', hours:''
   })
+  const [priceTiers, setPriceTiers] = useState([]) // [{label, price}]
+  const [csvMode, setCsvMode] = useState(false)
+  const [csvText, setCsvText] = useState('')
+  const [csvImporting, setCsvImporting] = useState(false)
+  const [csvResults, setCsvResults] = useState(null)
 
   function set(key, val) { setForm(f => ({...f, [key]: val})) }
 
@@ -150,10 +155,6 @@ export default function Sell() {
     </div>
   )
 
-  const [priceTiers, setPriceTiers] = useState([]) // [{label, price}]
-  const [csvText, setCsvText] = useState('')
-  const [csvImporting, setCsvImporting] = useState(false)
-  const [csvResults, setCsvResults] = useState(null)
 
   async function importCSV() {
     if (!user) { navigate('/signin'); return }

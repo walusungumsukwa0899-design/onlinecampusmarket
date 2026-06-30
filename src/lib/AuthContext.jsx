@@ -84,10 +84,8 @@ export function AuthProvider({ children }) {
       const subJson = sub.toJSON()
       await supabase.from('push_subscriptions').upsert({
         user_id: session.user.id,
-        endpoint: subJson.endpoint,
-        p256dh: subJson.keys?.p256dh,
-        auth_key: subJson.keys?.auth,
-      })
+        subscription: subJson,
+      }, { onConflict: 'user_id,endpoint' })
     } catch (err) {
       console.warn('Push registration failed:', err)
     }
