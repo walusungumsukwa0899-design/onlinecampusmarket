@@ -1,0 +1,25 @@
+.marketplaces-page{padding-top:64px;min-height:100vh;}
+.market-hero{background:linear-gradient(135deg,#0e0e1a,#1a0e2a);padding:60px 24px;text-align:center;}
+.market-hero h1{font-size:clamp(26px,5vw,48px);font-weight:800;color:white;margin-bottom:10px;}
+.market-hero h1 span{color:#a78bfa;}
+.market-hero p{color:rgba(255,255,255,0.55);font-size:15px;max-width:460px;margin:0 auto;}
+.filter-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:24px 0 8px;}
+.filter-btn{background:white;border:1.5px solid var(--border);border-radius:100px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--gray);}
+.filter-btn:hover,.filter-btn.active{background:var(--wolf);color:white;border-color:var(--wolf);}
+.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;padding:16px 0 48px;}
+.market-card{background:white;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:all .2s;}
+.market-card:hover{border-color:#a78bfa;transform:translateY(-2px);box-shadow:0 8px 24px rgba(167,139,250,0.12);}
+.market-card-banner{height:90px;display:flex;align-items:center;justify-content:center;}
+.market-emoji{font-size:44px;}
+.market-card-body{padding:16px;}
+.market-card-name{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:2px;}
+.market-card-full{font-size:11px;color:var(--gray);margin-bottom:6px;}
+.market-card-loc{font-size:12px;color:var(--gray);margin-bottom:12px;}
+.type-tag{padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;}
+.type-tag.public{background:#f0fdf4;color:var(--green);}
+.type-tag.private{background:#fff7ed;color:var(--wolf);}
+.market-card-stats{display:flex;gap:14px;margin-bottom:14px;}
+.mstat{font-size:11px;color:var(--gray);}
+.mstat strong{font-size:14px;color:var(--black);display:block;font-weight:800;}
+.market-card-btn{width:100%;background:var(--wolf-light);color:var(--wolf);border:none;padding:9px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.market-card-btn:hover{background:var(--wolf);color:white;}

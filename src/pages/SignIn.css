@@ -1,0 +1,172 @@
+/* ── Landing / Auth page ─────────────────────────────── */
+.landing-page {
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left hero panel */
+.landing-left {
+  flex: 1;
+  background: linear-gradient(150deg, #0a1a0e 0%, #1a3a20 60%, #0e2016 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.landing-left::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(232,99,10,.15) 0%, transparent 70%);
+  top: -100px; right: -100px;
+  pointer-events: none;
+}
+.landing-left::after {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(232,99,10,.1) 0%, transparent 70%);
+  bottom: -50px; left: -50px;
+  pointer-events: none;
+}
+
+.landing-hero-inner { max-width: 460px; width: 100%; position: relative; z-index: 1; }
+
+.landing-headline {
+  font-family: 'Syne', sans-serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: white;
+  line-height: 1.15;
+  margin: 0 0 16px;
+}
+
+.landing-sub {
+  color: rgba(255,255,255,.7);
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0 0 36px;
+}
+
+.landing-features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.landing-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  transition: background .2s;
+}
+.landing-feature:hover { background: rgba(255,255,255,.1); }
+.landing-feature-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+
+.landing-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 20px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+}
+
+/* Right form panel */
+.landing-right {
+  width: 440px;
+  flex-shrink: 0;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  overflow-y: auto;
+}
+
+.signin-card {
+  background: white;
+  border-radius: 20px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 380px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+}
+
+.signin-logo { text-align: center; margin-bottom: 24px; }
+.signin-logo-icon {
+  width: 52px; height: 52px;
+  background: var(--wolf);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  margin: 0 auto 10px;
+  box-shadow: 0 4px 12px rgba(232,99,10,.3);
+}
+.signin-logo-text { font-family: 'Syne',sans-serif; font-weight: 800; font-size: 18px; }
+.signin-logo-sub { font-size: 12px; color: var(--gray); margin-top: 3px; }
+
+.auth-toggle {
+  display: flex;
+  background: var(--light);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 22px;
+  gap: 2px;
+}
+.auth-tab {
+  flex: 1; border: none; background: none;
+  padding: 9px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+  color: var(--gray); font-family: 'Inter',sans-serif;
+}
+.auth-tab.active {
+  background: white; color: var(--wolf);
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  font-weight: 700;
+}
+
+.auth-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  padding: 10px 14px;
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .landing-page { flex-direction: column; }
+  .landing-left {
+    padding: 80px 24px 32px;
+    flex: none;
+  }
+  .landing-headline { font-size: 28px; }
+  .landing-features { gap: 10px; }
+  .landing-feature { padding: 10px 12px; }
+  .landing-right {
+    width: 100%;
+    padding: 24px 16px 80px;
+    background: #f8f9fa;
+  }
+  .signin-card { padding: 28px 20px; }
+}
+
+@media (max-width: 480px) {
+  .landing-stats { grid-template-columns: repeat(3,1fr); gap: 8px; padding: 14px; }
+}

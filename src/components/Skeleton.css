@@ -1,0 +1,43 @@
+@keyframes sk-shimmer {
+  0%   { background-position: -400px 0 }
+  100% { background-position:  400px 0 }
+}
+.sk-pulse {
+  background: linear-gradient(90deg, var(--light) 25%, #e9eaec 50%, var(--light) 75%);
+  background-size: 800px 100%;
+  animation: sk-shimmer 1.4s infinite linear;
+  border-radius: 6px;
+}
+.sk-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+}
+.sk-img {
+  width: 100%;
+  aspect-ratio: 1;
+}
+.sk-body {
+  padding: 12px;
+}
+.sk-line {
+  display: block;
+}
+.sk-vendor {
+  height: 200px;
+  border-radius: var(--radius);
+}
+.sk-order-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.sk-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

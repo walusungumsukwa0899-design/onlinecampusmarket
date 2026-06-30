@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wolfmarketplace.app/sitemap.xml
+
+# Block admin and private routes
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /messages
+Disallow: /disputes
+Disallow: /referrals
+Disallow: /cart
+Disallow: /order/

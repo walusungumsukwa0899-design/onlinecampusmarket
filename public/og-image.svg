@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1a0e"/>
+      <stop offset="100%" style="stop-color:#1a3a20"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Wolf icon circle -->
+  <circle cx="600" cy="220" r="100" fill="#E8630A" opacity="0.15"/>
+  <text x="600" y="265" font-size="120" text-anchor="middle" dominant-baseline="middle">🐺</text>
+  <!-- Title -->
+  <text x="600" y="380" font-family="Arial,sans-serif" font-size="64" font-weight="900" fill="white" text-anchor="middle">Wolf Marketplace</text>
+  <!-- Subtitle -->
+  <text x="600" y="450" font-family="Arial,sans-serif" font-size="28" fill="rgba(255,255,255,0.7)" text-anchor="middle">Malawi's Campus Marketplace</text>
+  <!-- Stats bar -->
+  <rect x="280" y="510" width="640" height="2" fill="rgba(232,99,10,0.4)"/>
+  <text x="370" y="580" font-family="Arial,sans-serif" font-size="22" fill="rgba(255,255,255,0.6)" text-anchor="middle">500+ Vendors</text>
+  <text x="600" y="580" font-family="Arial,sans-serif" font-size="22" fill="rgba(255,255,255,0.6)" text-anchor="middle">2,000+ Products</text>
+  <text x="830" y="580" font-family="Arial,sans-serif" font-size="22" fill="rgba(255,255,255,0.6)" text-anchor="middle">13 Universities</text>
+</svg>
