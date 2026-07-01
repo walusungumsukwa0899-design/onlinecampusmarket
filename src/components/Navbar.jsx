@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useCart } from '../lib/CartContext'
 import { useAuth } from '../lib/AuthContext'
 import { useInstallPrompt } from '../lib/useInstallPrompt'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import './Navbar.css'
 
@@ -15,34 +15,52 @@ export default function Navbar() {
   const path = location.pathname
   const [unreadNotifs, setUnreadNotifs] = useState(0)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
+  const channelsRef = useRef([])
 
   useEffect(() => {
-    if (!user) { setUnreadNotifs(0); setUnreadMsgs(0); return }
+    // Remove any existing channels first before creating new ones
+    const cleanup = async () => {
+      for (const ch of channelsRef.current) {
+        await supabase.removeChannel(ch)
+      }
+      channelsRef.current = []
+    }
+
+    if (!user) {
+      cleanup()
+      setUnreadNotifs(0)
+      setUnreadMsgs(0)
+      return
+    }
+
+    // Load initial counts
     supabase.from('notifications').select('id', { count: 'exact', head: true })
       .eq('user_id', user.id).eq('read', false)
       .then(({ count }) => setUnreadNotifs(count || 0))
     supabase.from('messages').select('id', { count: 'exact', head: true })
       .eq('buyer_id', user.id).eq('sender', 'vendor').eq('read', false)
       .then(({ count }) => setUnreadMsgs(count || 0))
-    const notifSub = supabase.channel('navbar-notifs-' + user.id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-        () => setUnreadNotifs(c => c + 1))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-        () => {
-          supabase.from('notifications').select('id', { count: 'exact', head: true })
+
+    // Wait for cleanup before subscribing
+    cleanup().then(() => {
+      const notifCh = supabase.channel(`navbar-notifs-${user.id}-${Date.now()}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          () => setUnreadNotifs(c => c + 1))
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          () => supabase.from('notifications').select('id', { count: 'exact', head: true })
             .eq('user_id', user.id).eq('read', false)
-            .then(({ count }) => setUnreadNotifs(count || 0))
-        })
-      .subscribe()
-    const msgSub = supabase.channel('navbar-msgs-' + user.id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `buyer_id=eq.${user.id}` },
-        payload => { if (payload.new.sender === 'vendor') setUnreadMsgs(c => c + 1) })
-      .subscribe()
-    // Use removeChannel (not unsubscribe) so the channel is fully torn down before
-    // this effect can re-run — onAuthStateChange fires a new `user` object on every
-    // token refresh, and re-adding .on() to a channel that's still mid-unsubscribe
-    // throws "cannot add postgres_changes callbacks after subscribe()".
-    return () => { supabase.removeChannel(notifSub); supabase.removeChannel(msgSub) }
+            .then(({ count }) => setUnreadNotifs(count || 0)))
+        .subscribe()
+
+      const msgCh = supabase.channel(`navbar-msgs-${user.id}-${Date.now()}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `buyer_id=eq.${user.id}` },
+          payload => { if (payload.new.sender === 'vendor') setUnreadMsgs(c => c + 1) })
+        .subscribe()
+
+      channelsRef.current = [notifCh, msgCh]
+    })
+
+    return () => { cleanup() }
   }, [user?.id])
 
   return (
