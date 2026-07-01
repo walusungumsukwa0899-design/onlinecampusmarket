@@ -52,6 +52,29 @@ export default function Home() {
       }
     }
     load()
+
+    // Live-update the "Fresh on Campus" feed the instant a new product is listed,
+    // without needing a page refresh.
+    const feedSub = supabase
+      .channel('home-fresh-feed')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'products', filter: 'available=eq.true' },
+        async (payload) => {
+          const { data: full } = await supabase
+            .from('products')
+            .select('*, vendors(name, avg_rating, review_count)')
+            .eq('id', payload.new.id)
+            .single()
+          if (!full || !full.vendor_id || !full.vendors) return
+          setProducts(prev => {
+            if (prev.some(p => p.id === full.id)) return prev
+            return [full, ...prev].slice(0, 8)
+          })
+        }
+      )
+      .subscribe()
+
+    return () => { feedSub.unsubscribe() }
   }, [])
 
   return (

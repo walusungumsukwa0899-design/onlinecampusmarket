@@ -437,7 +437,19 @@ export default function VendorProfile() {
                     )}
                         <button className="ask-btn" onClick={() => askAboutItem(p.name)}>Ask →</button>
                       </div>
-                      {p.available
+                      {isOwner ? (
+                        <div style={{display:'flex',gap:'6px',marginTop:'8px'}}>
+                          <button className="ask-btn" style={{flex:1,background:'var(--wolf)',color:'white',border:'none',borderRadius:'8px',padding:'8px',fontSize:'12px',fontWeight:700,cursor:'pointer'}}
+                            onClick={() => navigate(`/dashboard?tab=products&edit=${p.id}`)}>✏️ Edit</button>
+                          <button className="ask-btn" style={{flex:1,background:'#ef4444',color:'white',border:'none',borderRadius:'8px',padding:'8px',fontSize:'12px',fontWeight:700,cursor:'pointer'}}
+                            onClick={async () => {
+                              if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return
+                              const { error } = await supabase.from('products').delete().eq('id', p.id)
+                              if (!error) setProducts(prev => prev.filter(x => x.id !== p.id))
+                              else alert('Could not delete: ' + error.message)
+                            }}>🗑️ Delete</button>
+                        </div>
+                      ) : p.available
                         ? <button className="add-cart-btn" onClick={() => addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:vendor.name,vendor_id:vendor.id})}>Add to Cart</button>
                         : <button className="add-cart-btn" disabled>Out of Stock</button>
                       }

@@ -91,6 +91,7 @@ export default function ProductDetail() {
   const images = product.image_urls?.length ? product.image_urls : (product.image_url ? [product.image_url] : [])
   const variants = Array.isArray(product.variants) ? product.variants : (product.variants ? product.variants.split(',').map(v=>v.trim()).filter(Boolean) : [])
   const cartItem = { id: product.id, name: product.name + (selectedVariant ? ` (${selectedVariant})` : ''), price: `MWK ${Number(product.price).toLocaleString()}`, rawPrice: product.price, icon: product.icon || '📦', seller: vendor?.name, vendor_id: product.vendor_id, image_url: product.image_url }
+  const isOwnProduct = user && vendor && vendor.user_id === user.id
   const whatsappMsg = encodeURIComponent(`Hi! I saw your product "${product.name}" on Wolf Marketplace and I'm interested. Is it still available?`)
   const whatsappUrl = vendor?.phone ? `https://wa.me/${vendor.phone.replace(/\D/g,'')}?text=${whatsappMsg}` : null
   const shareUrl = `${window.location.origin}/products/${product.id}`
@@ -224,15 +225,24 @@ export default function ProductDetail() {
             )}
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button className="btn-primary" style={{ flex: 1, minWidth: '120px' }}
-                disabled={!product.available || product.stock_qty === 0}
-                onClick={() => addToCart(cartItem)}>
-                {product.available && product.stock_qty !== 0 ? '🛒 Add to Cart' : 'Unavailable'}
-              </button>
-              <button onClick={() => toggleWishlist(cartItem)}
-                style={{ background: isWishlisted(product.id) ? '#fee2e2' : 'var(--light)', border: 'none', borderRadius: '10px', padding: '0 16px', cursor: 'pointer', fontSize: '20px' }}>
-                {isWishlisted(product.id) ? '❤️' : '🤍'}
-              </button>
+              {isOwnProduct ? (
+                <button className="btn-primary" style={{ flex: 1, minWidth: '120px', background: 'var(--gray)' }}
+                  onClick={() => navigate(`/dashboard?tab=products&edit=${product.id}`)}>
+                  ✏️ Edit Your Product
+                </button>
+              ) : (
+                <button className="btn-primary" style={{ flex: 1, minWidth: '120px' }}
+                  disabled={!product.available || product.stock_qty === 0}
+                  onClick={() => addToCart(cartItem)}>
+                  {product.available && product.stock_qty !== 0 ? '🛒 Add to Cart' : 'Unavailable'}
+                </button>
+              )}
+              {!isOwnProduct && (
+                <button onClick={() => toggleWishlist(cartItem)}
+                  style={{ background: isWishlisted(product.id) ? '#fee2e2' : 'var(--light)', border: 'none', borderRadius: '10px', padding: '0 16px', cursor: 'pointer', fontSize: '20px' }}>
+                  {isWishlisted(product.id) ? '❤️' : '🤍'}
+                </button>
+              )}
             </div>
 
             {/* Notify me when back in stock */}
@@ -363,7 +373,11 @@ export default function ProductDetail() {
                     <div className="product-name">{p.name}</div>
                     <div className="product-seller">{p.vendors?.name}</div>
                     <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
-                    <button className="add-cart-btn" onClick={e => { e.stopPropagation(); addToCart({ id: p.id, name: p.name, price: `MWK ${Number(p.price).toLocaleString()}`, rawPrice: p.price, icon: p.icon || '📦', seller: p.vendors?.name, vendor_id: p.vendor_id, image_url: p.image_url }) }}>Add to Cart</button>
+                    <button className="add-cart-btn"
+                      disabled={p.vendor_id === product.vendor_id && isOwnProduct}
+                      onClick={e => { e.stopPropagation(); if (p.vendor_id === product.vendor_id && isOwnProduct) return; addToCart({ id: p.id, name: p.name, price: `MWK ${Number(p.price).toLocaleString()}`, rawPrice: p.price, icon: p.icon || '📦', seller: p.vendors?.name, vendor_id: p.vendor_id, image_url: p.image_url }) }}>
+                      {p.vendor_id === product.vendor_id && isOwnProduct ? 'Your Product' : 'Add to Cart'}
+                    </button>
                   </div>
                 </div>
               ))}

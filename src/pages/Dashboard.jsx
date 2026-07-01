@@ -40,12 +40,13 @@ function OrderTimeline({ status, createdAt, receivedAt }) {
 }
 
 function OnboardingChecklist({ vendor, myProducts, payoutPhone }) {
+  const navigate = useNavigate()
   const steps = [
-    { done: !!vendor?.avatar_url, label: 'Add a store photo', hint: 'Go to your store → tap your avatar' },
-    { done: !!vendor?.banner_url, label: 'Add a store banner', hint: 'Go to your store → tap the banner area' },
-    { done: myProducts.length > 0, label: 'List your first product', hint: 'Click "Sell" in the menu' },
-    { done: !!payoutPhone, label: 'Set up your payout number', hint: 'Go to Settings → Payout Details' },
-    { done: !!vendor?.phone, label: 'Add a WhatsApp number', hint: 'Edit your store to add a contact number' },
+    { done: !!vendor?.avatar_url, label: 'Add a store photo', hint: 'Tap to go to your store profile', action: () => navigate(`/vendor/${vendor?.id}`) },
+    { done: !!vendor?.banner_url, label: 'Add a store banner', hint: 'Tap to go to your store profile', action: () => navigate(`/vendor/${vendor?.id}`) },
+    { done: myProducts.length > 0, label: 'List your first product', hint: 'Tap to list a product', action: () => navigate('/sell') },
+    { done: !!payoutPhone, label: 'Set up your payout number', hint: 'Tap to go to Settings', action: () => navigate('/dashboard?tab=settings') },
+    { done: !!vendor?.phone, label: 'Add a WhatsApp number', hint: 'Tap to go to Settings', action: () => navigate('/dashboard?tab=settings') },
   ]
   const done = steps.filter(s => s.done).length
   if (done === steps.length) return null // hide when complete
@@ -57,11 +58,19 @@ function OnboardingChecklist({ vendor, myProducts, payoutPhone }) {
         <div style={{height:'100%',background:'var(--wolf)',borderRadius:'8px',width:`${(done/steps.length)*100}%`,transition:'width 0.4s'}}/>
       </div>
       {steps.map((s, i) => (
-        <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'10px',opacity:s.done?0.5:1}}>
+        <div key={i}
+          onClick={!s.done ? s.action : undefined}
+          style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'10px',
+            opacity:s.done?0.5:1,
+            cursor:s.done?'default':'pointer',
+            background:s.done?'transparent':'var(--light)',
+            borderRadius:'8px',padding:'8px',
+            transition:'background 0.2s'
+          }}>
           <span style={{fontSize:'16px',flexShrink:0,marginTop:'1px'}}>{s.done ? '✅' : '⭕'}</span>
-          <div>
+          <div style={{flex:1}}>
             <div style={{fontWeight:700,fontSize:'13px',textDecoration:s.done?'line-through':'none'}}>{s.label}</div>
-            {!s.done && <div style={{fontSize:'11px',color:'var(--gray)'}}>{s.hint}</div>}
+            {!s.done && <div style={{fontSize:'11px',color:'var(--wolf)',fontWeight:600}}>{s.hint} →</div>}
           </div>
         </div>
       ))}

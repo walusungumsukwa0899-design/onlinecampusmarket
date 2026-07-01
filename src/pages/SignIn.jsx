@@ -4,7 +4,7 @@ import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import './SignIn.css'
 
-const UNIS = ['UNIMA','The Polytechnic','Mzuzu University','MUST','College of Medicine','Catholic University of Malawi','MUBAS','LUANAR','Malawi Adventist University','Livingstonia University','Daeyang Luke University','NIPA','Other']
+const UNIS = ['UNIMA','MUBAS','Mzuzu University','MUST','College of Medicine','Catholic University of Malawi','LUANAR','Malawi Adventist University','Livingstonia University','Daeyang Luke University','NIPA','Other']
 
 const FEATURES = [
   { icon: '🛍️', title: 'Buy from campus vendors', desc: 'Food, fashion, electronics, services — all nearby' },

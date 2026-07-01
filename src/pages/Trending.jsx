@@ -33,9 +33,9 @@ export default function Trending() {
         .eq('available', true).not('compare_at_price', 'is', null)
         .order('created_at', { ascending: false }).limit(20),
     ])
-    setTrending((trend || []).filter(p => p.vendors))
-    setNewArrivals((newest || []).filter(p => p.vendors))
-    setOnSale((sale || []).filter(p => p.vendors && p.compare_at_price > p.price))
+    setTrending(trend || [])
+    setNewArrivals(newest || [])
+    setOnSale((sale || []).filter(p => p.compare_at_price > p.price))
     setLoading(false)
   }
 

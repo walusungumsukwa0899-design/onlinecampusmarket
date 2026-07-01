@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
-import Footer from '../components/Footer'
 
 export default function Messages() {
   const navigate = useNavigate()
@@ -10,188 +9,194 @@ export default function Messages() {
   const { user, loading: authLoading } = useAuth()
 
   const [conversations, setConversations] = useState([])
-  const [activeVendorId, setActiveVendorId] = useState(searchParams.get('vendor') || null)
-  const [activeVendor, setActiveVendor] = useState(null)
+  const [activeConv, setActiveConv] = useState(null) // { vendorId, buyerId, type:'buyer'|'vendor', vendor, buyer }
   const [messages, setMessages] = useState([])
   const [newMsg, setNewMsg] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [myVendor, setMyVendor] = useState(null)
+  const [myVendor, setMyVendor] = useState(undefined) // undefined=unchecked, null=not a vendor, object=is vendor
   const messagesEndRef = useRef(null)
   const realtimeRef = useRef(null)
 
+  // Load vendor profile first, then conversations
   useEffect(() => {
     if (authLoading) return
     if (!user) { navigate('/signin'); return }
-    loadConversations()
-    // Check if user is a vendor
-    supabase.from('vendors').select('id,name').eq('user_id', user.id).maybeSingle()
-      .then(({ data }) => setMyVendor(data || null))
+    supabase.from('vendors').select('id,name,avatar_url').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => { setMyVendor(data ?? null) })
   }, [user, authLoading])
 
+  // Load conversations once we know vendor status (myVendor is null=not a vendor, undefined=not checked yet)
   useEffect(() => {
-    if (activeVendorId) loadMessages(activeVendorId)
-  }, [activeVendorId])
+    if (!user || authLoading || myVendor === undefined) return
+    loadConversations(myVendor)
+  }, [user, myVendor, authLoading])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Realtime subscription for active conversation
+  // Realtime for active conversation
   useEffect(() => {
-    if (!activeVendorId || !user) return
-    realtimeRef.current?.unsubscribe()
-    realtimeRef.current = supabase
-      .channel(`messages-${activeVendorId}-${user.id}`)
+    if (!activeConv || !user) return
+    if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
+    const ch = supabase
+      .channel(`msgs-${activeConv.vendorId}-${activeConv.buyerId}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'messages',
-        filter: `vendor_id=eq.${activeVendorId}`
+        filter: `vendor_id=eq.${activeConv.vendorId}`
       }, payload => {
         const msg = payload.new
-        if (msg.buyer_id === user.id || (myVendor && msg.vendor_id === myVendor?.id)) {
-          setMessages(prev => {
-            if (prev.find(m => m.id === msg.id)) return prev
-            return [...prev, msg]
-          })
+        // Only show if it belongs to this conversation
+        if (msg.buyer_id === activeConv.buyerId) {
+          setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg])
         }
       })
       .subscribe()
-    return () => realtimeRef.current?.unsubscribe()
-  }, [activeVendorId, user, myVendor])
+    realtimeRef.current = ch
+    return () => { supabase.removeChannel(ch) }
+  }, [activeConv, user])
 
-  async function loadConversations() {
+  async function loadConversations(vendor) {
     setLoading(true)
     try {
-      // Load all unique conversations for this user (as buyer)
+      const convMap = new Map()
+
+      // Buyer side: conversations where user is the buyer
       const { data: buyerMsgs } = await supabase
         .from('messages')
-        .select('vendor_id, vendors(id, name, avatar_url, icon, university), created_at, text, read, sender')
+        .select('vendor_id, buyer_id, vendors(id,name,avatar_url,icon,university), created_at, text, read, sender')
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false })
 
-      // Load vendor conversations if user is a vendor
-      let vendorMsgs = []
-      if (myVendor) {
-        const { data } = await supabase
-          .from('messages')
-          .select('buyer_id, profiles(id, full_name, avatar_url), created_at, text, read, sender')
-          .eq('vendor_id', myVendor.id)
-          .order('created_at', { ascending: false })
-        vendorMsgs = data || []
-      }
-
-      // Deduplicate by vendor_id (take most recent per vendor)
-      const convMap = new Map()
       for (const m of (buyerMsgs || [])) {
-        if (!convMap.has(m.vendor_id)) {
-          convMap.set(m.vendor_id, {
-            type: 'buyer',
-            vendorId: m.vendor_id,
-            vendor: m.vendors,
-            lastMsg: m.text,
-            lastTime: m.created_at,
+        const key = `buyer-${m.vendor_id}`
+        if (!convMap.has(key)) {
+          convMap.set(key, {
+            key, type: 'buyer',
+            vendorId: m.vendor_id, buyerId: user.id,
+            vendor: m.vendors, buyer: null,
+            label: m.vendors?.name || 'Vendor',
+            avatar: m.vendors?.avatar_url,
+            lastMsg: m.text, lastTime: m.created_at,
             unread: !m.read && m.sender === 'vendor'
           })
         }
       }
-      setConversations([...convMap.values()])
 
-      // Auto-select first or URL param
-      if (activeVendorId) {
-        const v = convMap.get(activeVendorId)
-        if (v) setActiveVendor(v.vendor)
-        else {
-          // Fetch vendor info even if no prior messages
-          const { data: vd } = await supabase.from('vendors').select('id,name,avatar_url,icon,university,avg_rating,response_rate').eq('id', activeVendorId).maybeSingle()
-          if (vd) setActiveVendor(vd)
+      // Vendor side: conversations where user is the vendor
+      if (vendor) {
+        const { data: vendorMsgs } = await supabase
+          .from('messages')
+          .select('vendor_id, buyer_id, profiles(id,full_name,avatar_url), created_at, text, read, sender')
+          .eq('vendor_id', vendor.id)
+          .order('created_at', { ascending: false })
+
+        for (const m of (vendorMsgs || [])) {
+          const key = `vendor-${m.buyer_id}`
+          if (!convMap.has(key)) {
+            convMap.set(key, {
+              key, type: 'vendor',
+              vendorId: vendor.id, buyerId: m.buyer_id,
+              vendor: null, buyer: m.profiles,
+              label: m.profiles?.full_name || 'Customer',
+              avatar: m.profiles?.avatar_url,
+              lastMsg: m.text, lastTime: m.created_at,
+              unread: !m.read && m.sender === 'buyer'
+            })
+          }
         }
-      } else if (convMap.size > 0) {
-        const first = [...convMap.values()][0]
-        setActiveVendorId(first.vendorId)
-        setActiveVendor(first.vendor)
+      }
+
+      const convList = [...convMap.values()].sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime))
+      setConversations(convList)
+
+      // Auto-select from URL param or first conversation
+      const urlVendor = searchParams.get('vendor')
+      if (urlVendor) {
+        const match = convList.find(c => c.vendorId === urlVendor && c.type === 'buyer')
+          || convList.find(c => c.vendorId === urlVendor)
+        if (match) selectConversation(match)
+        else {
+          // New conversation with this vendor
+          const { data: vd } = await supabase.from('vendors').select('id,name,avatar_url,icon,university,avg_rating').eq('id', urlVendor).maybeSingle()
+          if (vd) {
+            const newConv = { key: `buyer-${urlVendor}`, type: 'buyer', vendorId: urlVendor, buyerId: user.id, vendor: vd, buyer: null, label: vd.name, avatar: vd.avatar_url, lastMsg: '', lastTime: new Date().toISOString(), unread: false }
+            setActiveConv(newConv)
+          }
+        }
+      } else if (convList.length > 0) {
+        selectConversation(convList[0])
       }
     } catch (err) {
-      console.error(err)
+      console.error('loadConversations error:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  async function loadMessages(vendorId) {
+  async function selectConversation(conv) {
+    setActiveConv(conv)
     const { data } = await supabase
       .from('messages')
       .select('*')
-      .eq('vendor_id', vendorId)
-      .eq('buyer_id', user.id)
+      .eq('vendor_id', conv.vendorId)
+      .eq('buyer_id', conv.buyerId)
       .order('created_at', { ascending: true })
     setMessages(data || [])
-    // Mark vendor messages as read
+    // Mark unread messages as read
+    const unreadSender = conv.type === 'buyer' ? 'vendor' : 'buyer'
     await supabase.from('messages').update({ read: true })
-      .eq('vendor_id', vendorId).eq('buyer_id', user.id).eq('sender', 'vendor').eq('read', false)
+      .eq('vendor_id', conv.vendorId).eq('buyer_id', conv.buyerId)
+      .eq('sender', unreadSender).eq('read', false)
+    setConversations(prev => prev.map(c => c.key === conv.key ? { ...c, unread: false } : c))
   }
 
   async function sendMessage() {
-    if (!newMsg.trim() || !activeVendorId || sending) return
-    // Rate limit: max 5 messages per minute
+    if (!newMsg.trim() || !activeConv || sending) return
     const now = Date.now()
-    const key = `wolf_msg_times_${activeVendorId}`
+    const key = `wolf_msg_times_${activeConv.vendorId}_${activeConv.buyerId}`
     let times = []
     try { times = JSON.parse(sessionStorage.getItem(key) || '[]') } catch {}
     times = times.filter(t => now - t < 60000)
-    if (times.length >= 5) {
-      alert('Please wait a moment before sending more messages.')
-      return
-    }
-    times.push(now)
-    sessionStorage.setItem(key, JSON.stringify(times))
+    if (times.length >= 5) { alert('Please wait a moment before sending more messages.'); return }
+    times.push(now); sessionStorage.setItem(key, JSON.stringify(times))
 
     setSending(true)
-    const msgData = {
-      vendor_id: activeVendorId,
-      buyer_id: user.id,
-      text: newMsg.trim(),
-      sender: 'buyer',
-    }
-    // Optimistic update
+    const sender = activeConv.type === 'buyer' ? 'buyer' : 'vendor'
+    const msgData = { vendor_id: activeConv.vendorId, buyer_id: activeConv.buyerId, text: newMsg.trim(), sender }
     const optimistic = { ...msgData, id: `opt-${Date.now()}`, created_at: new Date().toISOString() }
     setMessages(prev => [...prev, optimistic])
     setNewMsg('')
     const { data, error } = await supabase.from('messages').insert(msgData).select().single()
     if (error) {
-      // Remove optimistic message and restore text
       setMessages(prev => prev.filter(m => m.id !== optimistic.id))
       setNewMsg(msgData.text)
-      alert(`Message failed to send: ${error.message || 'Please try again.'}`)
+      alert(`Message failed: ${error.message}`)
     } else if (data) {
-      // Replace optimistic with real
       setMessages(prev => prev.map(m => m.id === optimistic.id ? data : m))
-      supabase.functions.invoke('notify-new-message', {
-        body: { vendorId: activeVendorId, buyerId: user.id, message: data.text }
-      }).catch(() => {})
+      if (sender === 'buyer') {
+        supabase.functions.invoke('notify-new-message', {
+          body: { vendorId: activeConv.vendorId, buyerId: user.id, message: data.text }
+        }).catch(() => {})
+      }
     }
     setSending(false)
-  }
-
-  function selectConversation(conv) {
-    setActiveVendorId(conv.vendorId)
-    setActiveVendor(conv.vendor)
   }
 
   if (authLoading || loading) {
     return <div className="loading" style={{ paddingTop: '80px' }}><div className="spinner" /><span>Loading messages...</span></div>
   }
 
+  const isMineMsg = (m) => {
+    if (!activeConv) return false
+    return activeConv.type === 'buyer' ? m.sender === 'buyer' : m.sender === 'vendor'
+  }
+
   return (
     <div style={{ display: 'flex', height: '100vh', paddingTop: '64px', overflow: 'hidden' }}>
       {/* Sidebar */}
-      <div style={{
-        width: activeVendorId ? '280px' : '100%',
-        borderRight: '1.5px solid var(--border)',
-        overflowY: 'auto',
-        background: 'white',
-        flexShrink: 0,
-        display: activeVendorId ? 'block' : 'block'
-      }} className="msgs-sidebar">
+      <div style={{ width: activeConv ? '280px' : '100%', borderRight: '1.5px solid var(--border)', overflowY: 'auto', background: 'white', flexShrink: 0 }} className="msgs-sidebar">
         <div style={{ padding: '16px', borderBottom: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' }}>←</button>
           <h2 style={{ fontWeight: 900, fontSize: '16px' }}>💬 Messages</h2>
@@ -200,19 +205,22 @@ export default function Messages() {
           <div className="empty-state" style={{ padding: '40px 20px' }}>
             <div className="empty-icon">💬</div>
             <h3 style={{ fontSize: '16px' }}>No conversations yet</h3>
-            <p>Message a vendor from their store page or a product page</p>
+            <p>Message a vendor from their store page</p>
             <button className="btn-primary" style={{ marginTop: '12px', fontSize: '13px', padding: '10px 18px' }} onClick={() => navigate('/vendors')}>Browse Vendors</button>
           </div>
         ) : (
           conversations.map(conv => (
-            <div key={conv.vendorId} onClick={() => selectConversation(conv)}
-              style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: activeVendorId === conv.vendorId ? 'var(--wolf-light)' : 'white', borderLeft: activeVendorId === conv.vendorId ? '3px solid var(--wolf)' : '3px solid transparent', transition: 'all .15s' }}>
+            <div key={conv.key} onClick={() => selectConversation(conv)}
+              style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: activeConv?.key === conv.key ? 'var(--wolf-light)' : 'white', borderLeft: activeConv?.key === conv.key ? '3px solid var(--wolf)' : '3px solid transparent', transition: 'all .15s' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--wolf)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, fontSize: '16px', flexShrink: 0, overflow: 'hidden' }}>
-                  {conv.vendor?.avatar_url ? <img src={conv.vendor.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (conv.vendor?.name?.[0] || '🏪')}
+                  {conv.avatar ? <img src={conv.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (conv.label?.[0] || '?')}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: conv.unread ? 800 : 600, fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.vendor?.name || 'Vendor'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ fontWeight: conv.unread ? 800 : 600, fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.label}</div>
+                    {conv.type === 'vendor' && <span style={{ fontSize: '10px', background: 'var(--wolf)', color: 'white', borderRadius: '4px', padding: '1px 5px', fontWeight: 700 }}>Customer</span>}
+                  </div>
                   <div style={{ fontSize: '11px', color: 'var(--gray)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>{conv.lastMsg}</div>
                 </div>
                 {conv.unread && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--wolf)', flexShrink: 0 }} />}
@@ -223,45 +231,35 @@ export default function Messages() {
       </div>
 
       {/* Chat window */}
-      {activeVendorId && (
+      {activeConv && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Chat header */}
           <div style={{ padding: '12px 16px', borderBottom: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px', background: 'white', flexShrink: 0 }}>
-            <button onClick={() => { setActiveVendorId(null); setActiveVendor(null) }}
-              style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', display: 'none' }} className="msg-back-btn">←</button>
-            <div onClick={() => navigate(`/vendors/${activeVendorId}`)}
-              style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--wolf)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, overflow: 'hidden', cursor: 'pointer', flexShrink: 0 }}>
-              {activeVendor?.avatar_url ? <img src={activeVendor.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (activeVendor?.name?.[0] || '🏪')}
+            <button onClick={() => setActiveConv(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', display: 'none' }} className="msg-back-btn">←</button>
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--wolf)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, overflow: 'hidden', flexShrink: 0 }}>
+              {activeConv.avatar ? <img src={activeConv.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (activeConv.label?.[0] || '?')}
             </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '14px', cursor: 'pointer' }} onClick={() => navigate(`/vendors/${activeVendorId}`)}>{activeVendor?.name || 'Vendor'}</div>
-              <div style={{ fontSize: '11px', color: 'var(--gray)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <span>{activeVendor?.university}</span>
-                {activeVendor?.response_rate > 0 && <span style={{ color: '#22c55e', fontWeight: 600 }}>⚡ {activeVendor.response_rate}% response rate</span>}
-                {activeVendor?.avg_rating > 0 && <span>⭐ {Number(activeVendor.avg_rating).toFixed(1)}</span>}
-              </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 800, fontSize: '14px' }}>{activeConv.label}</div>
+              <div style={{ fontSize: '11px', color: 'var(--gray)' }}>{activeConv.type === 'vendor' ? 'Customer' : 'Vendor'}</div>
             </div>
-            <button onClick={() => navigate(`/vendors/${activeVendorId}`)}
-              style={{ marginLeft: 'auto', background: 'var(--light)', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>View Store →</button>
+            {activeConv.type === 'buyer' && (
+              <button onClick={() => navigate(`/vendors/${activeConv.vendorId}`)}
+                style={{ background: 'var(--light)', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>View Store →</button>
+            )}
           </div>
 
-          {/* Messages */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9fafb' }}>
             {messages.length === 0 && (
               <div style={{ textAlign: 'center', color: 'var(--gray)', fontSize: '13px', marginTop: '40px' }}>
                 <div style={{ fontSize: '40px', marginBottom: '8px' }}>👋</div>
-                Say hi to {activeVendor?.name || 'the vendor'}!
+                Start the conversation!
               </div>
             )}
             {messages.map(m => {
-              const isMine = m.sender === 'buyer'
+              const mine = isMineMsg(m)
               return (
-                <div key={m.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
-                  <div style={{
-                    maxWidth: '70%', padding: '10px 14px', borderRadius: isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                    background: isMine ? 'var(--wolf)' : 'white', color: isMine ? 'white' : 'var(--black)',
-                    fontSize: '13px', lineHeight: 1.5, boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
-                  }}>
+                <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ maxWidth: '70%', padding: '10px 14px', borderRadius: mine ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: mine ? 'var(--wolf)' : 'white', color: mine ? 'white' : 'var(--black)', fontSize: '13px', lineHeight: 1.5, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
                     {m.text}
                     <div style={{ fontSize: '10px', opacity: 0.65, marginTop: '4px', textAlign: 'right' }}>
                       {new Date(m.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
@@ -273,16 +271,11 @@ export default function Messages() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div style={{ padding: '12px 16px', borderTop: '1.5px solid var(--border)', background: 'white', display: 'flex', gap: '10px', alignItems: 'flex-end', flexShrink: 0 }}>
-            <textarea
-              value={newMsg}
-              onChange={e => setNewMsg(e.target.value)}
+            <textarea value={newMsg} onChange={e => setNewMsg(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-              placeholder="Type a message..."
-              rows={1}
-              style={{ flex: 1, border: '1.5px solid var(--border)', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', fontFamily: 'Inter,sans-serif', outline: 'none', resize: 'none', maxHeight: '100px', overflowY: 'auto' }}
-            />
+              placeholder="Type a message..." rows={1}
+              style={{ flex: 1, border: '1.5px solid var(--border)', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', fontFamily: 'Inter,sans-serif', outline: 'none', resize: 'none', maxHeight: '100px', overflowY: 'auto' }} />
             <button onClick={sendMessage} disabled={sending || !newMsg.trim()}
               style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '10px', width: '42px', height: '42px', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}>
               ➤
@@ -293,7 +286,7 @@ export default function Messages() {
 
       <style>{`
         @media(max-width:600px) {
-          .msgs-sidebar { width: 100% !important; display: ${activeVendorId ? 'none' : 'block'} !important; }
+          .msgs-sidebar { width: 100% !important; display: ${activeConv ? 'none' : 'block'} !important; }
           .msg-back-btn { display: flex !important; }
         }
       `}</style>

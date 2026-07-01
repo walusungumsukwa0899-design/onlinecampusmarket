@@ -6,13 +6,14 @@ import Footer from '../components/Footer'
 import './Sell.css'
 
 const CATS = ['Fashion & Clothing','Electronics','Food & Drinks','Books & Stationery','Beauty & Health','Services','Art & Crafts','Home & Living','Sports & Fitness','Auto Parts','Other']
-const UNIS = ['UNIMA','The Polytechnic','Mzuzu University','MUST','College of Medicine','Catholic University of Malawi','MUBAS','LUANAR','Malawi Adventist University','Livingstonia University','Daeyang Luke University','NIPA','Other']
+const UNIS = ['UNIMA','MUBAS','Mzuzu University','MUST','College of Medicine','Catholic University of Malawi','LUANAR','Malawi Adventist University','Livingstonia University','Daeyang Luke University','NIPA','Other']
 
 export default function Sell() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [existingVendor, setExistingVendor] = useState(undefined) // undefined=checking, null=none, obj=exists
   const [photoPreviews, setPhotoPreviews] = useState([])
   const [photoFiles, setPhotoFiles] = useState([])
   const [selectedCat, setSelectedCat] = useState('')
@@ -20,13 +21,21 @@ export default function Sell() {
     name:'', price:'', description:'', phone:'', location:'', university:'',
     delivery:'', deliveryTime:'', deliveryFee:'', hours:''
   })
-  const [priceTiers, setPriceTiers] = useState([]) // [{label, price}]
+  const [priceTiers, setPriceTiers] = useState([])
   const [csvMode, setCsvMode] = useState(false)
   const [csvText, setCsvText] = useState('')
   const [csvImporting, setCsvImporting] = useState(false)
   const [csvResults, setCsvResults] = useState(null)
 
   function set(key, val) { setForm(f => ({...f, [key]: val})) }
+
+  // Check if user already has a vendor store
+  useEffect(() => {
+    if (!user) return
+    supabase.from('vendors').select('id,name,phone,location,university,delivery,delivery_time,delivery_fee,hours')
+      .eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => setExistingVendor(data ?? null))
+  }, [user])
 
   useEffect(() => {
     return () => { photoPreviews.forEach(url => URL.revokeObjectURL(url)) }
@@ -59,7 +68,8 @@ export default function Sell() {
 
   async function submit() {
     if (!user) { navigate('/signin'); return }
-    if (!form.name || !form.price || !selectedCat || !form.university) {
+    const university = existingVendor?.university || form.university
+    if (!form.name || !form.price || !selectedCat || !university) {
       alert('Please fill in all required fields (name, price, category, university)'); return
     }
     setLoading(true)
@@ -78,7 +88,7 @@ export default function Sell() {
         phone: form.phone,
         email: user.email,
         location: form.location,
-        university: form.university,
+        university: university,
         hours: form.hours,
         delivery_area: form.location,
         delivery_time: form.deliveryTime,
@@ -297,47 +307,69 @@ export default function Sell() {
         </div>
 
         <div className="form-group">
-          <label className="form-label">Your Phone Number</label>
-          <input className="form-input" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+265 9xx xxx xxx"/>
+          <label className="form-label">Stock Quantity</label>
+          <input className="form-input" type="number" value={form.stockQty||''} onChange={e => set('stockQty', e.target.value)} placeholder="e.g. 10 (leave blank for unlimited)"/>
         </div>
-        <div className="form-group">
-          <label className="form-label">Your Location on Campus</label>
-          <input className="form-input" value={form.location} onChange={e => set('location', e.target.value)} placeholder="e.g. Block C Hostel, UNIMA"/>
-        </div>
-        <div className="form-group">
-          <label className="form-label">University *</label>
-          <select className="form-input" value={form.university} onChange={e => set('university', e.target.value)}>
-            <option value="">Select your university</option>
-            {UNIS.map(u => <option key={u}>{u}</option>)}
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Delivery Available?</label>
-          <select className="form-input" value={form.delivery} onChange={e => set('delivery', e.target.value)}>
-            <option value="">Select...</option>
-            <option>Yes — I deliver to hostels</option>
-            <option>Pickup only — buyer collects</option>
-            <option>Both delivery & pickup available</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Estimated Delivery Time</label>
-          <select className="form-input" value={form.deliveryTime} onChange={e => set('deliveryTime', e.target.value)}>
-            <option value="">Select...</option>
-            <option>Within 1 hour</option>
-            <option>Same day (2–5 hours)</option>
-            <option>Next day</option>
-            <option>2–3 days</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Delivery Fee (MWK)</label>
-          <input className="form-input" type="number" value={form.deliveryFee} onChange={e => set('deliveryFee', e.target.value)} placeholder="e.g. 200 (or leave blank for free)"/>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Open Hours</label>
-          <input className="form-input" value={form.hours} onChange={e => set('hours', e.target.value)} placeholder="e.g. Mon–Sat 8am–7pm"/>
-        </div>
+
+        {/* Store setup fields — only show if no existing store */}
+        {existingVendor ? (
+          <div style={{background:'var(--light)',borderRadius:'12px',padding:'14px 16px',marginBottom:'16px',border:'1.5px solid var(--border)'}}>
+            <div style={{fontWeight:800,fontSize:'13px',marginBottom:'6px'}}>🏪 Adding to your store: <span style={{color:'var(--wolf)'}}>{existingVendor.name}</span></div>
+            <div style={{fontSize:'12px',color:'var(--gray)'}}>
+              {existingVendor.university && <span>📍 {existingVendor.university} · </span>}
+              {existingVendor.phone && <span>📱 {existingVendor.phone}</span>}
+            </div>
+            <button type="button" onClick={() => navigate('/dashboard?tab=settings')}
+              style={{marginTop:'8px',background:'none',border:'1.5px solid var(--wolf)',borderRadius:'8px',padding:'5px 12px',fontSize:'12px',fontWeight:700,color:'var(--wolf)',cursor:'pointer'}}>
+              ✏️ Edit Store Details
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="form-group">
+              <label className="form-label">Your Phone Number</label>
+              <input className="form-input" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+265 9xx xxx xxx"/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Your Location on Campus</label>
+              <input className="form-input" value={form.location} onChange={e => set('location', e.target.value)} placeholder="e.g. Block C Hostel, UNIMA"/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">University *</label>
+              <select className="form-input" value={form.university} onChange={e => set('university', e.target.value)}>
+                <option value="">Select your university</option>
+                {UNIS.map(u => <option key={u}>{u}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Delivery Available?</label>
+              <select className="form-input" value={form.delivery} onChange={e => set('delivery', e.target.value)}>
+                <option value="">Select...</option>
+                <option>Yes — I deliver to hostels</option>
+                <option>Pickup only — buyer collects</option>
+                <option>Both delivery & pickup available</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Estimated Delivery Time</label>
+              <select className="form-input" value={form.deliveryTime} onChange={e => set('deliveryTime', e.target.value)}>
+                <option value="">Select...</option>
+                <option>Within 1 hour</option>
+                <option>Same day (2–5 hours)</option>
+                <option>Next day</option>
+                <option>2–3 days</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Delivery Fee (MWK)</label>
+              <input className="form-input" type="number" value={form.deliveryFee} onChange={e => set('deliveryFee', e.target.value)} placeholder="e.g. 200 (or leave blank for free)"/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Open Hours</label>
+              <input className="form-input" value={form.hours} onChange={e => set('hours', e.target.value)} placeholder="e.g. Mon–Sat 8am–7pm"/>
+            </div>
+          </>
+        )}
 
         <button className="btn-primary" style={{width:'100%',justifyContent:'center',padding:'13px'}} onClick={submit} disabled={loading}>
           {loading ? 'Listing product...' : 'List Product →'}

@@ -24,7 +24,7 @@ export default function Navbar() {
     supabase.from('messages').select('id', { count: 'exact', head: true })
       .eq('buyer_id', user.id).eq('sender', 'vendor').eq('read', false)
       .then(({ count }) => setUnreadMsgs(count || 0))
-    const notifSub = supabase.channel('navbar-notifs')
+    const notifSub = supabase.channel('navbar-notifs-' + user.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
         () => setUnreadNotifs(c => c + 1))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
@@ -34,12 +34,16 @@ export default function Navbar() {
             .then(({ count }) => setUnreadNotifs(count || 0))
         })
       .subscribe()
-    const msgSub = supabase.channel('navbar-msgs')
+    const msgSub = supabase.channel('navbar-msgs-' + user.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `buyer_id=eq.${user.id}` },
         payload => { if (payload.new.sender === 'vendor') setUnreadMsgs(c => c + 1) })
       .subscribe()
-    return () => { notifSub.unsubscribe(); msgSub.unsubscribe() }
-  }, [user])
+    // Use removeChannel (not unsubscribe) so the channel is fully torn down before
+    // this effect can re-run — onAuthStateChange fires a new `user` object on every
+    // token refresh, and re-adding .on() to a channel that's still mid-unsubscribe
+    // throws "cannot add postgres_changes callbacks after subscribe()".
+    return () => { supabase.removeChannel(notifSub); supabase.removeChannel(msgSub) }
+  }, [user?.id])
 
   return (
     <>
@@ -87,9 +91,6 @@ export default function Navbar() {
               🔔{unreadNotifs > 0 && <span className="cart-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
             </Link>
           )}
-          <Link to="/wishlist" className="nav-cart" title="Saved">
-            🔖{wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
-          </Link>
           <Link to="/cart" className="nav-cart" title="Cart">
             🛒{totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
           </Link>
