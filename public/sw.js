@@ -1,5 +1,5 @@
-// Wolf Marketplace Service Worker v8.0.0
-const CACHE_NAME = 'wolf-market-v8'
+// Wolf Marketplace Service Worker v8.0.1
+const CACHE_NAME = 'wolf-market-v8-1'
 const OFFLINE_URL = '/offline.html'
 
 // Only cache static assets at install, NOT the HTML shell
@@ -55,7 +55,11 @@ self.addEventListener('fetch', event => {
         if (cached) return cached
         return fetch(request).then(response => {
           if (response.ok) {
-            caches.open(CACHE_NAME).then(cache => cache.put(request, response.clone()))
+            // Clone immediately — the original stream can only be read once,
+            // and reading it later (after returning it to the browser) throws
+            // "Response body is already used".
+            const responseToCache = response.clone()
+            caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache))
           }
           return response
         })
