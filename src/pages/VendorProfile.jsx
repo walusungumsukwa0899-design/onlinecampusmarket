@@ -54,8 +54,8 @@ export default function VendorProfile() {
   }, [id, user])
 
   useEffect(() => {
-    if (user && tab === 'messages') loadVendorInbox()
-  }, [tab, user, id])
+    if (user && vendor && tab === 'messages') loadVendorInbox()
+  }, [tab, user, id, vendor])
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight
@@ -134,17 +134,33 @@ export default function VendorProfile() {
   async function loadVendorInbox() {
     if (!vendor) return
     if (user?.id !== vendor.user_id) return
-    const { data } = await supabase
+    // Note: no FK exists between messages.buyer_id and profiles.id
+    // (buyer_id only references auth.users), so profiles can't be
+    // embedded here — fetch messages and profiles separately.
+    const { data, error } = await supabase
       .from('messages')
-      .select('buyer_id, text, sender, created_at, profiles(full_name)')
+      .select('buyer_id, text, sender, created_at')
       .eq('vendor_id', id)
       .order('created_at', { ascending: false })
+    if (error) { console.error('loadVendorInbox error:', error); return }
     if (!data) return
+
+    const buyerIds = [...new Set(data.map(m => m.buyer_id))]
+    let profilesById = {}
+    if (buyerIds.length > 0) {
+      const { data: buyerProfiles, error: profilesErr } = await supabase
+        .from('profiles')
+        .select('id,full_name')
+        .in('id', buyerIds)
+      if (profilesErr) console.error('buyerProfiles error:', profilesErr)
+      profilesById = Object.fromEntries((buyerProfiles || []).map(p => [p.id, p]))
+    }
+
     // Group by buyer_id, take most recent message per buyer
     const map = new Map()
     for (const m of data) {
       if (!map.has(m.buyer_id)) {
-        map.set(m.buyer_id, { buyer_id: m.buyer_id, buyer_name: m.profiles?.full_name || 'Student', last_msg: m.text, last_time: m.created_at })
+        map.set(m.buyer_id, { buyer_id: m.buyer_id, buyer_name: profilesById[m.buyer_id]?.full_name || 'Student', last_msg: m.text, last_time: m.created_at })
       }
     }
     setBuyerThreads([...map.values()])
@@ -175,7 +191,7 @@ export default function VendorProfile() {
     if (error) {
       setMessages(prev => prev.filter(m => m !== optimistic))
       setMsgText(optimistic.text)
-      alert('Message failed: ' + error.message + ' (code: ' + error.code + ')')
+      alert('Message could not be sent. Please try again.')
     }
   }
 
@@ -368,7 +384,7 @@ export default function VendorProfile() {
                   } else {
                     const { error } = await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id }, { onConflict: 'vendor_id,user_id' })
                     if (!error) setFollowing(true)
-                    else alert('Could not follow: ' + error.message + ' (code: ' + error.code + ')')
+                    else alert('Could not follow. Please try again.')
                   }
                   setFollowLoading(false)
                 }} disabled={followLoading}
