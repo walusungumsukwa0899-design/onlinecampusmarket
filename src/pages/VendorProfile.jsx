@@ -175,7 +175,7 @@ export default function VendorProfile() {
     if (error) {
       setMessages(prev => prev.filter(m => m !== optimistic))
       setMsgText(optimistic.text)
-      alert('Message could not be sent. Please try again.')
+      alert('Message failed: ' + error.message + ' (code: ' + error.code + ')')
     }
   }
 
@@ -368,7 +368,7 @@ export default function VendorProfile() {
                   } else {
                     const { error } = await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id }, { onConflict: 'vendor_id,user_id' })
                     if (!error) setFollowing(true)
-                    else alert('Could not follow. Please try again.')
+                    else alert('Could not follow: ' + error.message + ' (code: ' + error.code + ')')
                   }
                   setFollowLoading(false)
                 }} disabled={followLoading}
