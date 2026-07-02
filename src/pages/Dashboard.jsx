@@ -253,6 +253,16 @@ export default function Dashboard() {
     }
   }
 
+  async function deleteOrder(orderId) {
+    if (!confirm('Remove this cancelled order from your history? This cannot be undone.')) return
+    const { error } = await supabase.from('orders').delete().eq('id', orderId)
+    if (!error) {
+      setOrders(prev => prev.filter(o => o.id !== orderId))
+    } else {
+      alert('Could not delete order: ' + error.message)
+    }
+  }
+
   async function submitReport() {
     if (!reportingOrder) return
     setReportSubmitting(true)
@@ -610,6 +620,9 @@ export default function Dashboard() {
                               {o.vendor_id !== vendor?.id && (
                                 <button className="mini-btn confirm" onClick={() => navigate(`/messages?vendor=${o.vendor_id}`)}>💬 Message Vendor</button>
                               )}
+                              {o.status === 'cancelled' && (
+                                <button className="mini-btn report" onClick={() => deleteOrder(o.id)}>🗑️ Delete</button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -644,7 +657,6 @@ export default function Dashboard() {
                   )}
                 </div>
               )})()}
-              /* orders tab end */
 
               {tab === 'sales' && vendor && (
                 <div>

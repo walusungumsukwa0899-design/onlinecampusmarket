@@ -203,11 +203,9 @@ export default function Messages() {
       alert(`Message failed: ${error.message}`)
     } else if (data) {
       setMessages(prev => prev.map(m => m.id === optimistic.id ? data : m))
-      if (sender === 'buyer') {
-        supabase.functions.invoke('notify-new-message', {
-          body: { vendorId: activeConv.vendorId, buyerId: user.id, message: data.text }
-        }).catch(() => {})
-      }
+      supabase.functions.invoke('notify-new-message', {
+        body: { record: { vendor_id: data.vendor_id, buyer_id: data.buyer_id, sender: data.sender, text: data.text } }
+      }).catch(() => {})
     }
     setSending(false)
   }
