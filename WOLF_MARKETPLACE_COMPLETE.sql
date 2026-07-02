@@ -168,6 +168,9 @@ CREATE POLICY "Vendors see their sales" ON orders FOR SELECT USING (
 CREATE POLICY "Vendors update order status" ON orders FOR UPDATE USING (
   EXISTS (SELECT 1 FROM vendors v WHERE v.id = vendor_id AND v.user_id = auth.uid())
 );
+CREATE POLICY "Buyers delete cancelled orders" ON orders FOR DELETE USING (
+  auth.uid() = buyer_id AND status = 'cancelled'
+);
 CREATE INDEX IF NOT EXISTS orders_buyer_idx ON orders(buyer_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS orders_vendor_idx ON orders(vendor_id, created_at DESC);
 
@@ -186,6 +189,22 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 DROP TRIGGER IF EXISTS trg_notify_order_status ON orders;
 CREATE TRIGGER trg_notify_order_status AFTER UPDATE ON orders FOR EACH ROW WHEN (OLD.status IS DISTINCT FROM NEW.status) EXECUTE FUNCTION notify_order_status_change();
+
+-- New order placed — notify the vendor
+CREATE OR REPLACE FUNCTION notify_vendor_new_order() RETURNS TRIGGER AS $$
+DECLARE
+  vendor_user_id UUID;
+BEGIN
+  SELECT user_id INTO vendor_user_id FROM vendors WHERE id = NEW.vendor_id;
+  IF vendor_user_id IS NOT NULL THEN
+    INSERT INTO notifications (user_id, title, body, type, data)
+    VALUES (vendor_user_id, '🎉 New Order!', 'You have a new order to fulfill.', 'new_order', json_build_object('order_id', NEW.id)::TEXT);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+DROP TRIGGER IF EXISTS trg_notify_vendor_new_order ON orders;
+CREATE TRIGGER trg_notify_vendor_new_order AFTER INSERT ON orders FOR EACH ROW EXECUTE FUNCTION notify_vendor_new_order();
 
 -- ── 5. MESSAGES ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS messages (
@@ -206,6 +225,9 @@ CREATE POLICY "Vendors insert replies" ON messages FOR INSERT WITH CHECK (
   EXISTS (SELECT 1 FROM vendors v WHERE v.id = vendor_id AND v.user_id = auth.uid())
 );
 CREATE POLICY "Recipients update read status" ON messages FOR UPDATE USING (
+  auth.uid() = buyer_id OR EXISTS (SELECT 1 FROM vendors v WHERE v.id = vendor_id AND v.user_id = auth.uid())
+);
+CREATE POLICY "Message parties can delete" ON messages FOR DELETE USING (
   auth.uid() = buyer_id OR EXISTS (SELECT 1 FROM vendors v WHERE v.id = vendor_id AND v.user_id = auth.uid())
 );
 CREATE INDEX IF NOT EXISTS messages_buyer_idx ON messages(buyer_id, created_at DESC);
