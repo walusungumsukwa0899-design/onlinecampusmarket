@@ -132,6 +132,7 @@ export default function Messages() {
 
       // Auto-select from URL param or first conversation
       const urlVendor = searchParams.get('vendor')
+      const urlPrefill = searchParams.get('prefill')
       if (urlVendor && myVendor?.id === urlVendor) {
         // Vendors can't message their own store
         navigate('/messages', { replace: true })
@@ -147,9 +148,10 @@ export default function Messages() {
             setActiveConv(newConv)
           }
         }
-      } else if (convList.length > 0) {
-        selectConversation(convList[0])
+        if (urlPrefill) setNewMsg(urlPrefill)
       }
+      // No urlVendor: land on the conversation list rather than
+      // re-opening whichever chat was last active.
     } catch (err) {
       console.error('loadConversations error:', err)
     } finally {
@@ -210,6 +212,16 @@ export default function Messages() {
     setSending(false)
   }
 
+  async function deleteConversation(conv, e) {
+    if (e) e.stopPropagation()
+    if (!confirm(`Delete this conversation with ${conv.label}? This cannot be undone.`)) return
+    const { error } = await supabase.from('messages').delete()
+      .eq('vendor_id', conv.vendorId).eq('buyer_id', conv.buyerId)
+    if (error) { alert('Could not delete conversation: ' + error.message); return }
+    setConversations(prev => prev.filter(c => c.key !== conv.key))
+    if (activeConv?.key === conv.key) { setActiveConv(null); setMessages([]) }
+  }
+
   if (authLoading || loading) {
     return <div className="loading" style={{ paddingTop: '80px' }}><div className="spinner" /><span>Loading messages...</span></div>
   }
@@ -250,6 +262,10 @@ export default function Messages() {
                   <div style={{ fontSize: '11px', color: 'var(--gray)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>{conv.lastMsg}</div>
                 </div>
                 {conv.unread && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--wolf)', flexShrink: 0 }} />}
+                <button onClick={(e) => deleteConversation(conv, e)} title="Delete conversation"
+                  style={{ background: 'none', border: 'none', color: 'var(--gray)', fontSize: '15px', cursor: 'pointer', flexShrink: 0, padding: '4px', borderRadius: '6px', lineHeight: 1 }}>
+                  🗑️
+                </button>
               </div>
             </div>
           ))
@@ -272,6 +288,10 @@ export default function Messages() {
               <button onClick={() => navigate(`/vendors/${activeConv.vendorId}`)}
                 style={{ background: 'var(--light)', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>View Store →</button>
             )}
+            <button onClick={() => deleteConversation(activeConv)} title="Delete conversation"
+              style={{ background: 'none', border: 'none', color: 'var(--gray)', fontSize: '17px', cursor: 'pointer', padding: '4px' }}>
+              🗑️
+            </button>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9fafb' }}>

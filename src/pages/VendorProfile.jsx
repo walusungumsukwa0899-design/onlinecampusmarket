@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useSEO } from '../lib/useSEO'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -15,14 +15,10 @@ export default function VendorProfile() {
   const [vendor, setVendor] = useState(null)
   const [products, setProducts] = useState([])
   const [reviews, setReviews] = useState([])
-  const [messages, setMessages] = useState([])
   const [tab, setTab] = useState('products')
   const [loading, setLoading] = useState(true)
-  const [msgText, setMsgText] = useState('')
-  const [vendorBuyerId, setVendorBuyerId] = useState(null) // which buyer convo the vendor is viewing
   const [following, setFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
-  const [buyerThreads, setBuyerThreads] = useState([]) // list of {buyer_id, buyer_name, last_msg} for vendor inbox
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
   const [reviewItem, setReviewItem] = useState('')
@@ -41,7 +37,6 @@ export default function VendorProfile() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [editForm, setEditForm] = useState({})
   const [editSaving, setEditSaving] = useState(false)
-  const chatRef = useRef(null)
 
   useEffect(() => {
     loadVendor()
@@ -50,36 +45,8 @@ export default function VendorProfile() {
   }, [id])
 
   useEffect(() => {
-    loadMessages()
+    loadUnreadCount()
   }, [id, user])
-
-  useEffect(() => {
-    if (user && vendor && tab === 'messages') loadVendorInbox()
-  }, [tab, user, id, vendor])
-
-  useEffect(() => {
-    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight
-  }, [messages])
-
-  // Realtime messages — replace matching optimistic entry with real DB row to avoid duplicates
-  useEffect(() => {
-    const channel = supabase
-      .channel('messages-' + id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `vendor_id=eq.${id}` },
-        payload => {
-          setMessages(prev => {
-            const idx = prev.findIndex(m => !m.id && m.text === payload.new.text && m.sender === payload.new.sender)
-            if (idx !== -1) {
-              const next = [...prev]
-              next[idx] = payload.new
-              return next
-            }
-            return [...prev, payload.new]
-          })
-        })
-      .subscribe()
-    return () => supabase.removeChannel(channel)
-  }, [id])
 
   async function loadVendor() {
     try {
@@ -114,98 +81,22 @@ export default function VendorProfile() {
     }
   }
 
-  async function loadMessages() {
-    if (!user) return
-    const { data } = await supabase.from('messages')
-      .select('*')
-      .eq('vendor_id', id)
-      .eq('buyer_id', user.id)
-      .order('created_at', { ascending: true })
-    setMessages(data || [])
-    const unread = (data || []).filter(m => m.sender === 'vendor' && !m.read).length
-    setUnreadCount(unread)
-    // Mark vendor messages as read now that buyer opened chat
-    if (unread > 0) {
-      await supabase.from('messages').update({ read: true })
-        .eq('vendor_id', id).eq('buyer_id', user.id).eq('sender', 'vendor')
-    }
+  async function loadUnreadCount() {
+    if (!user) { setUnreadCount(0); return }
+    const { count } = await supabase.from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_id', id).eq('buyer_id', user.id).eq('sender', 'vendor').eq('read', false)
+    setUnreadCount(count || 0)
   }
 
-  async function loadVendorInbox() {
-    if (!vendor) return
-    if (user?.id !== vendor.user_id) return
-    // Note: no FK exists between messages.buyer_id and profiles.id
-    // (buyer_id only references auth.users), so profiles can't be
-    // embedded here — fetch messages and profiles separately.
-    const { data, error } = await supabase
-      .from('messages')
-      .select('buyer_id, text, sender, created_at')
-      .eq('vendor_id', id)
-      .order('created_at', { ascending: false })
-    if (error) { console.error('loadVendorInbox error:', error); return }
-    if (!data) return
-
-    const buyerIds = [...new Set(data.map(m => m.buyer_id))]
-    let profilesById = {}
-    if (buyerIds.length > 0) {
-      const { data: buyerProfiles, error: profilesErr } = await supabase
-        .from('profiles')
-        .select('id,full_name')
-        .in('id', buyerIds)
-      if (profilesErr) console.error('buyerProfiles error:', profilesErr)
-      profilesById = Object.fromEntries((buyerProfiles || []).map(p => [p.id, p]))
-    }
-
-    // Group by buyer_id, take most recent message per buyer
-    const map = new Map()
-    for (const m of data) {
-      if (!map.has(m.buyer_id)) {
-        map.set(m.buyer_id, { buyer_id: m.buyer_id, buyer_name: profilesById[m.buyer_id]?.full_name || 'Student', last_msg: m.text, last_time: m.created_at })
-      }
-    }
-    setBuyerThreads([...map.values()])
-    // Auto-open first thread
-    if (map.size > 0 && !vendorBuyerId) setVendorBuyerId([...map.keys()][0])
-  }
-
-  async function loadVendorThread(buyerId) {
-    setVendorBuyerId(buyerId)
-    const { data } = await supabase.from('messages')
-      .select('*')
-      .eq('vendor_id', id)
-      .eq('buyer_id', buyerId)
-      .order('created_at', { ascending: true })
-    setMessages(data || [])
-    // Mark vendor's unread as read
-    await supabase.from('messages').update({ read: true })
-      .eq('vendor_id', id).eq('buyer_id', buyerId).eq('sender', 'buyer')
-  }
-
-  async function sendMessage() {
-    if (!msgText.trim()) return
+  // Single source of truth for chat: always hand off to the main Chats page
+  // rather than maintaining a separate embedded chat UI here.
+  function goToChat(prefillText) {
     if (!user) { navigate('/signin'); return }
-    const optimistic = { vendor_id: id, buyer_id: user.id, text: msgText.trim(), sender: 'buyer', created_at: new Date().toISOString() }
-    setMessages(prev => [...prev, optimistic])
-    setMsgText('')
-    const { error } = await supabase.from('messages').insert({ vendor_id: id, buyer_id: user.id, text: optimistic.text, sender: 'buyer' })
-    if (error) {
-      setMessages(prev => prev.filter(m => m !== optimistic))
-      setMsgText(optimistic.text)
-      alert('Message could not be sent. Please try again.')
-    }
-  }
-
-  async function sendVendorReply() {
-    if (!msgText.trim() || !vendorBuyerId) return
-    const optimistic = { vendor_id: id, buyer_id: vendorBuyerId, text: msgText.trim(), sender: 'vendor', created_at: new Date().toISOString() }
-    setMessages(prev => [...prev, optimistic])
-    setMsgText('')
-    const { error } = await supabase.from('messages').insert({ vendor_id: id, buyer_id: vendorBuyerId, text: optimistic.text, sender: 'vendor' })
-    if (error) {
-      setMessages(prev => prev.filter(m => m !== optimistic))
-      setMsgText(optimistic.text)
-      alert('Could not send reply: ' + error.message)
-    }
+    if (user.id === vendor?.user_id) { navigate('/messages'); return }
+    const params = new URLSearchParams({ vendor: id })
+    if (prefillText) params.set('prefill', prefillText)
+    navigate(`/messages?${params.toString()}`)
   }
 
   async function submitReply(reviewId) {
@@ -315,9 +206,7 @@ export default function VendorProfile() {
   }
 
   function askAboutItem(name) {
-    setMsgText(`Hi! Is "${name}" still available?`)
-    setTab('messages')
-    setTimeout(() => document.getElementById('chat-input')?.focus(), 100)
+    goToChat(`Hi! Is "${name}" still available?`)
   }
 
   const avgRating = reviews.length ? (reviews.reduce((a, r) => a + r.stars, 0) / reviews.length).toFixed(1) : null
@@ -409,7 +298,7 @@ export default function VendorProfile() {
 
         <div className="vp-tabs">
           {['products','messages','reviews'].map(t => (
-            <button key={t} className={`vp-tab${tab===t?' active':''}`} onClick={() => setTab(t)}>
+            <button key={t} className={`vp-tab${tab===t?' active':''}`} onClick={() => t === 'messages' ? goToChat() : setTab(t)}>
               {t==='products'?'🛍️ Products':t==='messages'?(
               <span>💬 Messages{!isOwner && unreadCount > 0 && <span style={{marginLeft:'6px',background:'#ef4444',color:'white',borderRadius:'99px',padding:'1px 7px',fontSize:'11px',fontWeight:700}}>{unreadCount}</span>}</span>
             ):'⭐ Reviews'}
@@ -419,6 +308,27 @@ export default function VendorProfile() {
       </div>
 
       <div className="vp-body container">
+        {!isOwner && (vendor.phone || vendor.location || vendor.hours) && (
+          <div className="vp-panel" style={{fontSize:'13px',marginBottom:'16px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px',flexWrap:'wrap',gap:'8px'}}>
+              <h4 style={{margin:0,fontSize:'14px',fontWeight:700}}>📞 Contact & Delivery</h4>
+              <button className="btn-primary" style={{fontSize:'12px',padding:'8px 14px'}} onClick={() => goToChat()}>💬 Message Vendor</button>
+            </div>
+            <div className="contact-list">
+              {vendor.phone && <div className="ci"><div className="ci-icon">📱</div><div><div className="ci-label">Phone / WhatsApp</div><div className="ci-val">{vendor.phone}</div></div></div>}
+              {vendor.location && <div className="ci"><div className="ci-icon">📍</div><div><div className="ci-label">Location</div><div className="ci-val">{vendor.location}</div></div></div>}
+              {vendor.hours && <div className="ci"><div className="ci-icon">⏰</div><div><div className="ci-label">Open Hours</div><div className="ci-val">{vendor.hours}</div></div></div>}
+              <div className="ci"><div className="ci-icon">💰</div><div><div className="ci-label">Delivery Fee</div><div className="ci-val">{vendor.delivery_fee ? `MWK ${Number(vendor.delivery_fee).toLocaleString()}` : 'Free'}</div></div></div>
+              <div className="ci"><div className="ci-icon">⏱️</div><div><div className="ci-label">Delivery Time</div><div className="ci-val">{vendor.delivery_time || 'Same day'}</div></div></div>
+            </div>
+            {vendor.phone && (
+              <a href={`https://wa.me/${vendor.phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer"
+                style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'12px',background:'#25D366',color:'white',padding:'10px 14px',borderRadius:'10px',fontWeight:700,fontSize:'13px',textDecoration:'none'}}>
+                <span style={{fontSize:'18px'}}>💬</span> Chat on WhatsApp
+              </a>
+            )}
+          </div>
+        )}
         {/* Products */}
         {tab === 'products' && (
           products.length === 0
@@ -473,121 +383,6 @@ export default function VendorProfile() {
                   </div>
                 ))}
               </div>
-        )}
-
-        {/* Contact & Chat */}
-        {tab === 'messages' && (
-          <div style={{maxWidth:'600px',margin:'0 auto'}}>
-            {/* Chat panel — full width, prominent */}
-            <div className="vp-panel" style={{marginBottom:'16px'}}>
-              {isOwner ? (
-                <>
-                  {buyerThreads.length === 0
-                    ? <><h3>📥 Customer Messages</h3><div className="chat-empty" style={{padding:'24px 0'}}>No messages yet from buyers.</div></>
-                    : (
-                      <div className={`wa-shell ${vendorBuyerId ? 'thread-open' : ''}`}>
-                        <div className="wa-list">
-                          <div className="wa-list-header">📥 Customer Messages</div>
-                          <div className="wa-list-scroll">
-                            {buyerThreads.map(t => (
-                              <div key={t.buyer_id}
-                                onClick={() => loadVendorThread(t.buyer_id)}
-                                className={`wa-list-item ${vendorBuyerId===t.buyer_id?'active':''}`}>
-                                <div className="wa-avatar">{(t.buyer_name || 'S').charAt(0).toUpperCase()}</div>
-                                <div className="wa-list-meta">
-                                  <div className="wa-list-name">{t.buyer_name}</div>
-                                  <div className="wa-list-preview">{t.last_msg}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="wa-thread">
-                          {vendorBuyerId ? (
-                            <>
-                              <div className="wa-thread-header">
-                                <button className="wa-back" onClick={() => setVendorBuyerId(null)}>←</button>
-                                <div className="wa-avatar sm">{(buyerThreads.find(t => t.buyer_id === vendorBuyerId)?.buyer_name || 'S').charAt(0).toUpperCase()}</div>
-                                <div className="wa-thread-name">{buyerThreads.find(t => t.buyer_id === vendorBuyerId)?.buyer_name || 'Student'}</div>
-                              </div>
-                              <div className="wa-messages" ref={chatRef}>
-                                {messages.map((m, i) => (
-                                  <div key={i} className={`wa-row ${m.sender === 'vendor' ? 'me' : 'them'}`}>
-                                    <div className="wa-bubble">
-                                      <span className="wa-text">{m.text}</span>
-                                      <span className="wa-time">{new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="chat-input-row">
-                                <textarea className="chat-input" value={msgText} onChange={e => setMsgText(e.target.value)}
-                                  placeholder="Reply to customer..."
-                                  onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendVendorReply()} }}
-                                  rows={1}/>
-                                <button className="send-btn" onClick={sendVendorReply}>➤</button>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="wa-empty-state">Select a conversation</div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  }
-                </>
-              ) : (
-                <>
-                  <h3>💬 Message {vendor.name}</h3>
-                  <p className="chat-subtitle">Ask about availability, prices, or delivery. Messages go directly to the vendor.</p>
-                  <div className="wa-messages solo" ref={chatRef}>
-                    {messages.length === 0
-                      ? <div className="chat-empty">No messages yet. Say hello! 👋</div>
-                      : messages.map((m, i) => (
-                          <div key={i} className={`wa-row ${m.sender === 'buyer' ? 'me' : 'them'}`}>
-                            <div className="wa-bubble">
-                              <span className="wa-text">{m.text}</span>
-                              <span className="wa-time">{new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
-                            </div>
-                          </div>
-                        ))
-                    }
-                  </div>
-                  {user ? (
-                    <div className="chat-input-row">
-                      <textarea id="chat-input" className="chat-input" value={msgText} onChange={e => setMsgText(e.target.value)}
-                        placeholder="Type a message..."
-                        onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()} }}
-                        rows={1}/>
-                      <button className="send-btn" onClick={sendMessage}>➤</button>
-                    </div>
-                  ) : (
-                    <p className="signin-hint"><button onClick={() => navigate('/signin')}>Sign in</button> to message this vendor</p>
-                  )}
-                  {vendor.phone && (
-                    <a href={`https://wa.me/${vendor.phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer"
-                      style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'12px',background:'#25D366',color:'white',padding:'10px 14px',borderRadius:'10px',fontWeight:700,fontSize:'13px',textDecoration:'none'}}>
-                      <span style={{fontSize:'18px'}}>💬</span> Chat on WhatsApp
-                    </a>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Contact info — compact, below chat */}
-            {!isOwner && (
-              <div className="vp-panel" style={{fontSize:'13px'}}>
-                <h4 style={{margin:'0 0 10px',fontSize:'14px',fontWeight:700}}>📞 Contact & Delivery</h4>
-                <div className="contact-list">
-                  {vendor.phone && <div className="ci"><div className="ci-icon">📱</div><div><div className="ci-label">Phone / WhatsApp</div><div className="ci-val">{vendor.phone}</div></div></div>}
-                  {vendor.location && <div className="ci"><div className="ci-icon">📍</div><div><div className="ci-label">Location</div><div className="ci-val">{vendor.location}</div></div></div>}
-                  {vendor.hours && <div className="ci"><div className="ci-icon">⏰</div><div><div className="ci-label">Open Hours</div><div className="ci-val">{vendor.hours}</div></div></div>}
-                  <div className="ci"><div className="ci-icon">💰</div><div><div className="ci-label">Delivery Fee</div><div className="ci-val">{vendor.delivery_fee ? `MWK ${Number(vendor.delivery_fee).toLocaleString()}` : 'Free'}</div></div></div>
-                  <div className="ci"><div className="ci-icon">⏱️</div><div><div className="ci-label">Delivery Time</div><div className="ci-val">{vendor.delivery_time || 'Same day'}</div></div></div>
-                </div>
-              </div>
-            )}
-          </div>
         )}
 
         {/* Reviews */}

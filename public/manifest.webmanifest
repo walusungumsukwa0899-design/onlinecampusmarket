@@ -1,10 +1,13 @@
 {
+  "id": "/",
   "name": "Wolf Marketplace",
   "short_name": "Wolf Market",
   "description": "Malawi's campus marketplace — buy and sell with student vendors across all universities.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "launch_handler": { "client_mode": "navigate-existing" },
   "background_color": "#ffffff",
   "theme_color": "#E8630A",
   "orientation": "portrait-primary",
