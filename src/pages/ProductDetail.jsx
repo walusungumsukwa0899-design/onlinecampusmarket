@@ -270,10 +270,12 @@ export default function ProductDetail() {
                   💬 Ask Vendor on WhatsApp
                 </a>
               )}
-              <button onClick={() => navigate(`/messages?vendor=${product.vendor_id}`)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--wolf-light)', color: 'var(--wolf)', border: '1.5px solid var(--wolf)', borderRadius: '10px', padding: '10px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', flex: whatsappUrl ? undefined : 1, justifyContent: 'center' }}>
-                ✉️ Message in App
-              </button>
+              {user?.id !== vendor?.user_id && (
+                <button onClick={() => navigate(`/messages?vendor=${product.vendor_id}`)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--wolf-light)', color: 'var(--wolf)', border: '1.5px solid var(--wolf)', borderRadius: '10px', padding: '10px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', flex: whatsappUrl ? undefined : 1, justifyContent: 'center' }}>
+                  ✉️ Message in App
+                </button>
+              )}
               <button onClick={shareWhatsApp}
                 style={{ background: 'var(--light)', border: 'none', borderRadius: '10px', padding: '10px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 📤 Share

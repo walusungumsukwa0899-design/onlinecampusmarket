@@ -63,11 +63,13 @@ export default function Messages() {
       const convMap = new Map()
 
       // Buyer side: conversations where user is the buyer
-      const { data: buyerMsgs } = await supabase
+      const { data: buyerMsgs, error: buyerMsgsErr } = await supabase
         .from('messages')
         .select('vendor_id, buyer_id, vendors(id,name,avatar_url,icon,university), created_at, text, read, sender')
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false })
+
+      if (buyerMsgsErr) console.error('buyerMsgs error:', buyerMsgsErr)
 
       for (const m of (buyerMsgs || [])) {
         const key = `buyer-${m.vendor_id}`
@@ -86,21 +88,38 @@ export default function Messages() {
 
       // Vendor side: conversations where user is the vendor
       if (vendor) {
-        const { data: vendorMsgs } = await supabase
+        // Note: no FK exists between messages.buyer_id and profiles.id
+        // (buyer_id only references auth.users), so profiles can't be
+        // embedded in this query — fetch messages and profiles separately.
+        const { data: vendorMsgs, error: vendorMsgsErr } = await supabase
           .from('messages')
-          .select('vendor_id, buyer_id, profiles(id,full_name,avatar_url), created_at, text, read, sender')
+          .select('vendor_id, buyer_id, created_at, text, read, sender')
           .eq('vendor_id', vendor.id)
           .order('created_at', { ascending: false })
+
+        if (vendorMsgsErr) console.error('vendorMsgs error:', vendorMsgsErr)
+
+        const buyerIds = [...new Set((vendorMsgs || []).map(m => m.buyer_id))]
+        let profilesById = {}
+        if (buyerIds.length > 0) {
+          const { data: buyerProfiles, error: profilesErr } = await supabase
+            .from('profiles')
+            .select('id,full_name,avatar_url')
+            .in('id', buyerIds)
+          if (profilesErr) console.error('buyerProfiles error:', profilesErr)
+          profilesById = Object.fromEntries((buyerProfiles || []).map(p => [p.id, p]))
+        }
 
         for (const m of (vendorMsgs || [])) {
           const key = `vendor-${m.buyer_id}`
           if (!convMap.has(key)) {
+            const buyerProfile = profilesById[m.buyer_id] || null
             convMap.set(key, {
               key, type: 'vendor',
               vendorId: vendor.id, buyerId: m.buyer_id,
-              vendor: null, buyer: m.profiles,
-              label: m.profiles?.full_name || 'Customer',
-              avatar: m.profiles?.avatar_url,
+              vendor: null, buyer: buyerProfile,
+              label: buyerProfile?.full_name || 'Customer',
+              avatar: buyerProfile?.avatar_url,
               lastMsg: m.text, lastTime: m.created_at,
               unread: !m.read && m.sender === 'buyer'
             })
@@ -113,7 +132,10 @@ export default function Messages() {
 
       // Auto-select from URL param or first conversation
       const urlVendor = searchParams.get('vendor')
-      if (urlVendor) {
+      if (urlVendor && myVendor?.id === urlVendor) {
+        // Vendors can't message their own store
+        navigate('/messages', { replace: true })
+      } else if (urlVendor) {
         const match = convList.find(c => c.vendorId === urlVendor && c.type === 'buyer')
           || convList.find(c => c.vendorId === urlVendor)
         if (match) selectConversation(match)
@@ -154,6 +176,10 @@ export default function Messages() {
 
   async function sendMessage() {
     if (!newMsg.trim() || !activeConv || sending) return
+    if (activeConv.type === 'buyer' && myVendor && activeConv.vendorId === myVendor.id) {
+      alert("You can't message your own store.")
+      return
+    }
     const now = Date.now()
     const key = `wolf_msg_times_${activeConv.vendorId}_${activeConv.buyerId}`
     let times = []
