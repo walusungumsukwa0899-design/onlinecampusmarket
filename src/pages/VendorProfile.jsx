@@ -482,40 +482,55 @@ export default function VendorProfile() {
             <div className="vp-panel" style={{marginBottom:'16px'}}>
               {isOwner ? (
                 <>
-                  <h3>📥 Customer Messages</h3>
                   {buyerThreads.length === 0
-                    ? <div className="chat-empty" style={{padding:'24px 0'}}>No messages yet from buyers.</div>
+                    ? <><h3>📥 Customer Messages</h3><div className="chat-empty" style={{padding:'24px 0'}}>No messages yet from buyers.</div></>
                     : (
-                      <div style={{display:'flex',gap:'12px',height:'340px'}}>
-                        <div style={{width:'140px',borderRight:'1px solid var(--border)',overflowY:'auto',flexShrink:0}}>
-                          {buyerThreads.map(t => (
-                            <div key={t.buyer_id}
-                              onClick={() => loadVendorThread(t.buyer_id)}
-                              style={{padding:'10px 8px',cursor:'pointer',background:vendorBuyerId===t.buyer_id?'var(--light)':'',borderBottom:'1px solid var(--border)'}}>
-                              <div style={{fontWeight:700,fontSize:'12px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.buyer_name}</div>
-                              <div style={{fontSize:'11px',color:'var(--gray)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.last_msg}</div>
-                            </div>
-                          ))}
+                      <div className={`wa-shell ${vendorBuyerId ? 'thread-open' : ''}`}>
+                        <div className="wa-list">
+                          <div className="wa-list-header">📥 Customer Messages</div>
+                          <div className="wa-list-scroll">
+                            {buyerThreads.map(t => (
+                              <div key={t.buyer_id}
+                                onClick={() => loadVendorThread(t.buyer_id)}
+                                className={`wa-list-item ${vendorBuyerId===t.buyer_id?'active':''}`}>
+                                <div className="wa-avatar">{(t.buyer_name || 'S').charAt(0).toUpperCase()}</div>
+                                <div className="wa-list-meta">
+                                  <div className="wa-list-name">{t.buyer_name}</div>
+                                  <div className="wa-list-preview">{t.last_msg}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div style={{flex:1,display:'flex',flexDirection:'column'}}>
-                          <div className="chat-box" ref={chatRef} style={{flex:1}}>
-                            {messages.length === 0
-                              ? <div className="chat-empty">Select a conversation</div>
-                              : messages.map((m, i) => (
-                                  <div key={i} className={`chat-msg ${m.sender === 'vendor' ? 'me' : 'vendor'}`}>
-                                    <div className="bubble">{m.text}</div>
-                                    <div className="msg-time">{new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+                        <div className="wa-thread">
+                          {vendorBuyerId ? (
+                            <>
+                              <div className="wa-thread-header">
+                                <button className="wa-back" onClick={() => setVendorBuyerId(null)}>←</button>
+                                <div className="wa-avatar sm">{(buyerThreads.find(t => t.buyer_id === vendorBuyerId)?.buyer_name || 'S').charAt(0).toUpperCase()}</div>
+                                <div className="wa-thread-name">{buyerThreads.find(t => t.buyer_id === vendorBuyerId)?.buyer_name || 'Student'}</div>
+                              </div>
+                              <div className="wa-messages" ref={chatRef}>
+                                {messages.map((m, i) => (
+                                  <div key={i} className={`wa-row ${m.sender === 'vendor' ? 'me' : 'them'}`}>
+                                    <div className="wa-bubble">
+                                      <span className="wa-text">{m.text}</span>
+                                      <span className="wa-time">{new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+                                    </div>
                                   </div>
-                                ))
-                            }
-                          </div>
-                          <div className="chat-input-row" style={{marginTop:'8px'}}>
-                            <textarea className="chat-input" value={msgText} onChange={e => setMsgText(e.target.value)}
-                              placeholder="Reply to customer..."
-                              onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendVendorReply()} }}
-                              rows={2} disabled={!vendorBuyerId}/>
-                            <button className="send-btn" onClick={sendVendorReply} disabled={!vendorBuyerId}>➤</button>
-                          </div>
+                                ))}
+                              </div>
+                              <div className="chat-input-row">
+                                <textarea className="chat-input" value={msgText} onChange={e => setMsgText(e.target.value)}
+                                  placeholder="Reply to customer..."
+                                  onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendVendorReply()} }}
+                                  rows={1}/>
+                                <button className="send-btn" onClick={sendVendorReply}>➤</button>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="wa-empty-state">Select a conversation</div>
+                          )}
                         </div>
                       </div>
                     )
@@ -525,13 +540,15 @@ export default function VendorProfile() {
                 <>
                   <h3>💬 Message {vendor.name}</h3>
                   <p className="chat-subtitle">Ask about availability, prices, or delivery. Messages go directly to the vendor.</p>
-                  <div className="chat-box" ref={chatRef}>
+                  <div className="wa-messages solo" ref={chatRef}>
                     {messages.length === 0
                       ? <div className="chat-empty">No messages yet. Say hello! 👋</div>
                       : messages.map((m, i) => (
-                          <div key={i} className={`chat-msg ${m.sender === 'buyer' ? 'me' : 'vendor'}`}>
-                            <div className="bubble">{m.text}</div>
-                            <div className="msg-time">{new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+                          <div key={i} className={`wa-row ${m.sender === 'buyer' ? 'me' : 'them'}`}>
+                            <div className="wa-bubble">
+                              <span className="wa-text">{m.text}</span>
+                              <span className="wa-time">{new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+                            </div>
                           </div>
                         ))
                     }
@@ -541,7 +558,7 @@ export default function VendorProfile() {
                       <textarea id="chat-input" className="chat-input" value={msgText} onChange={e => setMsgText(e.target.value)}
                         placeholder="Type a message..."
                         onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()} }}
-                        rows={2}/>
+                        rows={1}/>
                       <button className="send-btn" onClick={sendMessage}>➤</button>
                     </div>
                   ) : (
