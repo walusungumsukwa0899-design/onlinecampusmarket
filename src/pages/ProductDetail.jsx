@@ -8,6 +8,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ImageLightbox from '../components/ImageLightbox'
 import { sanitizeText } from '../lib/sanitize'
+import { addRecentlyViewed } from '../lib/recentlyViewed'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -42,14 +43,8 @@ export default function ProductDetail() {
       if (!p) { navigate('/404'); return }
       setProduct(p)
       setVendor(p.vendors)
-      // Save to recently viewed
-      try {
-        const key = 'wolf_recently_viewed'
-        const prev = JSON.parse(localStorage.getItem(key) || '[]')
-        const entry = { id: p.id, name: p.name, price: p.price, image_url: p.image_url, icon: p.icon, vendor_id: p.vendor_id, seller: p.vendors?.name }
-        const updated = [entry, ...prev.filter(x => x.id !== p.id)].slice(0, 10)
-        localStorage.setItem(key, JSON.stringify(updated))
-      } catch {}
+      // Save to recently viewed (stores id only — live data is fetched fresh on render)
+      addRecentlyViewed(p.id)
       // Track view
       supabase.rpc('increment_product_views', { product_id: id }).catch(() => {})
       // Load related products (same category, different product)
@@ -369,7 +364,8 @@ export default function ProductDetail() {
               {related.map(p => (
                 <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                   <div className="product-img">
-                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span>{p.icon || '📦'}</span>}
+                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                    <span style={{display:p.image_url?'none':'flex'}}>{p.icon || '📦'}</span>
                   </div>
                   <div className="product-info">
                     <div className="product-name">{p.name}</div>

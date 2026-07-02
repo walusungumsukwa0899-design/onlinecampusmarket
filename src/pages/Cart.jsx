@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../lib/CartContext'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
+import { getRecentlyViewed } from '../lib/recentlyViewed'
 import Footer from '../components/Footer'
 import './Cart.css'
 
@@ -10,15 +11,16 @@ function EmptyCart({ navigate }) {
   const { addToCart, toggleWishlist, isWishlisted } = useCart()
   const [recommended, setRecommended] = useState([])
 
+  const [showingRecent, setShowingRecent] = useState(false)
+
   useEffect(() => {
-    // Show recently viewed first, then random products
-    try {
-      const rv = JSON.parse(localStorage.getItem('wolf_recently_viewed') || '[]')
-      if (rv.length > 0) { setRecommended(rv.slice(0, 4)); return }
-    } catch {}
-    supabase.from('products').select('*, vendors(name)').eq('available', true)
-      .order('created_at', { ascending: false }).limit(8)
-      .then(({ data }) => setRecommended((data || []).filter(p => p.vendors).slice(0, 4)))
+    // Show recently viewed first (validated live), then fall back to random products
+    getRecentlyViewed(4).then(rv => {
+      if (rv.length > 0) { setRecommended(rv); setShowingRecent(true); return }
+      supabase.from('products').select('*, vendors(name)').eq('available', true)
+        .order('created_at', { ascending: false }).limit(8)
+        .then(({ data }) => setRecommended((data || []).filter(p => p.vendors).slice(0, 4)))
+    })
   }, [])
 
   return (
@@ -33,7 +35,7 @@ function EmptyCart({ navigate }) {
         {recommended.length > 0 && (
           <>
             <h3 style={{ fontWeight: 800, fontSize: '16px', marginBottom: '16px' }}>
-              {JSON.parse(localStorage.getItem('wolf_recently_viewed') || '[]').length > 0 ? '👀 Recently Viewed' : '✨ Popular Right Now'}
+              {showingRecent ? '👀 Recently Viewed' : '✨ Popular Right Now'}
             </h3>
             <div className="products-grid">
               {recommended.map(p => {
@@ -41,7 +43,8 @@ function EmptyCart({ navigate }) {
                 return (
                   <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                     <div className="product-img">
-                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span>{p.icon || '📦'}</span>}
+                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                      <span style={{display:p.image_url?'none':'flex'}}>{p.icon || '📦'}</span>
                     </div>
                     <div className="product-body">
                       <div className="product-name">{p.name}</div>

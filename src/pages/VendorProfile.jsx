@@ -338,7 +338,8 @@ export default function VendorProfile() {
                   <div key={p.id} className="product-card">
                     <div className="product-img" style={{position:"relative", cursor: p.image_urls?.length > 1 ? 'zoom-in' : 'default'}}
                       onClick={() => p.image_urls?.length > 1 && setGalleryProduct({images: p.image_urls, idx: 0})}>
-                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy"/> : <span>{p.icon||'📦'}</span>}
+                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                      <span style={{display:p.image_url?'none':'flex'}}>{p.icon||'📦'}</span>
                       {p.image_urls?.length > 1 && (
                         <div style={{position:'absolute',bottom:'6px',left:0,right:0,display:'flex',justifyContent:'center',gap:'4px'}}>
                           {p.image_urls.map((_,i) => <span key={i} style={{width:'5px',height:'5px',borderRadius:'50%',background:'white',opacity:0.9,display:'block'}}/>)}

@@ -81,7 +81,8 @@ export default function Trending() {
               return (
                 <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                   <div className="product-img" style={{position:'relative'}}>
-                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy"/> : <span>{p.icon||'📦'}</span>}
+                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                    <span style={{display:p.image_url?'none':'flex'}}>{p.icon||'📦'}</span>
                     {tab==='trending' && i < 3 && (
                       <div style={{position:'absolute',top:'8px',left:'8px',background:['#E8630A','#6366f1','#0ea5e9'][i],color:'white',borderRadius:'20px',padding:'3px 10px',fontSize:'10px',fontWeight:900}}>
                         {['🥇 #1','🥈 #2','🥉 #3'][i]}

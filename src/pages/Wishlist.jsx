@@ -51,7 +51,8 @@ export default function Wishlist() {
             {wishlist.map(p => (
               <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                 <div className="product-img">
-                  {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span>{p.icon || '📦'}</span>}
+                  {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                  <span style={{display:p.image_url?'none':'flex'}}>{p.icon || '📦'}</span>
                 </div>
                 <div className="product-info">
                   <div className="product-name">{p.name}</div>

@@ -54,14 +54,7 @@ export default function SignIn() {
         setTab('check-email')
       }
     } catch (e) {
-      console.error('Auth error:', e)
-      const msg =
-        (typeof e === 'string' && e) ||
-        e?.message ||
-        e?.error_description ||
-        e?.msg ||
-        (e?.name ? `${e.name}: something went wrong. Please try again.` : '') ||
-        'Something went wrong. Please try again.'
+      const msg = typeof e === 'string' ? e : e?.message || JSON.stringify(e) || 'Something went wrong. Please try again.'
       setError(msg)
     } finally {
       setLoading(false)

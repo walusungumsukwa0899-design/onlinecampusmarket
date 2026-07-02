@@ -80,7 +80,8 @@ export default function OrderConfirmation() {
           {orders.map((o, i) => (
             <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', borderBottom: i < orders.length - 1 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'var(--light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, overflow: 'hidden' }}>
-                {o.products?.image_url ? <img src={o.products.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} /> : o.products?.icon || '📦'}
+                {o.products?.image_url ? <img src={o.products.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                <span style={{display:o.products?.image_url?'none':'flex'}}>{o.products?.icon || '📦'}</span>
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '14px' }}>{o.products?.name || 'Product'}</div>

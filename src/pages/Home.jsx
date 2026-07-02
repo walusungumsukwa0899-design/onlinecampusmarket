@@ -4,6 +4,7 @@ import { SkeletonGrid } from '../components/Skeleton'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useCart } from '../lib/CartContext'
+import { getRecentlyViewed } from '../lib/recentlyViewed'
 import Footer from '../components/Footer'
 import './Home.css'
 
@@ -29,10 +30,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    try {
-      const rv = JSON.parse(localStorage.getItem('wolf_recently_viewed') || '[]')
-      setRecentlyViewed(rv.slice(0, 4))
-    } catch {}
+    getRecentlyViewed(4).then(setRecentlyViewed)
   }, [])
 
   useEffect(() => {
@@ -161,7 +159,8 @@ export default function Home() {
                 {products.map(p => (
                   <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                     <div className="product-img">
-                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy"/> : <span>{p.icon || '📦'}</span>}
+                      {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                      <span style={{display:p.image_url?'none':'flex'}}>{p.icon || '📦'}</span>
                     </div>
                     <div className="product-body">
                       <div className="product-name">{p.name}</div>
@@ -203,15 +202,16 @@ export default function Home() {
               {recentlyViewed.map(p => (
                 <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
                   <div className="product-img">
-                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span>{p.icon || '📦'}</span>}
+                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                    <span style={{display:p.image_url?'none':'flex'}}>{p.icon || '📦'}</span>
                   </div>
                   <div className="product-body">
                     <div className="product-name">{p.name}</div>
-                    <div className="product-seller">by {p.seller}</div>
+                    <div className="product-seller">by {p.vendors?.name}</div>
                     <div className="product-footer">
                       <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
                     </div>
-                    <button className="add-cart-btn" style={{marginTop:'8px'}} onClick={e => { e.stopPropagation(); addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.seller,vendor_id:p.vendor_id,image_url:p.image_url}) }}>Add to Cart</button>
+                    <button className="add-cart-btn" style={{marginTop:'8px'}} onClick={e => { e.stopPropagation(); addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:p.vendors?.name,vendor_id:p.vendor_id,image_url:p.image_url}) }}>Add to Cart</button>
                   </div>
                 </div>
               ))}

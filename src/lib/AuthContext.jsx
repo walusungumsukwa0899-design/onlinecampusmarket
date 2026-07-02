@@ -7,14 +7,7 @@ const AuthContext = createContext(null)
 function extractError(error) {
   if (!error) return 'Something went wrong. Please try again.'
   if (typeof error === 'string') return error
-  console.error('Auth error:', error)
-  return (
-    error.message ||
-    error.error_description ||
-    error.msg ||
-    (error.name ? `${error.name}: something went wrong. Please try again.` : '') ||
-    'Something went wrong. Please try again.'
-  )
+  return error.message || error.error_description || error.msg || JSON.stringify(error) || 'Something went wrong. Please try again.'
 }
 
 export function AuthProvider({ children }) {
