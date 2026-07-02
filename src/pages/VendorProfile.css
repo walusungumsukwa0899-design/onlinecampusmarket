@@ -17,7 +17,7 @@
 .vp-stats-row{display:flex;gap:0;padding:16px 20px 0;flex-wrap:wrap;}
 .vp-stat{flex:1;min-width:80px;text-align:center;padding:12px 8px;border-right:1px solid rgba(255,255,255,0.08);}
 .vp-stat:last-child{border:none;}
-.vp-stat-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--wolf);}
+.vp-stat-val{font-family:'Manrope',sans-serif;font-size:18px;font-weight:800;color:var(--wolf);}
 .vp-stat-label{font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;}
 .vp-tabs{display:flex;padding:0 20px;margin-top:12px;border-bottom:1px solid rgba(255,255,255,0.1);}
 .vp-tab{padding:10px 16px;background:none;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}

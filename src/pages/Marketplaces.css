@@ -12,7 +12,7 @@
 .market-card-banner{height:90px;display:flex;align-items:center;justify-content:center;}
 .market-emoji{font-size:44px;}
 .market-card-body{padding:16px;}
-.market-card-name{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:2px;}
+.market-card-name{font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;margin-bottom:2px;}
 .market-card-full{font-size:11px;color:var(--gray);margin-bottom:6px;}
 .market-card-loc{font-size:12px;color:var(--gray);margin-bottom:12px;}
 .type-tag{padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;}

@@ -5,7 +5,7 @@
   --white:#fff;--border:#e5e7eb;--green:#1a7a4a;--radius:14px;
 }
 body{font-family:'Inter',sans-serif;color:var(--black);background:var(--white);overflow-x:hidden;}
-h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
+h1,h2,h3,h4,h5{font-family:'Manrope',sans-serif;}
 a{text-decoration:none;color:inherit;}
 button{cursor:pointer;font-family:'Inter',sans-serif;}
 input,select,textarea{font-family:'Inter',sans-serif;}
@@ -41,7 +41,7 @@ textarea.form-input{resize:vertical;min-height:100px;}
 .product-img{height:130px;display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--light);position:relative;overflow:hidden;}
 .product-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
 .product-body{padding:11px;}
-.product-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:2px;}
+.product-name{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;margin-bottom:2px;}
 .product-seller{font-size:11px;color:var(--gray);}
 .product-footer{display:flex;align-items:center;justify-content:space-between;margin-top:7px;}
 .product-price{font-weight:700;font-size:13px;color:var(--wolf);}

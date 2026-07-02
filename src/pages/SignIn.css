@@ -36,7 +36,7 @@
 .landing-hero-inner { max-width: 460px; width: 100%; position: relative; z-index: 1; }
 
 .landing-headline {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 42px;
   font-weight: 900;
   color: white;
@@ -114,7 +114,7 @@
   margin: 0 auto 10px;
   box-shadow: 0 4px 12px rgba(232,99,10,.3);
 }
-.signin-logo-text { font-family: 'Syne',sans-serif; font-weight: 800; font-size: 18px; }
+.signin-logo-text { font-family: 'Manrope',sans-serif; font-weight: 800; font-size: 18px; }
 .signin-logo-sub { font-size: 12px; color: var(--gray); margin-top: 3px; }
 
 .auth-toggle {

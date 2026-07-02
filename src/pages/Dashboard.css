@@ -14,7 +14,7 @@
 .dash-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:28px;}
 .dash-card{background:white;border-radius:var(--radius);padding:18px;border:1px solid var(--border);}
 .dash-card-label{font-size:11px;color:var(--gray);margin-bottom:5px;}
-.dash-card-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+.dash-card-val{font-family:'Manrope',sans-serif;font-size:22px;font-weight:800;}
 .dash-card-sub{font-size:10px;color:var(--wolf);margin-top:3px;}
 .dash-section-title{font-size:15px;font-weight:700;margin-bottom:12px;}
 .orders-list{background:white;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;}

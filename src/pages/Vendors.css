@@ -14,7 +14,7 @@
 .vendor-avatar{width:50px;height:50px;border-radius:14px;border:3px solid white;background:var(--wolf);display:flex;align-items:center;justify-content:center;font-size:22px;position:absolute;margin-top:-25px;margin-left:16px;overflow:hidden;}
 .vendor-avatar img{width:100%;height:100%;object-fit:cover;}
 .vendor-body{padding:28px 16px 16px;}
-.vendor-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:3px;}
+.vendor-name{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;margin-bottom:3px;}
 .vendor-cat-tag{font-size:11px;color:var(--wolf);font-weight:600;background:var(--wolf-light);padding:2px 9px;border-radius:20px;display:inline-block;margin-bottom:7px;}
 .vendor-uni{font-size:11px;color:var(--gray);margin-bottom:10px;}
 .vendor-stats{display:flex;gap:14px;margin-bottom:10px;}

@@ -6,7 +6,7 @@
 .steps-section{padding:56px 0;}
 .steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;}
 .step-card{text-align:center;padding:24px 16px;background:white;border:1px solid var(--border);border-radius:var(--radius);}
-.step-num{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:white;margin:0 auto 14px;}
+.step-num{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;color:white;margin:0 auto 14px;}
 .step-card h3{font-size:15px;font-weight:700;margin-bottom:6px;}
 .step-card p{font-size:12px;color:var(--gray);line-height:1.6;}
 .zones-section{background:var(--light);padding:56px 0;}
@@ -14,7 +14,7 @@
 .zone-card{background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center;}
 .delivery-disclaimer{max-width:680px;margin:0 auto;background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:24px 28px;font-size:14px;line-height:1.7;color:var(--gray);text-align:center;}
 .zone-icon{font-size:24px;margin-bottom:8px;}
-.zone-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;}
+.zone-name{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;}
 .zone-loc{font-size:11px;color:var(--gray);margin-top:2px;}
 .zone-time{font-size:11px;color:var(--wolf);font-weight:600;margin-top:4px;}
 .zone-fee{font-size:11px;color:var(--gray);}

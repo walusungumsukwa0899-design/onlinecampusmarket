@@ -607,7 +607,9 @@ export default function Dashboard() {
                                   ? <span className="mini-note">Reported</span>
                                   : <button className="mini-btn report" onClick={() => setReportingOrder(o)}>Report Issue</button>
                               )}
-                              <button className="mini-btn confirm" onClick={() => navigate(`/messages?vendor=${o.vendor_id}`)}>💬 Message Vendor</button>
+                              {o.vendor_id !== vendor?.id && (
+                                <button className="mini-btn confirm" onClick={() => navigate(`/messages?vendor=${o.vendor_id}`)}>💬 Message Vendor</button>
+                              )}
                             </div>
                           </div>
                         ))}

@@ -22,7 +22,7 @@ export default function OrderConfirmation() {
     try {
       const { data } = await supabase
         .from('orders')
-        .select('*, products(name, icon, image_url), vendors(name, phone)')
+        .select('*, products(name, icon, image_url), vendors(name, phone, user_id)')
         .eq('buyer_id', user.id)
         .like('notes', `%${chargeId}%`)
         .order('created_at', { ascending: true })
@@ -109,10 +109,12 @@ export default function OrderConfirmation() {
                     💬 WhatsApp
                   </a>
                 )}
-                <button onClick={() => navigate(`/messages?vendor=${orders.find(o=>o.vendors===v)?.vendor_id}`)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--wolf-light)', color: 'var(--wolf)', border: '1.5px solid var(--wolf)', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
-                  ✉️ Message in App
-                </button>
+                {v.user_id !== user?.id && (
+                  <button onClick={() => navigate(`/messages?vendor=${orders.find(o=>o.vendors===v)?.vendor_id}`)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--wolf-light)', color: 'var(--wolf)', border: '1.5px solid var(--wolf)', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                    ✉️ Message in App
+                  </button>
+                )}
               </div>
             </div>
           ))}
