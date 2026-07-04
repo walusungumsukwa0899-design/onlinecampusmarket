@@ -17,6 +17,7 @@ export default function SignIn() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user, signIn, signUp, loading: authLoading } = useAuth()
+  const [showIntro, setShowIntro] = useState(true)
   const [tab, setTab] = useState('in')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -26,9 +27,13 @@ export default function SignIn() {
   })
   const [termsAccepted, setTermsAccepted] = useState(false)
 
-  // Already signed in → go home
+  // Already signed in (didn't sign out) → go straight back to where they were,
+  // not through the intro/sign-in screens at all.
   useEffect(() => {
-    if (!authLoading && user) navigate('/home')
+    if (!authLoading && user) {
+      const last = localStorage.getItem('wolf_last_route')
+      navigate(last && last !== '/signin' && last !== '/' ? last : '/home', { replace: true })
+    }
   }, [user, authLoading])
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })); setError('') }
@@ -63,7 +68,7 @@ export default function SignIn() {
 
   function onKey(e) { if (e.key === 'Enter') handle() }
 
-  if (authLoading) return (
+  if (authLoading || user) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#0e1a12,#1a3a20)' }}>
       <div style={{ textAlign: 'center', color: 'white' }}>
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>🐺</div>
@@ -72,24 +77,21 @@ export default function SignIn() {
     </div>
   )
 
+  if (showIntro) return <IntroScreen onNext={() => setShowIntro(false)} />
+
   if (tab === 'check-email') return (
-    <div className="landing-page">
-      <div className="landing-left">
-        <LandingHero />
-      </div>
-      <div className="landing-right">
-        <div className="signin-card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>{!form.fullName ? '📧' : '🎉'}</div>
-          <h2 style={{ marginBottom: '8px', fontWeight: 900 }}>{!form.fullName ? 'Check your email' : 'Almost there!'}</h2>
-          <p style={{ color: 'var(--gray)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
-            {!form.fullName
-              ? `We sent a password reset link to ${form.email}. Click it to set a new password.`
-              : `We sent a confirmation link to ${form.email}. Click it to activate your account, then sign in below.`}
-          </p>
-          <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }} onClick={() => setTab('in')}>
-            Back to Sign In
-          </button>
-        </div>
+    <div className="auth-page">
+      <div className="signin-card" style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>{!form.fullName ? '📧' : '🎉'}</div>
+        <h2 style={{ marginBottom: '8px', fontWeight: 900 }}>{!form.fullName ? 'Check your email' : 'Almost there!'}</h2>
+        <p style={{ color: 'var(--gray)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
+          {!form.fullName
+            ? `We sent a password reset link to ${form.email}. Click it to set a new password.`
+            : `We sent a confirmation link to ${form.email}. Click it to activate your account, then sign in below.`}
+        </p>
+        <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }} onClick={() => setTab('in')}>
+          Back to Sign In
+        </button>
       </div>
     </div>
   )
@@ -101,20 +103,13 @@ export default function SignIn() {
   const pwColors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e']
 
   return (
-    <div className="landing-page">
-      {/* Left: hero */}
-      <div className="landing-left">
-        <LandingHero />
-      </div>
-
-      {/* Right: auth form */}
-      <div className="landing-right">
-        <div className="signin-card">
-          <div className="signin-logo">
-            <div className="signin-logo-icon">🐺</div>
-            <div className="signin-logo-text">Wolf Business Platform</div>
-            <div className="signin-logo-sub">Malawi&apos;s Campus Marketplace</div>
-          </div>
+    <div className="auth-page">
+      <div className="signin-card">
+        <div className="signin-logo">
+          <div className="signin-logo-icon">🐺</div>
+          <div className="signin-logo-text">Wolf Business Platform</div>
+          <div className="signin-logo-sub">Malawi&apos;s Campus Marketplace</div>
+        </div>
 
           {tab !== 'reset' && (
             <div className="auth-toggle">
@@ -212,53 +207,50 @@ export default function SignIn() {
               <span style={{ fontSize: '13px', color: 'var(--wolf)', cursor: 'pointer', fontWeight: 600 }} onClick={() => { setTab('in'); setError('') }}>← Back to Sign In</span>
             </div>
           )}
-
-
-        </div>
       </div>
     </div>
   )
 }
 
-function LandingHero() {
+function IntroScreen({ onNext }) {
   return (
-    <div className="landing-hero">
-      <div className="landing-hero-inner">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-          <div style={{ width: '52px', height: '52px', background: 'rgba(232,99,10,.2)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', border: '1.5px solid rgba(232,99,10,.4)' }}>🐺</div>
+    <div className="intro-screen">
+      <div className="intro-inner">
+        <div className="intro-logo-row">
+          <div className="intro-logo-icon">🐺</div>
           <div>
-            <div style={{ color: 'white', fontWeight: 900, fontSize: '18px', fontFamily: 'Manrope,sans-serif' }}>Wolf Business Platform</div>
-            <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '12px' }}>Malawi&apos;s Campus Marketplace</div>
+            <div className="intro-logo-text">Wolf Business Platform</div>
+            <div className="intro-logo-sub">Malawi&apos;s Campus Marketplace</div>
           </div>
         </div>
-        <h1 className="landing-headline">
-          Buy & sell anything<br />
-          <span style={{ color: '#E8630A' }}>on campus</span>
+
+        <h1 className="intro-headline">
+          Buy &amp; sell anything <span style={{ color: '#E8630A' }}>on campus</span>
         </h1>
-        <p className="landing-sub">
-          Join thousands of students buying food, fashion, electronics and services — right on their campus.
+        <p className="intro-sub">
+          Join thousands of students buying, selling and delivering right on their campus.
         </p>
-        <div className="landing-features">
+
+        <div className="intro-features">
           {FEATURES.map(f => (
-            <div key={f.title} className="landing-feature">
-              <span className="landing-feature-icon">{f.icon}</span>
-              <div>
-                <div style={{ color: 'white', fontWeight: 700, fontSize: '13px' }}>{f.title}</div>
-                <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '12px', marginTop: '2px' }}>{f.desc}</div>
-              </div>
+            <div key={f.title} className="intro-feature">
+              <span className="intro-feature-icon">{f.icon}</span>
+              <div className="intro-feature-title">{f.title}</div>
             </div>
           ))}
         </div>
-        <div className="landing-stats">
+
+        <div className="intro-stats">
           {[['🏪', '500+', 'Vendors'], ['📦', '2,000+', 'Products'], ['🎓', '13', 'Universities']].map(([icon, num, label]) => (
-            <div key={label} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '20px', marginBottom: '2px' }}>{icon}</div>
-              <div style={{ color: 'white', fontWeight: 900, fontSize: '18px' }}>{num}</div>
-              <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '11px' }}>{label}</div>
+            <div key={label} className="intro-stat">
+              <div className="intro-stat-num">{icon} {num}</div>
+              <div className="intro-stat-label">{label}</div>
             </div>
           ))}
         </div>
       </div>
+
+      <button className="intro-next-btn" onClick={onNext}>Next →</button>
     </div>
   )
 }

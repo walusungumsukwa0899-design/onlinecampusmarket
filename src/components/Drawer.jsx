@@ -64,6 +64,9 @@ export default function Drawer({ open, onClose }) {
             <div className="drawer-section">
               <h4>Account</h4>
               <Link to="/dashboard?tab=settings" onClick={go}>Profile Settings</Link>
+              {user.email?.toLowerCase() === 'walusungumsukwa0899@gmail.com' && (
+                <Link to="/admin" onClick={go}>🛡️ Admin Panel</Link>
+              )}
               <button className="drawer-signout" onClick={() => { signOut(); onClose() }}>Sign Out</button>
             </div>
           )}

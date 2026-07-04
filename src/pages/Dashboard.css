@@ -56,12 +56,12 @@
 .status-chip.payout-failed{background:#fef2f2;color:#ef4444;}
 .dash-main .auth-error{background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px 14px;color:#ef4444;font-size:13px;}
 .my-products-list{display:flex;flex-direction:column;gap:8px;}
-.my-product-row{display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:var(--card-shadow);}
+.my-product-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;background:white;border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:var(--card-shadow);}
 .my-product-icon{font-size:26px;width:40px;height:40px;background:var(--light);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.my-product-info{flex:1;}
+.my-product-info{flex:1 1 140px;min-width:120px;}
 .my-product-name{font-weight:700;font-size:12.5px;}
 .my-product-meta{font-size:10.5px;color:var(--gray);margin-top:2px;}
-.my-product-actions{display:flex;align-items:center;gap:8px;}
+.my-product-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;}
 .avail-toggle{border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;background:white;transition:all .2s;}
 .avail-toggle.on{border-color:var(--green);color:var(--green);}
 .avail-toggle.off{border-color:#ef4444;color:#ef4444;}
@@ -90,4 +90,5 @@
   .dash-mobile-tab.active{background:var(--wolf);color:white;}
   .dash-mobile-tab.sell{background:rgba(232,99,10,0.18);color:var(--wolf);}
   .dash-main{padding:16px;}
+  .my-product-actions{flex:1 1 100%;justify-content:flex-start;}
 }

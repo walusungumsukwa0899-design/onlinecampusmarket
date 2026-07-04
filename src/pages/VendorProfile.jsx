@@ -245,7 +245,6 @@ export default function VendorProfile() {
             <div className="vp-meta-tags">
               <span>🏷️ {vendor.category}</span>
               <span>📍 {vendor.university}</span>
-              <span style={{color:'#4ade80'}}>✅ Verified</span>
               {avgRating && <span>⭐ {avgRating} ({reviews.length} reviews)</span>}
             </div>
             {isOwner && (

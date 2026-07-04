@@ -13,6 +13,7 @@ function extractError(error) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [onlineUserIds, setOnlineUserIds] = useState(new Set())
 
   useEffect(() => {
     // Timeout fallback: if getSession hangs (bad network/env vars), stop loading after 5s
@@ -36,6 +37,30 @@ export function AuthProvider({ children }) {
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // Presence: join a shared realtime channel while logged in, so any page can
+  // check who's currently online. Also heartbeat profiles.last_seen so we can
+  // show "last seen X ago" once someone goes offline.
+  useEffect(() => {
+    if (!user) { setOnlineUserIds(new Set()); return }
+    const channel = supabase.channel('online-users', { config: { presence: { key: user.id } } })
+    channel.on('presence', { event: 'sync' }, () => {
+      setOnlineUserIds(new Set(Object.keys(channel.presenceState())))
+    })
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') channel.track({ online_at: new Date().toISOString() })
+    })
+
+    const updateLastSeen = () => {
+      supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', user.id).then(() => {})
+    }
+    updateLastSeen()
+    const heartbeat = setInterval(updateLastSeen, 45000)
+
+    return () => { supabase.removeChannel(channel); clearInterval(heartbeat) }
+  }, [user?.id])
+
+  function isOnline(userId) { return onlineUserIds.has(userId) }
 
   async function signUp({ email, password, fullName, phone, university, referralCode }) {
     const { data, error } = await supabase.auth.signUp({
@@ -92,7 +117,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, registerPush }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, registerPush, isOnline }}>
       {children}
     </AuthContext.Provider>
   )

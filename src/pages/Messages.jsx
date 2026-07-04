@@ -2,11 +2,12 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
+import './Messages.css'
 
 export default function Messages() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, isOnline } = useAuth()
 
   const [conversations, setConversations] = useState([])
   const [activeConv, setActiveConv] = useState(null) // { vendorId, buyerId, type:'buyer'|'vendor', vendor, buyer }
@@ -15,8 +16,35 @@ export default function Messages() {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [myVendor, setMyVendor] = useState(undefined) // undefined=unchecked, null=not a vendor, object=is vendor
+  const [otherLastSeen, setOtherLastSeen] = useState(null)
   const messagesEndRef = useRef(null)
   const realtimeRef = useRef(null)
+
+  // Whichever user is on "the other side" of the active conversation
+  const otherUserId = activeConv
+    ? (activeConv.type === 'buyer' ? activeConv.vendor?.user_id : activeConv.buyerId)
+    : null
+  const otherIsOnline = otherUserId ? isOnline(otherUserId) : false
+
+  // Fetch last_seen for the other participant whenever the active conversation changes
+  useEffect(() => {
+    if (!otherUserId) { setOtherLastSeen(null); return }
+    supabase.from('profiles').select('last_seen').eq('id', otherUserId).maybeSingle()
+      .then(({ data }) => setOtherLastSeen(data?.last_seen || null))
+  }, [otherUserId])
+
+  function formatLastSeen(iso) {
+    if (!iso) return 'Offline'
+    const diffMs = Date.now() - new Date(iso).getTime()
+    const mins = Math.floor(diffMs / 60000)
+    if (mins < 1) return 'Last seen just now'
+    if (mins < 60) return `Last seen ${mins}m ago`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `Last seen ${hours}h ago`
+    const days = Math.floor(hours / 24)
+    if (days < 7) return `Last seen ${days}d ago`
+    return `Last seen ${new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+  }
 
   // Load vendor profile first, then conversations
   useEffect(() => {
@@ -65,7 +93,7 @@ export default function Messages() {
       // Buyer side: conversations where user is the buyer
       const { data: buyerMsgs, error: buyerMsgsErr } = await supabase
         .from('messages')
-        .select('vendor_id, buyer_id, vendors(id,name,avatar_url,icon,university), created_at, text, read, sender')
+        .select('vendor_id, buyer_id, vendors(id,name,avatar_url,icon,university,user_id), created_at, text, read, sender')
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -142,7 +170,7 @@ export default function Messages() {
         if (match) selectConversation(match)
         else {
           // New conversation with this vendor
-          const { data: vd } = await supabase.from('vendors').select('id,name,avatar_url,icon,university,avg_rating').eq('id', urlVendor).maybeSingle()
+          const { data: vd } = await supabase.from('vendors').select('id,name,avatar_url,icon,university,avg_rating,user_id').eq('id', urlVendor).maybeSingle()
           if (vd) {
             const newConv = { key: `buyer-${urlVendor}`, type: 'buyer', vendorId: urlVendor, buyerId: user.id, vendor: vd, buyer: null, label: vd.name, avatar: vd.avatar_url, lastMsg: '', lastTime: new Date().toISOString(), unread: false }
             setActiveConv(newConv)
@@ -230,7 +258,7 @@ export default function Messages() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', paddingTop: '64px', overflow: 'hidden' }}>
+    <div className="msgs-page">
       {/* Sidebar */}
       <div style={{ width: activeConv ? '280px' : '100%', borderRight: '1.5px solid var(--border)', overflowY: 'auto', background: 'white', flexShrink: 0 }} className="msgs-sidebar">
         <div style={{ padding: '16px', borderBottom: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -280,7 +308,9 @@ export default function Messages() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 800, fontSize: '14px' }}>{activeConv.label}</div>
-              <div style={{ fontSize: '11px', color: 'var(--gray)' }}>{activeConv.type === 'vendor' ? 'Customer' : 'Vendor'}</div>
+              <div style={{ fontSize: '11px', color: otherIsOnline ? 'var(--green)' : 'var(--gray)', fontWeight: otherIsOnline ? 700 : 400 }}>
+                {otherIsOnline ? '🟢 Online' : formatLastSeen(otherLastSeen)}
+              </div>
             </div>
             {activeConv.type === 'buyer' && (
               <button onClick={() => navigate(`/vendors/${activeConv.vendorId}`)}
@@ -305,8 +335,9 @@ export default function Messages() {
                 <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
                   <div style={{ maxWidth: '70%', padding: '10px 14px', borderRadius: mine ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: mine ? 'var(--wolf)' : 'white', color: mine ? 'white' : 'var(--black)', fontSize: '13px', lineHeight: 1.5, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
                     {m.text}
-                    <div style={{ fontSize: '10px', opacity: 0.65, marginTop: '4px', textAlign: 'right' }}>
+                    <div style={{ fontSize: '10px', opacity: 0.65, marginTop: '4px', textAlign: 'right', display: 'flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
                       {new Date(m.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      {mine && <span title={otherIsOnline ? 'Online' : 'Offline'}>{otherIsOnline ? '✓✓' : '✓'}</span>}
                     </div>
                   </div>
                 </div>

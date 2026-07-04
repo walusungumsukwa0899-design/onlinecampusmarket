@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 
+// Only this email can access the admin panel.
+const ADMIN_EMAIL = 'walusungumsukwa0899@gmail.com'
+
 export default function Admin() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
@@ -24,9 +27,8 @@ export default function Admin() {
     checkAdmin()
   }, [user, authLoading])
 
-  async function checkAdmin() {
-    const { data, error } = await supabase.from('profiles').select('is_admin').eq('id', user.id).maybeSingle()
-    if (error || !data?.is_admin) {
+  function checkAdmin() {
+    if (user.email?.toLowerCase() !== ADMIN_EMAIL) {
       setIsAdmin(false)
       navigate('/home')
       return

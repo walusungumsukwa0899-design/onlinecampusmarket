@@ -65,8 +65,13 @@ function EmailVerificationBanner() {
 }
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  const { pathname, search } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    if (pathname !== '/signin' && pathname !== '/') {
+      localStorage.setItem('wolf_last_route', pathname + search)
+    }
+  }, [pathname, search])
   return null
 }
 
