@@ -222,7 +222,7 @@ export default function VendorProfile() {
       <div className="vp-header">
         <button className="vp-back" onClick={() => navigate('/vendors')}>← Back to Vendors</button>
         <div className="vp-banner">
-          {vendor.banner_url && <img src={vendor.banner_url} alt=""/>}
+          {vendor.banner_url && <img src={vendor.banner_url} alt="" onError={e=>{e.target.style.display='none'}}/>}
           {isOwner && (
             <>
               <label className="banner-upload-btn" htmlFor="banner-input">📷 Change Cover</label>
@@ -232,7 +232,7 @@ export default function VendorProfile() {
         </div>
         <div className="vp-info-row">
           <div className="vp-avatar">
-            {vendor.avatar_url ? <img src={vendor.avatar_url} alt={vendor.name}/> : <span>{vendor.icon || '🏪'}</span>}
+            {vendor.avatar_url ? <img src={vendor.avatar_url} alt={vendor.name} onError={e=>{e.target.style.display='none';e.target.insertAdjacentHTML('afterend',`<span>${vendor.icon || '🏪'}</span>`)}}/> : <span>{vendor.icon || '🏪'}</span>}
             {isOwner && (
               <>
                 <label className="avatar-upload-overlay" htmlFor="avatar-input">📷</label>

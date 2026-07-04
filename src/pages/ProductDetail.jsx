@@ -210,7 +210,7 @@ export default function ProductDetail() {
             {vendor && (
               <div onClick={() => navigate(`/vendors/${vendor.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'var(--light)', borderRadius: '10px', cursor: 'pointer' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--wolf)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, fontSize: '16px', flexShrink: 0 }}>
-                  {vendor.avatar_url ? <img src={vendor.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : vendor.name?.[0] || '🏪'}
+                  {vendor.avatar_url ? <img src={vendor.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e=>{e.target.style.display='none';e.target.insertAdjacentHTML('afterend',`<span>${vendor.name?.[0] || '🏪'}</span>`)}} /> : vendor.name?.[0] || '🏪'}
                 </div>
                 <div>
                   <div style={{ fontWeight: 800, fontSize: '14px' }}>{vendor.name}</div>

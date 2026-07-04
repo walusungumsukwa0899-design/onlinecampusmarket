@@ -230,7 +230,13 @@ export default function Messages() {
       setNewMsg(msgData.text)
       alert(`Message failed: ${error.message}`)
     } else if (data) {
-      setMessages(prev => prev.map(m => m.id === optimistic.id ? data : m))
+      setMessages(prev => {
+        const merged = prev.map(m => m.id === optimistic.id ? data : m)
+        // The realtime subscription may have already pushed this same row
+        // (with the real id) while this insert was in flight, so de-dupe.
+        const seen = new Set()
+        return merged.filter(m => (seen.has(m.id) ? false : (seen.add(m.id), true)))
+      })
       supabase.functions.invoke('notify-new-message', {
         body: { record: { vendor_id: data.vendor_id, buyer_id: data.buyer_id, sender: data.sender, text: data.text } }
       }).catch(() => {})
@@ -278,7 +284,7 @@ export default function Messages() {
               style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: activeConv?.key === conv.key ? 'var(--wolf-light)' : 'white', borderLeft: activeConv?.key === conv.key ? '3px solid var(--wolf)' : '3px solid transparent', transition: 'all .15s' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--wolf)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, fontSize: '16px', flexShrink: 0, overflow: 'hidden' }}>
-                  {conv.avatar ? <img src={conv.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (conv.label?.[0] || '?')}
+                  {conv.avatar ? <img src={conv.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e=>{e.target.style.display='none';e.target.insertAdjacentHTML('afterend',`<span>${conv.label?.[0] || '?'}</span>`)}} /> : (conv.label?.[0] || '?')}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -300,11 +306,11 @@ export default function Messages() {
 
       {/* Chat window */}
       {activeConv && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
           <div style={{ padding: '12px 16px', borderBottom: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px', background: 'white', flexShrink: 0 }}>
             <button onClick={() => setActiveConv(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', display: 'none' }} className="msg-back-btn">←</button>
             <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--wolf)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, overflow: 'hidden', flexShrink: 0 }}>
-              {activeConv.avatar ? <img src={activeConv.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (activeConv.label?.[0] || '?')}
+              {activeConv.avatar ? <img src={activeConv.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e=>{e.target.style.display='none';e.target.insertAdjacentHTML('afterend',`<span>${activeConv.label?.[0] || '?'}</span>`)}} /> : (activeConv.label?.[0] || '?')}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 800, fontSize: '14px' }}>{activeConv.label}</div>
@@ -322,7 +328,7 @@ export default function Messages() {
             </button>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9fafb' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9fafb', minHeight: 0 }}>
             {messages.length === 0 && (
               <div style={{ textAlign: 'center', color: 'var(--gray)', fontSize: '13px', marginTop: '40px' }}>
                 <div style={{ fontSize: '40px', marginBottom: '8px' }}>👋</div>

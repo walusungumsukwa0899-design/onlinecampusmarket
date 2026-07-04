@@ -9,5 +9,5 @@
 }
 
 @media (max-width: 768px) {
-  .msgs-page { top: 112px; } /* mobile navbar is two rows, taller */
+  .msgs-page { top: 112px; bottom: 64px; } /* mobile navbar is two rows, taller; leave room for fixed bottom tab bar */
 }

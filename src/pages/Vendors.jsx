@@ -95,10 +95,10 @@ export default function Vendors() {
                 {filtered.map(v => (
                   <div key={v.id} className="vendor-card" onClick={() => navigate(`/vendors/${v.id}`)}>
                     <div className="vendor-banner" style={{background:'linear-gradient(135deg,#0e1a12,#1a3a20)'}}>
-                      {v.banner_url && <img src={v.banner_url} alt="" loading="lazy"/>}
+                      {v.banner_url && <img src={v.banner_url} alt="" loading="lazy" onError={e=>{e.target.style.display='none'}}/>}
                     </div>
                     <div className="vendor-avatar">
-                      {v.avatar_url ? <img loading="lazy" src={v.avatar_url} alt={v.name}/> : <span>{v.icon || '🏪'}</span>}
+                      {v.avatar_url ? <img loading="lazy" src={v.avatar_url} alt={v.name} onError={e=>{e.target.style.display='none';e.target.insertAdjacentHTML('afterend',`<span>${v.icon || '🏪'}</span>`)}}/> : <span>{v.icon || '🏪'}</span>}
                     </div>
                     <div className="vendor-body">
                       <div className="vendor-name" style={{display:'flex',alignItems:'center',gap:'6px'}}>

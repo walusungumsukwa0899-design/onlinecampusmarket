@@ -1,30 +1,30 @@
 .vp-page{padding-top:64px;min-height:100vh;background:var(--light);}
-.vp-header{background:white;box-shadow:var(--card-shadow);}
-.vp-back{padding:10px 20px;background:transparent;border:none;color:var(--gray);font-size:13px;cursor:pointer;}
-.vp-banner{height:130px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--navy),#111827);}
+.vp-header{background:var(--green);box-shadow:var(--card-shadow);}
+.vp-back{padding:8px 20px;background:transparent;border:none;color:rgba(255,255,255,0.85);font-size:13px;cursor:pointer;}
+.vp-banner{height:100px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--navy),#111827);}
 .vp-banner img{width:100%;height:100%;object-fit:cover;}
 
 /* Avatar overlaps the banner's bottom edge slightly (standard profile pattern),
    but the name/badge/meta sit fully below on white — never layered on the photo. */
-.vp-info-row{display:flex;align-items:flex-start;gap:14px;padding:0 20px;margin-top:-32px;position:relative;z-index:2;}
-.vp-avatar{width:68px;height:68px;border-radius:18px;border:4px solid white;background:var(--wolf);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.vp-info-row{display:flex;align-items:flex-start;gap:12px;padding:0 20px;margin-top:-24px;position:relative;z-index:2;}
+.vp-avatar{width:52px;height:52px;border-radius:14px;border:3px solid white;background:var(--wolf);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
 .vp-avatar img{width:100%;height:100%;object-fit:cover;}
 
 .vp-avatar:hover .avatar-upload-overlay{opacity:1;}
-.vp-meta{flex:1;padding-top:38px;padding-bottom:14px;}
-.vp-meta h1{font-size:clamp(17px,3vw,24px);font-weight:800;color:var(--black);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.vp-meta{flex:1;padding-top:26px;padding-bottom:10px;}
+.vp-meta h1{font-size:clamp(15px,2.6vw,20px);font-weight:800;color:white;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .vp-meta-tags{display:flex;gap:10px;flex-wrap:wrap;}
-.vp-meta-tags span{font-size:12px;color:var(--gray);}
+.vp-meta-tags span{font-size:11px;color:rgba(255,255,255,0.85);}
 .banner-upload-btn{position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,0.5);color:white;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;}
 .avatar-upload-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:0;cursor:pointer;transition:.2s;}
-.vp-stats-row{display:flex;gap:0;padding:14px 20px 0;flex-wrap:wrap;border-top:1px solid var(--border);}
-.vp-stat{flex:1;min-width:80px;text-align:center;padding:12px 8px;border-right:1px solid var(--border);}
+.vp-stats-row{display:flex;gap:0;padding:10px 20px 0;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.25);}
+.vp-stat{flex:1;min-width:70px;text-align:center;padding:8px 8px;border-right:1px solid rgba(255,255,255,0.25);}
 .vp-stat:last-child{border-right:none;}
-.vp-stat-val{font-family:'Manrope',sans-serif;font-size:18px;font-weight:800;color:var(--wolf);}
-.vp-stat-label{font-size:10px;color:var(--gray);margin-top:2px;}
-.vp-tabs{display:flex;padding:0 20px;margin-top:4px;border-bottom:1px solid var(--border);}
-.vp-tab{padding:10px 16px;background:none;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
-.vp-tab.active{color:var(--wolf);border-bottom-color:var(--wolf);}
+.vp-stat-val{font-family:'Manrope',sans-serif;font-size:16px;font-weight:800;color:white;}
+.vp-stat-label{font-size:10px;color:rgba(255,255,255,0.75);margin-top:2px;}
+.vp-tabs{display:flex;padding:0 20px;margin-top:2px;border-bottom:1px solid rgba(255,255,255,0.25);}
+.vp-tab{padding:8px 16px;background:none;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.vp-tab.active{color:white;border-bottom-color:white;}
 .vp-body{padding:24px 0 48px;}
 .avail-tag{font-size:11px;font-weight:600;margin-bottom:4px;}
 .avail{color:var(--green);}
