@@ -1,17 +1,17 @@
 .vp-page{padding-top:64px;min-height:100vh;background:var(--light);}
-.vp-header{background:var(--green);box-shadow:var(--card-shadow);}
+.vp-header{background:#1a3a20;box-shadow:var(--card-shadow);}
 .vp-back{padding:8px 20px;background:transparent;border:none;color:rgba(255,255,255,0.85);font-size:13px;cursor:pointer;}
-.vp-banner{height:100px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--navy),#111827);}
+.vp-banner{height:125px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--navy),#111827);}
 .vp-banner img{width:100%;height:100%;object-fit:cover;}
 
 /* Avatar overlaps the banner's bottom edge slightly (standard profile pattern),
    but the name/badge/meta sit fully below on white — never layered on the photo. */
-.vp-info-row{display:flex;align-items:flex-start;gap:12px;padding:0 20px;margin-top:-24px;position:relative;z-index:2;}
-.vp-avatar{width:52px;height:52px;border-radius:14px;border:3px solid white;background:var(--wolf);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.vp-info-row{display:flex;align-items:flex-start;gap:12px;padding:0 20px;margin-top:-40px;position:relative;z-index:2;}
+.vp-avatar{width:84px;height:84px;border-radius:50%;border:4px solid white;background:var(--wolf);display:flex;align-items:center;justify-content:center;font-size:34px;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
 .vp-avatar img{width:100%;height:100%;object-fit:cover;}
 
 .vp-avatar:hover .avatar-upload-overlay{opacity:1;}
-.vp-meta{flex:1;padding-top:26px;padding-bottom:10px;}
+.vp-meta{flex:1;padding-top:42px;padding-bottom:10px;}
 .vp-meta h1{font-size:clamp(15px,2.6vw,20px);font-weight:800;color:white;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .vp-meta-tags{display:flex;gap:10px;flex-wrap:wrap;}
 .vp-meta-tags span{font-size:11px;color:rgba(255,255,255,0.85);}

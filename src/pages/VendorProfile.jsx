@@ -261,7 +261,7 @@ export default function VendorProfile() {
               </div>
             )}
             {!isOwner && (
-              <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'8px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',gap:'8px',flexWrap:'wrap',marginTop:'8px'}}>
                 <button onClick={async () => {
                   if (!user) { navigate('/signin'); return }
                   setFollowLoading(true)
