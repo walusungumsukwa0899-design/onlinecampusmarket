@@ -26,7 +26,7 @@ export default function ReportIssue() {
       return
     }
     const lines = [
-      'New issue report from Wolf Market site:',
+      'New issue report from Wolf Business Platform site:',
       `Type: ${form.type}`,
       form.orderId.trim() ? `Order ID: ${form.orderId}` : null,
       `Contact: ${form.contact}`,

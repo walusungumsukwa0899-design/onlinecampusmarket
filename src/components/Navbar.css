@@ -13,6 +13,15 @@
 .cart-badge{position:absolute;top:-6px;right:-6px;background:var(--wolf);color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
 .nav-cta{background:var(--wolf);color:white;border:none;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
 .nav-cta:hover{background:var(--wolf-dark);}
+
+/* ── Hamburger menu button ────────────────────────────────────────────── */
+.nav-menu-btn{background:var(--navy-soft);border:1.5px solid var(--border);border-radius:9px;width:38px;height:38px;font-size:16px;color:var(--navy);cursor:pointer;flex-shrink:0;transition:all .2s;}
+.nav-menu-btn:hover{border-color:var(--navy);}
+
+/* ── Buy / Sell mode toggle ───────────────────────────────────────────── */
+.mode-toggle{display:flex;background:var(--navy-soft);border:1.5px solid var(--border);border-radius:9px;padding:2px;flex-shrink:0;}
+.mode-toggle button{border:none;background:transparent;padding:6px 12px;font-size:12px;font-weight:700;border-radius:7px;color:var(--gray);cursor:pointer;transition:all .2s;}
+.mode-toggle button.active{background:var(--wolf);color:white;}
 .nav-install{background:var(--wolf-light);color:var(--wolf);border:1.5px solid var(--wolf);padding:7px 13px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;}
 .nav-install:hover{background:var(--wolf);color:white;}
 .install-banner{display:none;}
@@ -38,6 +47,7 @@
   }
   /* Row 1: logo only */
   .nav-logo{padding-bottom:8px;}
+  .nav-logo-text{font-size:14px;}
   /* Hide desktop links and install */
   .nav-links{display:none;}
   .nav-install{display:none;}
@@ -48,11 +58,12 @@
   .mobile-icon-row{
     display:flex;
     align-items:center;
-    justify-content:flex-end;
+    justify-content:flex-start;
     gap:8px;
     padding:8px 0 10px;
     border-top:1px solid var(--border);
   }
+  .mobile-icon-row .mode-toggle button{padding:6px 9px;font-size:11px;}
 
   /* Bottom nav */
   .mobile-nav{display:flex;justify-content:space-around;}

@@ -10,7 +10,7 @@ export default function Wishlist() {
   const [shared, setShared] = useState(false)
 
   async function shareWishlist() {
-    const text = `My Wolf Marketplace wishlist 🐺❤️\n\n` + wishlist.map(p => `• ${p.name} — MWK ${Number(p.rawPrice || p.price).toLocaleString()}`).join('\n') + `\n\nShop at wolfmarketplace.app`
+    const text = `My Wolf Business Platform wishlist 🐺❤️\n\n` + wishlist.map(p => `• ${p.name} — MWK ${Number(p.rawPrice || p.price).toLocaleString()}`).join('\n') + `\n\nShop at wolfmarketplace.app`
     if (navigator.share) {
       await navigator.share({ title: 'My Wolf Wishlist', text }).catch(() => {})
     } else {

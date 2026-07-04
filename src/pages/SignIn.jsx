@@ -112,7 +112,7 @@ export default function SignIn() {
         <div className="signin-card">
           <div className="signin-logo">
             <div className="signin-logo-icon">🐺</div>
-            <div className="signin-logo-text">Wolf Marketplace</div>
+            <div className="signin-logo-text">Wolf Business Platform</div>
             <div className="signin-logo-sub">Malawi&apos;s Campus Marketplace</div>
           </div>
 
@@ -227,7 +227,7 @@ function LandingHero() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
           <div style={{ width: '52px', height: '52px', background: 'rgba(232,99,10,.2)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', border: '1.5px solid rgba(232,99,10,.4)' }}>🐺</div>
           <div>
-            <div style={{ color: 'white', fontWeight: 900, fontSize: '18px', fontFamily: 'Manrope,sans-serif' }}>Wolf Marketplace</div>
+            <div style={{ color: 'white', fontWeight: 900, fontSize: '18px', fontFamily: 'Manrope,sans-serif' }}>Wolf Business Platform</div>
             <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '12px' }}>Malawi&apos;s Campus Marketplace</div>
           </div>
         </div>

@@ -74,7 +74,7 @@ export default function ProductDetail() {
   // SEO — runs every render; falls back to defaults while product is still loading
   useSEO({
     title: product ? `${product.name} – MWK ${Number(product.price).toLocaleString()}` : 'Product',
-    description: product?.description || `Buy ${product?.name || 'this product'} from ${vendor?.name || 'a campus vendor'} on Wolf Marketplace.`,
+    description: product?.description || `Buy ${product?.name || 'this product'} from ${vendor?.name || 'a campus vendor'} on Wolf Business Platform.`,
     image: product?.image_url || undefined,
     url: window.location.href,
   })
@@ -87,12 +87,12 @@ export default function ProductDetail() {
   const variants = Array.isArray(product.variants) ? product.variants : (product.variants ? product.variants.split(',').map(v=>v.trim()).filter(Boolean) : [])
   const cartItem = { id: product.id, name: product.name + (selectedVariant ? ` (${selectedVariant})` : ''), price: `MWK ${Number(product.price).toLocaleString()}`, rawPrice: product.price, icon: product.icon || '📦', seller: vendor?.name, vendor_id: product.vendor_id, image_url: product.image_url }
   const isOwnProduct = user && vendor && vendor.user_id === user.id
-  const whatsappMsg = encodeURIComponent(`Hi! I saw your product "${product.name}" on Wolf Marketplace and I'm interested. Is it still available?`)
+  const whatsappMsg = encodeURIComponent(`Hi! I saw your product "${product.name}" on Wolf Business Platform and I'm interested. Is it still available?`)
   const whatsappUrl = vendor?.phone ? `https://wa.me/${vendor.phone.replace(/\D/g,'')}?text=${whatsappMsg}` : null
   const shareUrl = `${window.location.origin}/products/${product.id}`
 
   function shareWhatsApp() {
-    const text = encodeURIComponent(`Check out "${product.name}" on Wolf Marketplace — MWK ${Number(product.price).toLocaleString()}\n${shareUrl}`)
+    const text = encodeURIComponent(`Check out "${product.name}" on Wolf Business Platform — MWK ${Number(product.price).toLocaleString()}\n${shareUrl}`)
     window.open(`https://wa.me/?text=${text}`, '_blank')
   }
 

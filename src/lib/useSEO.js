@@ -3,11 +3,11 @@
  * and Open Graph tags for any page.
  *
  * Usage:
- *   useSEO({ title: 'Shop | Wolf Marketplace', description: '...' })
+ *   useSEO({ title: 'Shop | Wolf Business Platform', description: '...' })
  */
 import { useEffect } from 'react'
 
-const SITE = 'Wolf Marketplace'
+const SITE = 'Wolf Business Platform'
 const DEFAULT_IMG = '/icon-512.png'
 
 export function useSEO({ title, description, image, url } = {}) {

@@ -1,4 +1,4 @@
-// Wolf Marketplace Service Worker v8.0.1
+// Wolf Business Platform Service Worker v8.0.1
 const CACHE_NAME = 'wolf-market-v8-1'
 const OFFLINE_URL = '/offline.html'
 

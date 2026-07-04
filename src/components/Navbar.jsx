@@ -4,7 +4,11 @@ import { useAuth } from '../lib/AuthContext'
 import { useInstallPrompt } from '../lib/useInstallPrompt'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import Drawer from './Drawer'
 import './Navbar.css'
+
+// Routes considered part of "Sell" mode for the Buy/Sell toggle
+const SELL_ROUTES = ['/sell', '/dashboard']
 
 export default function Navbar() {
   const { totalItems, wishlist } = useCart()
@@ -15,7 +19,12 @@ export default function Navbar() {
   const path = location.pathname
   const [unreadNotifs, setUnreadNotifs] = useState(0)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const channelsRef = useRef([])
+  const isSellMode = SELL_ROUTES.some(r => path.startsWith(r))
+
+  function goBuy() { navigate('/home') }
+  function goSell() { navigate(user ? '/dashboard?tab=products' : '/signin') }
 
   useEffect(() => {
     // Remove any existing channels first before creating new ones
@@ -69,7 +78,7 @@ export default function Navbar() {
         {/* Row 1 — Logo */}
         <Link to="/home" className="nav-logo">
           <div className="nav-logo-icon">🐺</div>
-          <div className="nav-logo-text">Wolf <span>Market</span></div>
+          <div className="nav-logo-text">Wolf <span>Business Platform</span></div>
         </Link>
 
         {/* Desktop centre links */}
@@ -84,6 +93,11 @@ export default function Navbar() {
 
         {/* Desktop right actions */}
         <div className="nav-actions">
+          <button className="nav-menu-btn" onClick={() => setDrawerOpen(true)} aria-label="Open menu">☰</button>
+          <div className="mode-toggle">
+            <button className={!isSellMode ? 'active' : ''} onClick={goBuy}>Buy</button>
+            <button className={isSellMode ? 'active' : ''} onClick={goSell}>Sell</button>
+          </div>
           {canInstall && <button className="nav-install" onClick={promptInstall}>⬇️ Install App</button>}
           {user && (
             <Link to="/dashboard?tab=notifications" className="nav-cart" title="Notifications">
@@ -104,6 +118,12 @@ export default function Navbar() {
 
         {/* Row 2 — Mobile icon strip (below logo) */}
         <div className="mobile-icon-row">
+          <button className="nav-menu-btn" onClick={() => setDrawerOpen(true)} aria-label="Open menu">☰</button>
+          <div className="mode-toggle">
+            <button className={!isSellMode ? 'active' : ''} onClick={goBuy}>Buy</button>
+            <button className={isSellMode ? 'active' : ''} onClick={goSell}>Sell</button>
+          </div>
+          <div style={{ flex: 1 }} />
           {user && (
             <Link to="/dashboard?tab=notifications" className="nav-cart" title="Notifications">
               🔔{unreadNotifs > 0 && <span className="cart-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
@@ -121,10 +141,12 @@ export default function Navbar() {
 
       {canInstall && (
         <div className="install-banner">
-          <span>📲 Install Wolf Market for quicker access</span>
+          <span>📲 Install Wolf Business Platform for quicker access</span>
           <button onClick={promptInstall}>Install</button>
         </div>
       )}
+
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Mobile Bottom Nav */}
       <div className="mobile-nav">

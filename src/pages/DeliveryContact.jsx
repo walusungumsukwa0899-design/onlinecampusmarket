@@ -8,7 +8,7 @@ export function Delivery() {
     <div className="page-wrap">
       <div className="delivery-hero">
         <h1>Delivery, <span>Vendor</span><br/>to You</h1>
-        <p>Wolf Market handles payments — delivery is arranged directly between you and the vendor you&apos;re buying from.</p>
+        <p>Wolf Business Platform handles payments — delivery is arranged directly between you and the vendor you&apos;re buying from.</p>
       </div>
       <div className="steps-section">
         <div className="container">
@@ -33,7 +33,7 @@ export function Delivery() {
         <div className="container">
           <div className="section-header"><div className="eyebrow">Good to Know</div><h2 className="section-title">Delivery Is Set by Each Vendor</h2></div>
           <p className="delivery-disclaimer">
-            Wolf Market is a marketplace, not a delivery service — we don&apos;t dispatch riders or set delivery fees.
+            Wolf Business Platform is a marketplace, not a delivery service — we don&apos;t dispatch riders or set delivery fees.
             Each vendor decides how they get items to you: some deliver around campus, others ask buyers to pick up.
             Delivery time, cost (if any), and coverage area are agreed between you and the vendor directly, usually
             over chat right after you pay. Check a vendor's profile or ask them before ordering if delivery details matter to you.
@@ -58,7 +58,7 @@ export function Contact() {
       return
     }
     const lines = [
-      'New message from Wolf Market site:',
+      'New message from Wolf Business Platform site:',
       `Name: ${form.name}`,
       `Contact: ${form.contact}`,
       form.subject.trim() ? `Subject: ${form.subject}` : null,

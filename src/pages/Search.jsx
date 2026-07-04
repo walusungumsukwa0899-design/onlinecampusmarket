@@ -14,7 +14,7 @@ const SORT_OPTIONS = [
 ]
 
 export default function Search() {
-  useSEO({ title: 'Search Products', description: 'Search products across all campus vendors on Wolf Marketplace.' })
+  useSEO({ title: 'Search Products', description: 'Search products across all campus vendors on Wolf Business Platform.' })
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { addToCart, toggleWishlist, isWishlisted } = useCart()
@@ -107,7 +107,7 @@ export default function Search() {
       <div style={{ background: 'linear-gradient(135deg,#0e1a12,#1a3a20)', padding: '80px 24px 28px' }}>
         <div style={{ maxWidth: '680px', margin: '0 auto' }}>
           <h1 style={{ color: 'white', fontWeight: 900, fontSize: '22px', marginBottom: '14px', textAlign: 'center' }}>
-            🔍 Search Wolf Marketplace
+            🔍 Search Wolf Business Platform
           </h1>
           <div style={{ position: 'relative' }}>
             <input

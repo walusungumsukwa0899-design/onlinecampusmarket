@@ -9,7 +9,7 @@ export function checkEnv() {
   if (missing.length === 0) return
 
   const msg = [
-    '🐺 Wolf Marketplace — Missing environment variables:',
+    '🐺 Wolf Business Platform — Missing environment variables:',
     ...missing.map(([key, desc]) => `  • ${key}  (${desc})`),
     '',
     'Create a .env.local file with these values.',

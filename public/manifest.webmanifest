@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Wolf Marketplace",
-  "short_name": "Wolf Market",
-  "description": "Malawi's campus marketplace — buy and sell with student vendors across all universities.",
+  "name": "Wolf Business Platform",
+  "short_name": "Wolf Business",
+  "description": "Do your business online, anywhere, anytime — Malawi's campus commerce platform for student buyers and sellers.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

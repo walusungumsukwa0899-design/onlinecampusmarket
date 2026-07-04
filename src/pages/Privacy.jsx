@@ -3,7 +3,7 @@ import Footer from '../components/Footer'
 import { useSEO } from '../lib/useSEO'
 
 export default function Privacy() {
-  useSEO({ title: 'Privacy Policy', description: 'How Wolf Marketplace collects, uses, and protects your personal data.' })
+  useSEO({ title: 'Privacy Policy', description: 'How Wolf Business Platform collects, uses, and protects your personal data.' })
   return (
     <div>
       <Navbar />
@@ -26,7 +26,7 @@ export default function Privacy() {
           },
           {
             title: '4. Mobile Money Data',
-            body: 'Mobile money numbers used for payments are processed by PayChangu and are subject to their privacy policy. Wolf Marketplace stores your saved mobile number (if you opt in) to speed up future checkouts. You can delete this at any time from your account settings.'
+            body: 'Mobile money numbers used for payments are processed by PayChangu and are subject to their privacy policy. Wolf Business Platform stores your saved mobile number (if you opt in) to speed up future checkouts. You can delete this at any time from your account settings.'
           },
           {
             title: '5. Push Notifications',

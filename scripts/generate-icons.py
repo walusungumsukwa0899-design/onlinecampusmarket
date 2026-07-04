@@ -1,5 +1,5 @@
 """
-Wolf Marketplace — Python Icon Generator (no dependencies)
+Wolf Business Platform — Python Icon Generator (no dependencies)
 Usage: python3 scripts/generate-icons.py
 Produces the same branded icons as generate-icons.cjs but without npm canvas.
 """
@@ -98,7 +98,7 @@ def make_icon(size, path, maskable=False):
 
 pub = os.path.join(os.path.dirname(__file__), '../public')
 os.makedirs(pub, exist_ok=True)
-print('Generating Wolf Marketplace icons (Python)...')
+print('Generating Wolf Business Platform icons (Python)...')
 make_icon(16,  os.path.join(pub, 'favicon-16.png'))
 make_icon(32,  os.path.join(pub, 'favicon-32.png'))
 make_icon(180, os.path.join(pub, 'apple-touch-icon.png'))

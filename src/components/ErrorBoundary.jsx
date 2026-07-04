@@ -11,7 +11,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Wolf Marketplace error:', error, info)
+    console.error('Wolf Business Platform error:', error, info)
   }
 
   render() {
@@ -22,7 +22,7 @@ export default class ErrorBoundary extends Component {
           <div style={{ fontSize: '64px', marginBottom: '16px' }}>🐺</div>
           <h2 style={{ fontWeight: 900, fontSize: '22px', marginBottom: '8px' }}>Something went wrong</h2>
           <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
-            Wolf Marketplace ran into an unexpected error. Your cart and data are safe.
+            Wolf Business Platform ran into an unexpected error. Your cart and data are safe.
           </p>
           {this.state.error && (
             <details style={{ background: '#f1f5f9', borderRadius: '8px', padding: '12px', marginBottom: '20px', textAlign: 'left', fontSize: '12px', color: '#475569' }}>

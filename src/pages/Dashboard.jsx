@@ -165,6 +165,15 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState([])
   const [unreadNotifCount, setUnreadNotifCount] = useState(0)
 
+  // Keep the active tab in sync with the URL (?tab=...), so links/toggles
+  // that point at /dashboard?tab=X still switch tabs even when already on this page.
+  useEffect(() => {
+    const urlTab = searchParams.get('tab')
+    if (urlTab && urlTab !== tab) setTab(urlTab)
+  }, [searchParams])
+
+
+
   useEffect(() => {
     if (authLoading) return // wait until we actually know if there's a session
     if (!user) { navigate('/signin'); return }
@@ -438,8 +447,28 @@ export default function Dashboard() {
   const name = user.user_metadata?.full_name || user.email
   const uni = user.user_metadata?.university || ''
 
+  const dashTabs = [
+    {id:'overview',icon:'📊',label:'Overview'},
+    {id:'notifications',icon:'🔔',label:unreadNotifCount>0?`Notifications (${unreadNotifCount})`:'Notifications'},
+    {id:'orders',icon:'🛍️',label:'My Orders'},
+    ...(vendor ? [{id:'sales',icon:'💵',label:'My Sales'},{id:'analytics',icon:'📈',label:'Analytics'},{id:'payouts',icon:'💰',label:'Payout History'}] : []),
+    {id:'products',icon:'🏪',label:'My Products'},
+    {id:'settings',icon:'⚙️',label:'Settings'},
+  ]
+
   return (
     <div className="dash-page">
+      {/* Mobile tab strip — the sidebar (below) is desktop-only, so this is the
+          only way to switch tabs on a phone */}
+      <div className="dash-mobile-tabs">
+        {dashTabs.map(item => (
+          <button key={item.id} className={`dash-mobile-tab${tab===item.id?' active':''}`} onClick={() => setTab(item.id)}>
+            <span>{item.icon}</span>{item.label}
+          </button>
+        ))}
+        <button className="dash-mobile-tab sell" onClick={() => navigate('/sell')}><span>➕</span>List Product</button>
+      </div>
+
       <div className="dash-layout">
         {/* Sidebar */}
         <aside className="dash-sidebar">
@@ -448,14 +477,7 @@ export default function Dashboard() {
             <div className="dash-user-name">{name}</div>
             <div className="dash-user-uni">{uni}</div>
           </div>
-          {[
-            {id:'overview',icon:'📊',label:'Overview'},
-            {id:'notifications',icon:'🔔',label:unreadNotifCount>0?`Notifications (${unreadNotifCount})`:'Notifications'},
-            {id:'orders',icon:'🛍️',label:'My Orders'},
-            ...(vendor ? [{id:'sales',icon:'💵',label:'My Sales'},{id:'analytics',icon:'📈',label:'Analytics'},{id:'payouts',icon:'💰',label:'Payout History'}] : []),
-            {id:'products',icon:'🏪',label:'My Products'},
-            {id:'settings',icon:'⚙️',label:'Settings'},
-          ].map(item => (
+          {dashTabs.map(item => (
             <div key={item.id} className={`dash-nav-item${tab===item.id?' active':''}`} onClick={() => setTab(item.id)}>
               <span>{item.icon}</span>{item.label}
             </div>
@@ -515,8 +537,9 @@ export default function Dashboard() {
                   {vendor && <Onboarding />}
                   <div className="dash-cards">
                     <div className="dash-card"><div className="dash-card-label">Total Orders</div><div className="dash-card-val">{orders.length}</div><div className="dash-card-sub">All time</div></div>
-                    <div className="dash-card"><div className="dash-card-label">My Products</div><div className="dash-card-val">{myProducts.length}</div><div className="dash-card-sub">Listed</div></div>
                     <div className="dash-card"><div className="dash-card-label">Total Spent</div><div className="dash-card-val" style={{fontSize:'16px'}}>MWK {orders.reduce((a,o)=>a+(o.total||0),0).toLocaleString()}</div><div className="dash-card-sub">All orders</div></div>
+                    {vendor && <div className="dash-card"><div className="dash-card-label">My Products</div><div className="dash-card-val">{myProducts.length}</div><div className="dash-card-sub">Listed</div></div>}
+                    {vendor && <div className="dash-card"><div className="dash-card-label">Total Earned</div><div className="dash-card-val" style={{fontSize:'16px'}}>MWK {analytics.totalRevenue.toLocaleString()}</div><div className="dash-card-sub">From sales</div></div>}
                   </div>
                   {/* Quick links */}
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'10px',marginBottom:'24px'}}>

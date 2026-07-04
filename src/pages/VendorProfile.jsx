@@ -28,7 +28,7 @@ export default function VendorProfile() {
   const [storeSearch, setStoreSearch] = useState('')
   useSEO({
     title: vendor ? vendor.name : 'Store',
-    description: vendor ? `Shop at ${vendor.name} on Wolf Marketplace – ${vendor.category} at ${vendor.university}` : undefined,
+    description: vendor ? `Shop at ${vendor.name} on Wolf Business Platform – ${vendor.category} at ${vendor.university}` : undefined,
     image: vendor?.avatar_url || undefined,
   })
   const [replyTexts, setReplyTexts] = useState({}) // reviewId -> text
@@ -280,7 +280,7 @@ export default function VendorProfile() {
                   style={{background:following?'var(--wolf)':'white',color:following?'white':'var(--wolf)',border:'1.5px solid var(--wolf)',borderRadius:'8px',padding:'6px 14px',fontSize:'12px',fontWeight:700,cursor:'pointer',transition:'all .2s'}}>
                   {following ? '✓ Following' : '+ Follow'}
                 </button>
-                <button onClick={() => { const text=encodeURIComponent(`Check out ${vendor.name} on Wolf Marketplace!\n${window.location.href}`); window.open(`https://wa.me/?text=${text}`,'_blank') }}
+                <button onClick={() => { const text=encodeURIComponent(`Check out ${vendor.name} on Wolf Business Platform!\n${window.location.href}`); window.open(`https://wa.me/?text=${text}`,'_blank') }}
                   style={{background:'#25D366',color:'white',border:'none',borderRadius:'8px',padding:'6px 14px',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>
                   📤 Share Store
                 </button>

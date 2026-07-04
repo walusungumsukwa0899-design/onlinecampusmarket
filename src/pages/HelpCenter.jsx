@@ -10,7 +10,7 @@ const FAQS = [
       { q: 'How do I order something from a vendor?', a: 'Browse Vendors or a Campus Market, open a product, and tap Add to Cart. When you\'re ready, go to your Cart and pay — then message the vendor to arrange delivery or pickup.' },
       { q: 'What payment methods are accepted?', a: 'Airtel Money and TNM Mpamba are supported directly in the app at checkout.' },
       { q: 'Can I cancel an order after placing it?', a: 'Message the vendor directly as soon as possible — since they handle fulfillment themselves, cancellation depends on whether they\'ve already started preparing your order.' },
-      { q: 'How do I arrange delivery or pickup?', a: 'After paying, open the vendor\'s store page and message them directly to agree on delivery or pickup. Wolf Market doesn\'t arrange delivery itself — each vendor handles their own.' },
+      { q: 'How do I arrange delivery or pickup?', a: 'After paying, open the vendor\'s store page and message them directly to agree on delivery or pickup. Wolf Business Platform doesn\'t arrange delivery itself — each vendor handles their own.' },
     ],
   },
   {
@@ -25,9 +25,9 @@ const FAQS = [
   {
     category: 'Delivery & Payments',
     items: [
-      { q: 'Does Wolf Market deliver my order?', a: 'No — Wolf Market handles payments only. Delivery or pickup is arranged directly between you and the vendor after you pay. See the Delivery page for details.' },
+      { q: 'Does Wolf Business Platform deliver my order?', a: 'No — Wolf Business Platform handles payments only. Delivery or pickup is arranged directly between you and the vendor after you pay. See the Delivery page for details.' },
       { q: 'What if my payment fails?', a: 'Check your mobile money balance and PIN, then retry. If money was deducted but the order didn\'t go through, contact Support with your transaction ID.' },
-      { q: 'Is there a delivery fee?', a: 'There\'s no Wolf Market delivery fee. Some vendors may charge their own fee for delivering to you, or ask you to pick up — agree on this with them directly before or after ordering.' },
+      { q: 'Is there a delivery fee?', a: 'There\'s no Wolf Business Platform delivery fee. Some vendors may charge their own fee for delivering to you, or ask you to pick up — agree on this with them directly before or after ordering.' },
     ],
   },
   {
@@ -49,7 +49,7 @@ export default function HelpCenter() {
         <div className="section-header">
           <div className="eyebrow">Help Center</div>
           <h2 className="section-title">How Can We Help?</h2>
-          <p className="section-sub">Answers to the most common questions about buying, selling, and using Wolf Market.</p>
+          <p className="section-sub">Answers to the most common questions about buying, selling, and using Wolf Business Platform.</p>
         </div>
 
         {FAQS.map(group => (

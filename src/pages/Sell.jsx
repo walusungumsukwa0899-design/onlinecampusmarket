@@ -145,7 +145,7 @@ export default function Sell() {
       <div className="empty-state" style={{paddingTop:'80px'}}>
         <div className="empty-icon">🔐</div>
         <h3>Sign in to sell</h3>
-        <p>You need an account to list products on Wolf Marketplace.</p>
+        <p>You need an account to list products on Wolf Business Platform.</p>
         <button className="btn-primary" onClick={() => navigate('/signin')}>Sign In / Register</button>
       </div>
     </div>
@@ -232,7 +232,7 @@ export default function Sell() {
             </button>
           </div>
         ) : (
-          <><p className="sell-sub">Add your items to Wolf Marketplace and start selling to students on your campus.</p>
+          <><p className="sell-sub">Add your items to Wolf Business Platform and start selling to students on your campus.</p>
 
         {/* Photo upload */}
         <label className="photo-upload-area" htmlFor="product-photos">

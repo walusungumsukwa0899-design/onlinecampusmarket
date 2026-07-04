@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Timeout fallback: if getSession hangs (bad network/env vars), stop loading after 5s
     const sessionTimeout = setTimeout(() => {
-      console.warn('Wolf Marketplace: getSession timed out — showing app without auth')
+      console.warn('Wolf Business Platform: getSession timed out — showing app without auth')
       setLoading(false)
     }, 5000)
 

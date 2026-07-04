@@ -39,9 +39,9 @@ export default function OrderConfirmation() {
   }
 
   async function shareReceipt() {
-    const text = `🐺 Wolf Marketplace Order\nRef: ${chargeId}\nTotal: MWK ${total.toLocaleString()}\n${orders.map(o => `• ${o.products?.name} (x${o.quantity||1}) — MWK ${(o.total||0).toLocaleString()}`).join('\n')}`
+    const text = `🐺 Wolf Business Platform Order\nRef: ${chargeId}\nTotal: MWK ${total.toLocaleString()}\n${orders.map(o => `• ${o.products?.name} (x${o.quantity||1}) — MWK ${(o.total||0).toLocaleString()}`).join('\n')}`
     if (navigator.share) {
-      await navigator.share({ title: 'My Wolf Marketplace Order', text }).catch(() => {})
+      await navigator.share({ title: 'My Wolf Business Platform Order', text }).catch(() => {})
     } else {
       await navigator.clipboard.writeText(text)
       setShared(true)

@@ -54,7 +54,7 @@ function EmailVerificationBanner() {
   }
   return (
     <div style={{ background: '#fffbeb', borderBottom: '1.5px solid #fde68a', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', fontSize: '13px', position: 'fixed', top: '108px', left: 0, right: 0, zIndex: 999 }}>
-      <span>📧 <strong>Verify your email</strong> — check your inbox for a link from Wolf Marketplace.</span>
+      <span>📧 <strong>Verify your email</strong> — check your inbox for a link from Wolf Business Platform.</span>
       {!resent
         ? <button onClick={resend} style={{ background: 'var(--wolf)', color: 'white', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>Resend Email</button>
         : <span style={{ color: '#22c55e', fontWeight: 700 }}>✅ Sent!</span>

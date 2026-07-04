@@ -9,7 +9,7 @@ import './Vendors.css'
 const PAGE_SIZE = 16
 
 export default function Vendors() {
-  useSEO({ title: 'Vendors', description: 'Browse trusted student entrepreneurs on Wolf Marketplace.' })
+  useSEO({ title: 'Vendors', description: 'Browse trusted student entrepreneurs on Wolf Business Platform.' })
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [vendors, setVendors] = useState([])

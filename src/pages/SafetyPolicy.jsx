@@ -16,7 +16,7 @@ const GUIDELINES = [
     icon: '💳',
     title: 'Payments',
     points: [
-      'Only pay through Wolf Market\'s checkout (Airtel Money or TNM Mpamba) — never send money outside the app.',
+      'Only pay through Wolf Business Platform\'s checkout (Airtel Money or TNM Mpamba) — never send money outside the app.',
       'Never share your mobile money PIN with anyone, including vendors or "support agents."',
       'Keep your transaction confirmation SMS until the order is delivered.',
     ],
@@ -56,7 +56,7 @@ export default function SafetyPolicy() {
       <div className="container" style={{ padding: '48px 24px 64px' }}>
         <div className="section-header">
           <div className="eyebrow">Safety Policy</div>
-          <h2 className="section-title">Staying Safe on Wolf Market</h2>
+          <h2 className="section-title">Staying Safe on Wolf Business Platform</h2>
           <p className="section-sub">Simple guidelines to help you buy and sell safely across Malawi&apos;s campuses.</p>
         </div>
 
@@ -74,7 +74,7 @@ export default function SafetyPolicy() {
 
         <div className="safety-note">
           <strong>Spotted something unsafe?</strong>
-          <p>Don&apos;t hesitate to report it. Every report helps keep the Wolf Market community safe.</p>
+          <p>Don&apos;t hesitate to report it. Every report helps keep the Wolf Business Platform community safe.</p>
           <Link to="/report" className="btn-primary">Report an Issue</Link>
         </div>
       </div>

@@ -10,9 +10,8 @@ import './Home.css'
 
 const CATEGORIES = [
   {icon:'👗',name:'Fashion & Clothing'},{icon:'📱',name:'Electronics'},{icon:'🍱',name:'Food & Drinks'},
-  {icon:'📚',name:'Books & Stationery'},{icon:'✏️',name:'Books & Stationery'},{icon:'💊',name:'Beauty & Health'},
-  {icon:'🏠',name:'Home & Living'},{icon:'💄',name:'Beauty & Health'},{icon:'⚽',name:'Sports & Fitness'},
-  {icon:'🔧',name:'Auto Parts'},{icon:'🛠️',name:'Services'},{icon:'📦',name:'Other'},
+  {icon:'📚',name:'Books & Stationery'},{icon:'💊',name:'Beauty & Health'},{icon:'🏠',name:'Home & Living'},
+  {icon:'⚽',name:'Sports & Fitness'},{icon:'🔧',name:'Auto Parts'},{icon:'🛠️',name:'Services'},{icon:'📦',name:'Other'},
 ]
 
 export default function Home() {
@@ -79,12 +78,11 @@ export default function Home() {
     <div className="home-page">
       {/* HERO */}
       <section className="hero">
-        <div className="hero-badge">🐺 Malawi&apos;s Campus Marketplace</div>
-        <h1>Shop Smart.<br/><span>Study Hard.</span></h1>
-        <p>Buy and sell everything on campus — fashion, food, electronics, books and more. Delivered to your hostel door.</p>
+        <div className="hero-badge">🐺 Do your business online, anywhere, anytime</div>
+        <h1>Shop Smart. <span>Study Hard.</span></h1>
+        <p>Buy and sell on campus — fashion, food, electronics, books and more, delivered to your hostel door.</p>
         <div className="hero-btns">
           <button className="btn-primary" onClick={() => navigate('/marketplaces')}>Choose Your Campus</button>
-          <button className="btn-secondary" onClick={() => navigate('/vendors')}>Become a Vendor</button>
         </div>
         <form onSubmit={handleHeroSearch} style={{ display: 'flex', gap: '8px', maxWidth: '480px', margin: '24px auto 0', width: '100%' }}>
           <input value={heroSearch} onChange={e => setHeroSearch(e.target.value)}
@@ -122,7 +120,7 @@ export default function Home() {
       <section className="section features-bg">
         <div className="container">
           <div className="section-header">
-            <div className="eyebrow">Why Wolf Marketplace</div>
+            <div className="eyebrow">Why Wolf Business Platform</div>
             <h2 className="section-title">Built for Campus Life</h2>
           </div>
           <div className="features-grid">
@@ -241,14 +239,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="cta-banner">
-        <div className="container" style={{textAlign:'center'}}>
-          <h2>Start Selling on Campus Today</h2>
-          <p>Turn your skills and products into income. Join 380+ student vendors already earning on Wolf Marketplace.</p>
-          <button className="btn-white" onClick={() => navigate('/sell')}>List Your Products →</button>
         </div>
       </section>
 

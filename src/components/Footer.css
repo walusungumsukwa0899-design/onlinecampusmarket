@@ -1,18 +1,15 @@
-.footer{background:var(--black);padding:44px 0 0;}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:28px;margin-bottom:36px;}
-.footer-brand p{font-size:12px;color:rgba(255,255,255,0.38);line-height:1.7;margin-top:10px;max-width:220px;}
-.footer-logo{display:flex;align-items:center;gap:10px;}
+.footer{background:var(--navy);padding:36px 0 0;}
+.footer-brand-centered{text-align:center;margin-bottom:24px;}
+.footer-logo{display:flex;align-items:center;justify-content:center;gap:10px;}
 .footer-logo-icon{width:34px;height:34px;background:var(--wolf);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;}
 .footer-logo-text{font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;color:white;}
 .footer-logo-text span{color:var(--wolf);}
-.footer-col h4{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;color:white;margin-bottom:12px;}
-.footer-col a{display:block;font-size:12px;color:rgba(255,255,255,0.38);margin-bottom:7px;cursor:pointer;transition:color .2s;text-decoration:none;}
-.footer-col a:hover{color:var(--wolf);}
-.footer-bottom{border-top:1px solid rgba(255,255,255,0.07);padding:18px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-.footer-bottom p{font-size:11px;color:rgba(255,255,255,0.28);}
-.footer-socials{display:flex;gap:8px;}
-.social-btn{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:background .2s;}
-.social-btn:hover{background:var(--wolf);}
-.footer-slogan{text-align:center;padding:12px 24px 16px;font-size:12px;color:rgba(255,255,255,0.22);letter-spacing:1px;}
+.footer-tagline{font-size:12px;color:rgba(255,255,255,0.5);margin-top:10px;}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.07);padding:16px 0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;}
+.footer-bottom p{font-size:11px;color:rgba(255,255,255,0.38);}
+.footer-legal-links{display:flex;align-items:center;gap:8px;font-size:11px;}
+.footer-legal-links a{color:rgba(255,255,255,0.5);text-decoration:none;}
+.footer-legal-links a:hover{color:var(--wolf);}
+.footer-legal-links span{color:rgba(255,255,255,0.25);}
+.footer-slogan{text-align:center;padding:12px 24px 16px;font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:1px;}
 .footer-slogan span{color:var(--wolf);font-weight:700;}
-@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;}}

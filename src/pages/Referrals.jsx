@@ -41,8 +41,8 @@ export default function Referrals() {
 
   function shareLink() {
     const link = `${window.location.origin}/signin?ref=${profile?.referral_code}`
-    const text = `Join me on Wolf Marketplace — Malawi's campus marketplace! Use my link to sign up and we both get MWK 500 credit 🐺`
-    if (navigator.share) navigator.share({ title: 'Join Wolf Marketplace', text, url: link })
+    const text = `Join me on Wolf Business Platform — Malawi's campus marketplace! Use my link to sign up and we both get MWK 500 credit 🐺`
+    if (navigator.share) navigator.share({ title: 'Join Wolf Business Platform', text, url: link })
     else copyLink()
   }
 
@@ -57,7 +57,7 @@ export default function Referrals() {
         <div style={{maxWidth:'600px',margin:'0 auto',textAlign:'center'}}>
           <div style={{fontSize:'48px',marginBottom:'12px'}}>🎁</div>
           <h1 style={{color:'white',fontWeight:900,fontSize:'24px',marginBottom:'8px'}}>Refer & Earn</h1>
-          <p style={{color:'rgba(255,255,255,.75)',fontSize:'14px'}}>Invite friends to Wolf Marketplace. You both get MWK 500 credit when they make their first purchase.</p>
+          <p style={{color:'rgba(255,255,255,.75)',fontSize:'14px'}}>Invite friends to Wolf Business Platform. You both get MWK 500 credit when they make their first purchase.</p>
         </div>
       </div>
 

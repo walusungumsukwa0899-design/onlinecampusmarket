@@ -1,4 +1,4 @@
-// Wolf Marketplace — Icon Generator
+// Wolf Business Platform — Icon Generator
 // Produces branded PNG icons with dark green bg + orange W mark.
 //
 // Option A: Uses 'canvas' npm package for full quality
@@ -85,7 +85,7 @@ function makeIcon(size, outPath, maskable = false) {
   console.log(`✅ ${path.basename(outPath)} (${size}x${size})`)
 }
 
-console.log('Generating Wolf Marketplace icons...')
+console.log('Generating Wolf Business Platform icons...')
 makeIcon(16,  path.join(pub, 'favicon-16.png'))
 makeIcon(32,  path.join(pub, 'favicon-32.png'))
 makeIcon(180, path.join(pub, 'apple-touch-icon.png'))
