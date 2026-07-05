@@ -127,7 +127,7 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
           onDoubleClick={toggleZoom}
           draggable={false}
           style={{
-            maxWidth: '92vw', maxHeight: description || title ? '52vh' : '78vh', objectFit: 'contain', borderRadius: '8px',
+            maxWidth: '92vw', maxHeight: description || title ? '38vh' : '78vh', objectFit: 'contain', borderRadius: '8px',
             transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
             cursor: scale > 1 ? 'grab' : 'zoom-in',
             transition: dragRef.current ? 'none' : 'transform .15s ease-out',
@@ -154,12 +154,12 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
       {/* Caption: title + description — always visible, never hidden behind a tap */}
       {(title || description) && (
         <div onClick={e => e.stopPropagation()} style={{
-          width: '100%', maxWidth: '600px', padding: '16px 20px calc(16px + env(safe-area-inset-bottom))',
-          background: 'rgba(20,20,20,.95)', borderTop: '1px solid rgba(255,255,255,.1)', flexShrink: 0,
-          maxHeight: '32vh', overflowY: 'auto'
+          width: '100%', maxWidth: '600px', padding: '18px 20px calc(18px + env(safe-area-inset-bottom))',
+          background: 'rgba(20,20,20,.97)', borderTop: '1px solid rgba(255,255,255,.1)', flexShrink: 0,
+          maxHeight: '48vh', overflowY: 'auto'
         }}>
-          {title && <div style={{ color: 'white', fontWeight: 800, fontSize: '15px', marginBottom: description ? '8px' : 0 }}>{title}</div>}
-          {description && <div style={{ color: 'rgba(255,255,255,.75)', fontSize: '13.5px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{description}</div>}
+          {title && <div style={{ color: 'white', fontWeight: 800, fontSize: '16px', marginBottom: description ? '10px' : 0 }}>{title}</div>}
+          {description && <div style={{ color: 'rgba(255,255,255,.8)', fontSize: '14px', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{description}</div>}
         </div>
       )}
 
