@@ -267,10 +267,11 @@ export default function VendorProfile() {
                   if (!user) { navigate('/signin'); return }
                   setFollowLoading(true)
                   if (following) {
-                    const { error } = await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id);                  if (!error) setFollowing(false)
+                    const { error } = await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id);
+                    if (!error) setFollowing(false)
                     else alert('Could not unfollow. Please try again.')
                   } else {
-                    const { error } = await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id }, { onConflict: 'vendor_id,user_id' });
+                    const { error } = await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id }, { onConflict: 'vendor_id,user_id' })
                     if (!error) setFollowing(true)
                     else alert('Could not follow. Please try again.')
                   }
@@ -351,7 +352,10 @@ export default function VendorProfile() {
                     <div className="product-body">
                       <div className="product-name">{p.name}</div>
                       {p.description && (
-                        <div style={{fontSize:'11.5px',color:'var(--gray)',lineHeight:1.4,margin:'2px 0 4px',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{p.description}</div>
+                        <div
+                          onClick={() => setGalleryProduct({images: p.image_urls?.length ? p.image_urls : (p.image_url ? [p.image_url] : []), idx: 0, name: p.name, description: p.description})}
+                          style={{fontSize:'11.5px',color:'var(--gray)',lineHeight:1.4,margin:'2px 0 4px',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',cursor:'pointer'}}
+                        >{p.description}</div>
                       )}
                       <div className={`avail-tag ${p.available?'avail':'unavail'}`}>{p.available ? '✅ In Stock' : '❌ Out of Stock'}</div>
                       {avgRating && (
