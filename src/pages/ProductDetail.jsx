@@ -197,8 +197,7 @@ export default function ProductDetail() {
               </div>
             )}
             {product.stock_qty !== null && (
-              <div style={{ fontSize: '13px', color: product.stock_qty > 5 ? '#22c55e' : product.stock_qty > 0 ? '#f97316' : '#ef4444', fontWeight: 700 }}>
-                {product.stock_qty > 5 ? `✅ ${product.stock_qty} in stock` : product.stock_qty > 0 ? `⚠️ Only ${product.stock_qty} left!` : '❌ Out of stock'}
+              <div style={{ fontSize: '13px', color: product.stock_qty > 5 ? '#22c55e' : product.stock_qty > 0 ? '#f97316' : '#ef4444', fontWeight: 700 }}>                {product.stock_qty > 5 ? `✅ ${product.stock_qty} in stock` : product.stock_qty > 0 ? `⚠️ Only ${product.stock_qty} left!` : '❌ Out of stock'}
               </div>
             )}
 
@@ -315,4 +314,87 @@ export default function ProductDetail() {
                   setReviewSubmitting(true)
                   const { error } = await supabase.from('product_reviews').insert({
                     product_id: id, vendor_id: product.vendor_id, user_id: user.id,
-                 
+                    buyer_name: user.user_metadata?.full_name || 'Anonymous',
+                    stars: reviewRating, text: reviewText.trim()
+                  })
+                  if (!error) {
+                    setProductReviews(prev => [{ stars: reviewRating, text: reviewText.trim(), buyer_name: user.user_metadata?.full_name || 'Anonymous', created_at: new Date().toISOString() }, ...prev])
+                    setReviewDone(true)
+                  }
+                  setReviewSubmitting(false)
+                }}>
+                {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
+          )}
+          {reviewDone && <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: '#166534', fontWeight: 700 }}>✅ Thanks for your review!</div>}
+          {productReviews.length === 0 ? (
+            <div style={{ background: 'var(--light)', borderRadius: '14px', padding: '24px', textAlign: 'center', color: 'var(--gray)', fontSize: '14px' }}>
+              No reviews yet — be the first!
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {productReviews.map((r, i) => (
+                <div key={i} style={{ background: 'white', border: '1.5px solid var(--border)', borderRadius: '12px', padding: '14px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--wolf)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '14px', flexShrink: 0 }}>
+                      {(r.buyer_name || '?')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '13px' }}>{r.buyer_name || 'Anonymous'}</div>
+                      <div style={{ display: 'flex', gap: '1px' }}>
+                        {[1,2,3,4,5].map(n => <span key={n} style={{ color: n <= r.stars ? '#f59e0b' : '#d1d5db', fontSize: '12px' }}>★</span>)}
+                      </div>
+                    </div>
+                    <div style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--gray)' }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</div>
+                  </div>
+                  {r.text && <p style={{ fontSize: '13px', color: 'var(--black)', margin: 0, lineHeight: 1.6 }}>{r.text}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Related products */}
+        {related.length > 0 && (
+          <div style={{ marginTop: '48px' }}>
+            <h2 style={{ fontWeight: 900, fontSize: '18px', marginBottom: '20px' }}>More in {product.category}</h2>
+            <div className="products-grid">
+              {related.map(p => (
+                <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.id}`)}>
+                  <div className="product-img">
+                    {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" onError={e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex';}}/> : null}
+                    <span style={{display:p.image_url?'none':'flex'}}>{p.icon || '📦'}</span>
+                  </div>
+                  <div className="product-info">
+                    <div className="product-name">{p.name}</div>
+                    <div className="product-seller">{p.vendors?.name}</div>
+                    <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
+                    <button className="add-cart-btn"
+                      disabled={p.vendor_id === product.vendor_id && isOwnProduct}
+                      onClick={e => { e.stopPropagation(); if (p.vendor_id === product.vendor_id && isOwnProduct) return; addToCart({ id: p.id, name: p.name, price: `MWK ${Number(p.price).toLocaleString()}`, rawPrice: p.price, icon: p.icon || '📦', seller: p.vendors?.name, vendor_id: p.vendor_id, image_url: p.image_url }) }}>
+                      {p.vendor_id === product.vendor_id && isOwnProduct ? 'Your Product' : 'Add to Cart'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      <Footer />
+      {lightboxOpen && (
+        <ImageLightbox
+          images={images}
+          activeIndex={lightboxIdx}
+          onClose={() => setLightboxOpen(false)}
+          onPrev={() => setLightboxIdx(i => (i - 1 + images.length) % images.length)}
+          onNext={(delta) => setLightboxIdx(i => typeof delta === 'number' ? Math.abs(i + delta) % images.length : (i + 1) % images.length)}
+          title={product.name}
+          description={product.description ? sanitizeText(product.description) : ''}
+        />
+      )}
+    </div>
+  )
+}
+
