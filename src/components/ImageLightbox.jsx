@@ -102,9 +102,10 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
       {/* Prev */}
       {images.length > 1 && (
         <button onClick={e => { e.stopPropagation(); onPrev() }} style={{
-          position: 'absolute', left: '16px', top: '45%', background: 'rgba(255,255,255,.15)',
-          border: 'none', color: 'white', borderRadius: '50%', width: '44px', height: '44px',
-          fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2
+          position: 'absolute', left: '16px', top: '45%', background: 'rgba(255,255,255,.35)',
+          border: '1.5px solid rgba(255,255,255,.6)', color: 'white', borderRadius: '50%', width: '48px', height: '48px',
+          fontSize: '24px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2,
+          boxShadow: '0 2px 10px rgba(0,0,0,.4)'
         }}>‹</button>
       )}
 
@@ -126,7 +127,7 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
           onDoubleClick={toggleZoom}
           draggable={false}
           style={{
-            maxWidth: '92vw', maxHeight: description || title ? '62vh' : '78vh', objectFit: 'contain', borderRadius: '8px',
+            maxWidth: '92vw', maxHeight: description || title ? '52vh' : '78vh', objectFit: 'contain', borderRadius: '8px',
             transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
             cursor: scale > 1 ? 'grab' : 'zoom-in',
             transition: dragRef.current ? 'none' : 'transform .15s ease-out',
@@ -136,9 +137,10 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
 
       {images.length > 1 && (
         <button onClick={e => { e.stopPropagation(); onNext() }} style={{
-          position: 'absolute', right: '16px', top: '45%', background: 'rgba(255,255,255,.15)',
-          border: 'none', color: 'white', borderRadius: '50%', width: '44px', height: '44px',
-          fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2
+          position: 'absolute', right: '16px', top: '45%', background: 'rgba(255,255,255,.35)',
+          border: '1.5px solid rgba(255,255,255,.6)', color: 'white', borderRadius: '50%', width: '48px', height: '48px',
+          fontSize: '24px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2,
+          boxShadow: '0 2px 10px rgba(0,0,0,.4)'
         }}>›</button>
       )}
 
@@ -152,11 +154,12 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
       {/* Caption: title + description — always visible, never hidden behind a tap */}
       {(title || description) && (
         <div onClick={e => e.stopPropagation()} style={{
-          width: '100%', maxWidth: '600px', padding: '14px 20px calc(14px + env(safe-area-inset-bottom))',
-          background: 'rgba(20,20,20,.9)', borderTop: '1px solid rgba(255,255,255,.1)', flexShrink: 0
+          width: '100%', maxWidth: '600px', padding: '16px 20px calc(16px + env(safe-area-inset-bottom))',
+          background: 'rgba(20,20,20,.95)', borderTop: '1px solid rgba(255,255,255,.1)', flexShrink: 0,
+          maxHeight: '32vh', overflowY: 'auto'
         }}>
-          {title && <div style={{ color: 'white', fontWeight: 800, fontSize: '14px', marginBottom: description ? '4px' : 0 }}>{title}</div>}
-          {description && <div style={{ color: 'rgba(255,255,255,.65)', fontSize: '12.5px', lineHeight: 1.5, maxHeight: '80px', overflowY: 'auto' }}>{description}</div>}
+          {title && <div style={{ color: 'white', fontWeight: 800, fontSize: '15px', marginBottom: description ? '8px' : 0 }}>{title}</div>}
+          {description && <div style={{ color: 'rgba(255,255,255,.75)', fontSize: '13.5px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{description}</div>}
         </div>
       )}
 
