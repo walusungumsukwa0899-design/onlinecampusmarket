@@ -1,6 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-export default function ImageLightbox({ images, activeIndex, onClose, onPrev, onNext }) {
+export default function ImageLightbox({ images, activeIndex, onClose, onPrev, onNext, title, description }) {
+  const [scale, setScale] = useState(1)
+  const [pos, setPos] = useState({ x: 0, y: 0 })
+  const dragRef = useRef(null) // { startX, startY, origX, origY }
+  const pinchRef = useRef(null) // { startDist, startScale }
+
   useEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape') onClose()
@@ -15,20 +20,75 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
     }
   }, [onClose, onPrev, onNext])
 
+  // Reset zoom/pan whenever the photo changes
+  useEffect(() => { setScale(1); setPos({ x: 0, y: 0 }) }, [activeIndex])
+
   if (!images?.length) return null
   const src = images[activeIndex]
+
+  function clampScale(s) { return Math.min(4, Math.max(1, s)) }
+
+  function toggleZoom(e) {
+    e.stopPropagation()
+    setScale(s => (s > 1 ? 1 : 2.5))
+    setPos({ x: 0, y: 0 })
+  }
+
+  function onWheel(e) {
+    e.stopPropagation()
+    e.preventDefault()
+    setScale(s => clampScale(s - e.deltaY * 0.0015))
+  }
+
+  // Mouse/touch drag-to-pan (only meaningful once zoomed in)
+  function onPointerDown(e) {
+    if (scale <= 1) return
+    e.stopPropagation()
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y }
+  }
+  function onPointerMove(e) {
+    if (!dragRef.current) return
+    e.stopPropagation()
+    const dx = e.clientX - dragRef.current.startX
+    const dy = e.clientY - dragRef.current.startY
+    setPos({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy })
+  }
+  function onPointerUp() { dragRef.current = null }
+
+  // Pinch-to-zoom (two-finger touch)
+  function dist(touches) {
+    const [a, b] = touches
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+  }
+  function onTouchStart(e) {
+    if (e.touches.length === 2) {
+      e.stopPropagation()
+      pinchRef.current = { startDist: dist(e.touches), startScale: scale }
+    }
+  }
+  function onTouchMove(e) {
+    if (e.touches.length === 2 && pinchRef.current) {
+      e.stopPropagation()
+      e.preventDefault()
+      const ratio = dist(e.touches) / pinchRef.current.startDist
+      setScale(clampScale(pinchRef.current.startScale * ratio))
+    }
+  }
+  function onTouchEnd(e) {
+    if (e.touches.length < 2) pinchRef.current = null
+  }
 
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,.92)',
-      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+      zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
     }}>
       {/* Close */}
       <button onClick={onClose} style={{
         position: 'absolute', top: '16px', right: '20px',
         background: 'rgba(255,255,255,.15)', border: 'none', color: 'white',
         borderRadius: '50%', width: '40px', height: '40px', fontSize: '20px',
-        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2
       }}>✕</button>
 
       {/* Counter */}
@@ -42,27 +102,66 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
       {/* Prev */}
       {images.length > 1 && (
         <button onClick={e => { e.stopPropagation(); onPrev() }} style={{
-          position: 'absolute', left: '16px', background: 'rgba(255,255,255,.15)',
+          position: 'absolute', left: '16px', top: '45%', background: 'rgba(255,255,255,.15)',
           border: 'none', color: 'white', borderRadius: '50%', width: '44px', height: '44px',
-          fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2
         }}>‹</button>
       )}
 
-      {/* Image */}
-      <img onClick={e => e.stopPropagation()} src={src} alt=""
-        style={{ maxWidth: '92vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: '8px' }} />
+      {/* Image — click/double-click to zoom, drag to pan once zoomed, pinch on touch, wheel on desktop */}
+      <div
+        style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', touchAction: 'none' }}
+        onClick={e => e.stopPropagation()}
+        onWheel={onWheel}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <img
+          src={src} alt={title || ''}
+          onDoubleClick={toggleZoom}
+          draggable={false}
+          style={{
+            maxWidth: '92vw', maxHeight: description || title ? '62vh' : '78vh', objectFit: 'contain', borderRadius: '8px',
+            transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
+            cursor: scale > 1 ? 'grab' : 'zoom-in',
+            transition: dragRef.current ? 'none' : 'transform .15s ease-out',
+          }}
+        />
+      </div>
 
-      {/* Next */}
       {images.length > 1 && (
         <button onClick={e => { e.stopPropagation(); onNext() }} style={{
-          position: 'absolute', right: '16px', background: 'rgba(255,255,255,.15)',
+          position: 'absolute', right: '16px', top: '45%', background: 'rgba(255,255,255,.15)',
           border: 'none', color: 'white', borderRadius: '50%', width: '44px', height: '44px',
-          fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2
         }}>›</button>
       )}
 
-      {/* Thumbnails */}
-      {images.length > 1 && (
+      {/* Zoom hint */}
+      {scale === 1 && (
+        <div style={{ position: 'absolute', bottom: images.length > 1 && !(title || description) ? '90px' : '4px', left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,.5)', fontSize: '11px' }}>
+          🔍 Double-tap or pinch to zoom
+        </div>
+      )}
+
+      {/* Caption: title + description — always visible, never hidden behind a tap */}
+      {(title || description) && (
+        <div onClick={e => e.stopPropagation()} style={{
+          width: '100%', maxWidth: '600px', padding: '14px 20px calc(14px + env(safe-area-inset-bottom))',
+          background: 'rgba(20,20,20,.9)', borderTop: '1px solid rgba(255,255,255,.1)', flexShrink: 0
+        }}>
+          {title && <div style={{ color: 'white', fontWeight: 800, fontSize: '14px', marginBottom: description ? '4px' : 0 }}>{title}</div>}
+          {description && <div style={{ color: 'rgba(255,255,255,.65)', fontSize: '12.5px', lineHeight: 1.5, maxHeight: '80px', overflowY: 'auto' }}>{description}</div>}
+        </div>
+      )}
+
+      {/* Thumbnails (only shown when there's no caption panel taking that space) */}
+      {images.length > 1 && !(title || description) && (
         <div onClick={e => e.stopPropagation()} style={{
           position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
           display: 'flex', gap: '8px'
