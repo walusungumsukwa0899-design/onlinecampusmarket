@@ -267,10 +267,10 @@ export default function VendorProfile() {
                   if (!user) { navigate('/signin'); return }
                   setFollowLoading(true)
                   if (following) {
-                    const { error } = await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id)                    if (!error) setFollowing(false)
+                    const { error } = await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id);                  if (!error) setFollowing(false)
                     else alert('Could not unfollow. Please try again.')
                   } else {
-                    const { error } = await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id }, { onConflict: 'vendor_id,user_id' })
+                    const { error } = await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id }, { onConflict: 'vendor_id,user_id' });
                     if (!error) setFollowing(true)
                     else alert('Could not follow. Please try again.')
                   }
