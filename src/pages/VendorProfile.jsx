@@ -267,8 +267,7 @@ export default function VendorProfile() {
                   if (!user) { navigate('/signin'); return }
                   setFollowLoading(true)
                   if (following) {
-                    const { error } = await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id)
-                    if (!error) setFollowing(false)
+                    const { error } = await supabase.from('vendor_follows').delete().eq('vendor_id', id).eq('user_id', user.id)                    if (!error) setFollowing(false)
                     else alert('Could not unfollow. Please try again.')
                   } else {
                     const { error } = await supabase.from('vendor_follows').upsert({ vendor_id: id, user_id: user.id }, { onConflict: 'vendor_id,user_id' })
@@ -357,4 +356,182 @@ export default function VendorProfile() {
                       <div className={`avail-tag ${p.available?'avail':'unavail'}`}>{p.available ? '✅ In Stock' : '❌ Out of Stock'}</div>
                       {avgRating && (
                         <div style={{display:'flex',alignItems:'center',gap:'3px',marginBottom:'4px'}}>
-                          {'★'.repeat(Math.floor
+                          {'★'.repeat(Math.floor(avgRating)).split('').map((_,i)=><span key={i} style={{color:'#f59e0b',fontSize:'11px'}}>★</span>)}
+                          <span style={{fontSize:'11px',color:'#6b7280',fontWeight:600}}>{avgRating} ({reviews.length})</span>
+                        </div>
+                      )}
+                      <div className="product-footer">
+                        <div className="product-price">MWK {Number(p.price).toLocaleString()}</div>
+                    {p.stock_qty !== null && p.stock_qty !== undefined && (
+                      <div style={{fontSize:'11px',fontWeight:700,color:p.stock_qty>5?'#22c55e':p.stock_qty>0?'#f97316':'#ef4444',marginBottom:'4px'}}>
+                        {p.stock_qty>5?`${p.stock_qty} in stock`:p.stock_qty>0?`Only ${p.stock_qty} left!`:'Out of stock'}
+                      </div>
+                    )}
+                        <button className="ask-btn" onClick={() => askAboutItem(p.name)}>Ask →</button>
+                      </div>
+                      {isOwner ? (
+                        <div style={{display:'flex',gap:'6px',marginTop:'8px'}}>
+                          <button className="ask-btn" style={{flex:1,background:'var(--wolf)',color:'white',border:'none',borderRadius:'8px',padding:'8px',fontSize:'12px',fontWeight:700,cursor:'pointer'}}
+                            onClick={() => navigate(`/dashboard?tab=products&edit=${p.id}`)}>✏️ Edit</button>
+                          <button className="ask-btn" style={{flex:1,background:'#ef4444',color:'white',border:'none',borderRadius:'8px',padding:'8px',fontSize:'12px',fontWeight:700,cursor:'pointer'}}
+                            onClick={async () => {
+                              if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return
+                              const { error } = await supabase.from('products').delete().eq('id', p.id)
+                              if (!error) setProducts(prev => prev.filter(x => x.id !== p.id))
+                              else alert('Could not delete: ' + error.message)
+                            }}>🗑️ Delete</button>
+                        </div>
+                      ) : p.available
+                        ? <button className="add-cart-btn" onClick={() => addToCart({id:p.id,name:p.name,price:`MWK ${Number(p.price).toLocaleString()}`,rawPrice:p.price,icon:p.icon||'📦',seller:vendor.name,vendor_id:vendor.id})}>Add to Cart</button>
+                        : <button className="add-cart-btn" disabled>Out of Stock</button>
+                      }
+                    </div>
+                  </div>
+                ))}
+              </div>
+        )}
+
+        {/* Reviews */}
+        {tab === 'reviews' && (
+          <div className="reviews-pane">
+            <div className="add-review">
+              {isOwner ? (
+                <div className="success-msg" style={{background:'var(--light)'}}>You can&apos;t review your own store.</div>
+              ) : hasReviewed || reviewSuccess ? (
+                <div className="success-msg">✅ {reviewSuccess ? 'Review posted! Thank you.' : "You've already reviewed this store."}</div>
+              ) : !user ? (
+                <p className="signin-hint"><button onClick={() => navigate('/signin')}>Sign in</button> to leave a review</p>
+              ) : (
+                <>
+                  <h4>✍️ Leave a Review</h4>
+                  <div className="stars-row">
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} className={`star-btn${rating>=n?' on':''}`} onClick={() => setRating(n)}>★</button>
+                    ))}
+                    <span className="rating-label">{rating ? ['','Poor','Fair','Good','Great','Excellent'][rating] : 'Tap to rate'}</span>
+                  </div>
+                  <div className="form-group"><label className="form-label">Item purchased (optional)</label><input className="form-input" value={reviewItem} onChange={e => setReviewItem(e.target.value)} placeholder="e.g. Ankara Dress"/></div>
+                  <div className="form-group"><label className="form-label">Your review</label><textarea className="form-input" value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Share your experience with this vendor..." rows={3}/></div>
+                  <button className="btn-primary" onClick={submitReview}>Submit Review</button>
+                </>
+              )}
+            </div>
+
+            {reviews.length === 0
+              ? <div className="empty-state"><div className="empty-icon">⭐</div><h3>No reviews yet</h3><p>Be the first to review this vendor!</p></div>
+              : reviews.map((r, i) => (
+                  <div key={i} className="review-card">
+                    <div className="review-top">
+                      <div className="review-name">{r.buyer_name}</div>
+                      <div className="review-stars">{'★'.repeat(r.stars)}{'☆'.repeat(5-r.stars)}</div>
+                    </div>
+                    {r.item_purchased && <div className="review-item">Purchased: {r.item_purchased}</div>}
+                    <div className="review-text">{r.text}</div>
+                    <div className="review-date">{new Date(r.created_at).toLocaleDateString()}</div>
+                    {/* Vendor reply */}
+                    {r.review_replies?.[0] && (
+                      <div style={{background:'var(--light)',borderRadius:'8px',padding:'10px 12px',marginTop:'10px',fontSize:'13px'}}>
+                        <div style={{fontWeight:700,marginBottom:'4px',color:'var(--wolf)'}}>🏪 Vendor replied:</div>
+                        <div style={{color:'var(--gray)'}}>{r.review_replies[0].text}</div>
+                      </div>
+                    )}
+                    {isOwner && !r.review_replies?.[0] && (
+                      replyOpen[r.id]
+                        ? <div style={{marginTop:'10px'}}>
+                            <textarea className="form-input" rows={2} placeholder="Write a reply..." value={replyTexts[r.id]||''} onChange={e=>setReplyTexts(t=>({...t,[r.id]:e.target.value}))} style={{marginBottom:'6px'}}/>
+                            <div style={{display:'flex',gap:'8px'}}>
+                              <button className="mini-btn confirm" onClick={()=>submitReply(r.id)}>Post Reply</button>
+                              <button className="mini-btn" style={{background:'var(--light)',border:'none',borderRadius:'6px',padding:'4px 10px',cursor:'pointer',fontSize:'12px'}} onClick={()=>setReplyOpen(o=>({...o,[r.id]:false}))}>Cancel</button>
+                            </div>
+                          </div>
+                        : <button className="mini-btn confirm" style={{marginTop:'8px'}} onClick={()=>setReplyOpen(o=>({...o,[r.id]:true}))}>Reply to Review</button>
+                    )}
+                  </div>
+                ))
+            }
+          </div>
+        )}
+      </div>
+      <Footer />
+
+      {/* Image Gallery Lightbox — shared component (zoomable, shows title/description) */}
+      {galleryProduct && (
+        <ImageLightbox
+          images={galleryProduct.images}
+          activeIndex={galleryProduct.idx}
+          onClose={() => setGalleryProduct(null)}
+          onPrev={() => setGalleryProduct(g => ({ ...g, idx: (g.idx - 1 + g.images.length) % g.images.length }))}
+          onNext={(delta) => setGalleryProduct(g => ({ ...g, idx: typeof delta === 'number' ? Math.abs(g.idx + delta) % g.images.length : (g.idx + 1) % g.images.length }))}
+          title={galleryProduct.name}
+          description={galleryProduct.description}
+        />
+      )}
+
+      {/* Edit Store Modal */}
+      {editMode && (
+        <div className="modal-overlay" onClick={() => setEditMode(false)}>
+          <div className="modal-card" style={{maxWidth:'480px',maxHeight:'85vh',overflowY:'auto'}} onClick={e => e.stopPropagation()}>
+            <h3>✏️ Edit Store</h3>
+            {[
+              {label:'Store Name', key:'name', placeholder:'Your store name'},
+              {label:'Category', key:'category', placeholder:'e.g. Fashion'},
+              {label:'Phone / WhatsApp', key:'phone', placeholder:'+265 9xx xxx xxx'},
+              {label:'Email', key:'email', placeholder:'store@example.com'},
+              {label:'Location on Campus', key:'location', placeholder:'e.g. Block C Hostel'},
+              {label:'Open Hours', key:'hours', placeholder:'e.g. Mon–Sat 8am–7pm'},
+              {label:'Delivery Area', key:'delivery_area', placeholder:'e.g. UNIMA Campus'},
+              {label:'Delivery Fee (MWK)', key:'delivery_fee', placeholder:'Leave blank for free'},
+            ].map(f => (
+              <div className="form-group" key={f.key}>
+                <label className="form-label">{f.label}</label>
+                <input className="form-input" value={editForm[f.key] || ''} onChange={e => setEditForm(ef => ({...ef, [f.key]: e.target.value}))} placeholder={f.placeholder}/>
+              </div>
+            ))}
+            <div className="form-group">
+              <label className="form-label">Estimated Delivery Time</label>
+              <select className="form-input" value={editForm.delivery_time || ''} onChange={e => setEditForm(ef => ({...ef, delivery_time: e.target.value}))}>
+                <option value="">Select...</option>
+                <option>Within 1 hour</option>
+                <option>Same day (2–5 hours)</option>
+                <option>Next day</option>
+                <option>2–3 days</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Delivery Zones <span style={{fontWeight:400,color:'var(--gray)'}}>— campuses/areas you deliver to</span></label>
+              <input className="form-input" value={editForm.delivery_zones || ''} onChange={e => setEditForm(ef => ({...ef, delivery_zones: e.target.value}))} placeholder="e.g. UNIMA, Poly, Chancellor College, Zomba Town"/>
+              <div style={{fontSize:'11px',color:'var(--gray)',marginTop:'4px'}}>Separate with commas. Leave blank for all areas.</div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Payout Phone Number <span style={{fontWeight:400,color:'var(--gray)'}}>— Airtel Money or TNM Mpamba</span></label>
+              <input className="form-input" value={editForm.payout_phone || ''} onChange={e => setEditForm(ef => ({...ef, payout_phone: e.target.value}))} placeholder="e.g. 0991234567"/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Mobile Money Network</label>
+              <select className="form-input" value={editForm.payout_network || ''} onChange={e => setEditForm(ef => ({...ef, payout_network: e.target.value}))}>
+                <option value="">Select network...</option>
+                <option value="airtel">Airtel Money</option>
+                <option value="tnm">TNM Mpamba</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">🏖️ Vacation Mode</label>
+              <label style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',cursor:'pointer',marginBottom:'8px'}}>
+                <input type="checkbox" checked={editForm.is_available === false} onChange={e => setEditForm(ef => ({...ef, is_available: !e.target.checked}))} style={{accentColor:'var(--wolf)'}}/>
+                Mark store as temporarily unavailable
+              </label>
+              {editForm.is_available === false && (
+                <input className="form-input" value={editForm.unavailable_reason || ''} onChange={e => setEditForm(ef => ({...ef, unavailable_reason: e.target.value}))} placeholder="Reason (e.g. Away until 15 Jan — back soon!)"/>
+              )}
+            </div>
+            <div className="modal-actions">
+              <button className="continue-btn" onClick={() => setEditMode(false)}>Cancel</button>
+              <button className="btn-primary" onClick={saveStoreEdit} disabled={editSaving}>{editSaving ? 'Saving...' : 'Save Changes'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
