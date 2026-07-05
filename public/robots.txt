@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://wolfmarketplace.app/sitemap.xml
+Sitemap: https://onlinecampusmarket.vercel.app/sitemap.xml
 
 # Block admin and private routes
 Disallow: /admin
