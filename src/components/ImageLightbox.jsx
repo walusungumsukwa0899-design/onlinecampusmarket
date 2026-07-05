@@ -23,8 +23,9 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
   // Reset zoom/pan whenever the photo changes
   useEffect(() => { setScale(1); setPos({ x: 0, y: 0 }) }, [activeIndex])
 
-  if (!images?.length) return null
-  const src = images[activeIndex]
+  if (!images?.length && !title && !description) return null
+  const hasImages = images?.length > 0
+  const src = hasImages ? images[activeIndex] : null
 
   function clampScale(s) { return Math.min(4, Math.max(1, s)) }
 
@@ -110,30 +111,37 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
       )}
 
       {/* Image — click/double-click to zoom, drag to pan once zoomed, pinch on touch, wheel on desktop */}
-      <div
-        style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', touchAction: 'none' }}
-        onClick={e => e.stopPropagation()}
-        onWheel={onWheel}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <img
-          src={src} alt={title || ''}
-          onDoubleClick={toggleZoom}
-          draggable={false}
-          style={{
-            maxWidth: '92vw', maxHeight: description || title ? '38vh' : '78vh', objectFit: 'contain', borderRadius: '8px',
-            transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
-            cursor: scale > 1 ? 'grab' : 'zoom-in',
-            transition: dragRef.current ? 'none' : 'transform .15s ease-out',
-          }}
-        />
-      </div>
+      {hasImages ? (
+        <div
+          style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', touchAction: 'none' }}
+          onClick={e => e.stopPropagation()}
+          onWheel={onWheel}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <img
+            src={src} alt={title || ''}
+            onDoubleClick={toggleZoom}
+            draggable={false}
+            style={{
+              maxWidth: '92vw', maxHeight: description || title ? '38vh' : '78vh', objectFit: 'contain', borderRadius: '8px',
+              transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
+              cursor: scale > 1 ? 'grab' : 'zoom-in',
+              transition: dragRef.current ? 'none' : 'transform .15s ease-out',
+            }}
+          />
+        </div>
+      ) : (
+        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,.3)' }}>
+          <div style={{ fontSize: '52px', marginBottom: '10px' }}>📦</div>
+          <div style={{ fontSize: '12px' }}>No photo uploaded</div>
+        </div>
+      )}
 
       {images.length > 1 && (
         <button onClick={e => { e.stopPropagation(); onNext() }} style={{
@@ -145,7 +153,7 @@ export default function ImageLightbox({ images, activeIndex, onClose, onPrev, on
       )}
 
       {/* Zoom hint */}
-      {scale === 1 && (
+      {hasImages && scale === 1 && (
         <div style={{ position: 'absolute', bottom: images.length > 1 && !(title || description) ? '90px' : '4px', left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,.5)', fontSize: '11px' }}>
           🔍 Double-tap or pinch to zoom
         </div>
