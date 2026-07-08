@@ -13,6 +13,20 @@ const FEATURES = [
   { icon: '🔒', title: 'Secure payments', desc: 'Pay safely with Airtel Money or TNM Mpamba' },
 ]
 
+function EyeIcon({ off }) {
+  return off ? (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.4 18.4 0 0 1 4.22-5.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
 export default function SignIn() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -26,6 +40,8 @@ export default function SignIn() {
     referralCode: searchParams.get('ref') || ''
   })
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [showPwIn, setShowPwIn] = useState(false)
+  const [showPwUp, setShowPwUp] = useState(false)
 
   // Already signed in (didn't sign out) → go straight back to where they were,
   // not through the intro/sign-in screens at all.
@@ -137,7 +153,12 @@ export default function SignIn() {
               </div>
               <div className="form-group">
                 <label className="form-label">Password</label>
-                <input className="form-input" type="password" value={form.password} onChange={e => set('password', e.target.value)} onKeyDown={onKey} placeholder="••••••••" />
+                <div className="pw-input-wrap">
+                  <input className="form-input" type={showPwIn ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)} onKeyDown={onKey} placeholder="••••••••" />
+                  <button type="button" className="pw-toggle-btn" onClick={() => setShowPwIn(v => !v)} aria-label={showPwIn ? 'Hide password' : 'Show password'}>
+                    <EyeIcon off={showPwIn} />
+                  </button>
+                </div>
               </div>
               <div style={{ textAlign: 'right', marginBottom: '16px' }}>
                 <span style={{ fontSize: '12px', color: 'var(--wolf)', cursor: 'pointer', fontWeight: 600 }} onClick={() => { setTab('reset'); setError('') }}>Forgot password?</span>
@@ -168,7 +189,12 @@ export default function SignIn() {
               </div>
               <div className="form-group">
                 <label className="form-label">Password *</label>
-                <input className="form-input" type="password" value={form.password} onChange={e => set('password', e.target.value)} onKeyDown={onKey} placeholder="Min 8 chars, include a number" />
+                <div className="pw-input-wrap">
+                  <input className="form-input" type={showPwUp ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)} onKeyDown={onKey} placeholder="Min 8 chars, include a number" />
+                  <button type="button" className="pw-toggle-btn" onClick={() => setShowPwUp(v => !v)} aria-label={showPwUp ? 'Hide password' : 'Show password'}>
+                    <EyeIcon off={showPwUp} />
+                  </button>
+                </div>
                 {form.password.length > 0 && (
                   <div style={{ marginTop: '6px' }}>
                     <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
