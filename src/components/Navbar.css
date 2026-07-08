@@ -30,7 +30,7 @@
 .mobile-icon-row{display:none;}
 
 /* ── Bottom mobile nav ───────────────────────────────────────────────────── */
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--green);border-top:1px solid rgba(255,255,255,0.12);padding:6px 0 10px;z-index:200;}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:1px solid rgba(255,255,255,0.12);padding:6px 0 10px;z-index:200;}
 .mob-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 10px;text-decoration:none;font-size:9px;color:rgba(255,255,255,0.75);font-weight:500;position:relative;}
 .mob-item span:first-child{font-size:18px;position:relative;}
 .mob-item.active{color:#fff;}
